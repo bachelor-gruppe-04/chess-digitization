@@ -3,7 +3,7 @@ import onnxruntime as ort
 import matplotlib.pyplot as plt
 
 # Last inn din egen modell
-session = ort.InferenceSession('C:/Users/chris/OneDrive/Skrivebord/Skole/Bachelor/models/480M_leyolo_pieces.onnx')
+session = ort.InferenceSession('sandbox/cs-stuff/models/480M_leyolo_pieces.onnx')
 
 def preprocess_frame(frame):
     processed_frame = cv2.resize(frame, (480, 288))  # Juster dimensjonene til 288x480
