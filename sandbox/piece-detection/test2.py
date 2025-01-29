@@ -24,7 +24,7 @@ def preprocess_image(image, target_width, target_height):
     image = image.transpose(2, 0, 1)  # Convert HWC to CHW format
     return image[np.newaxis, ...].astype(np.float16)  # Add batch dimension and convert to float16
 
-def predict(image_path, target_width=480, target_height=288, confidence_threshold=0.5):
+def predict(image_path, target_width=480, target_height=288, confidence_threshold=0.4):
     """Predict bounding boxes, class indices, and scores using the ONNX model."""
     # Load and preprocess the image
     image = cv2.imread(image_path)
@@ -68,7 +68,15 @@ def predict(image_path, target_width=480, target_height=288, confidence_threshol
 
     return xc, yc, w, h, scores, class_indices
 
-def apply_nms(boxes, scores, nms_threshold=0.4):
+def scale_boxes(xc, yc, w, h, orig_width, orig_height, target_width, target_height):
+    """Skalere koordinatene tilbake til original bildestørrelse."""
+    xc = xc * (orig_width / target_width)
+    yc = yc * (orig_height / target_height)
+    w = w * (orig_width / target_width)
+    h = h * (orig_height / target_height)
+    return xc, yc, w, h
+
+def apply_nms(boxes, scores, nms_threshold=0.0):
     """Apply Non-Maximum Suppression to remove overlapping boxes."""
     indices = cv2.dnn.NMSBoxes(boxes.tolist(), scores.tolist(), score_threshold=0.0, nms_threshold=nms_threshold)
     indices = indices.flatten() if indices is not None else []
@@ -104,9 +112,14 @@ image_path = 'sandbox/piece-detection/images/chessboard.jpg'  # Replace with you
 # Get predictions
 xc, yc, w, h, scores, class_indices = predict(image_path)
 
+# Skalere boksene tilbake til original bildestørrelse
+orig_image = cv2.imread(image_path)
+orig_height, orig_width, _ = orig_image.shape
+xc, yc, w, h = scale_boxes(xc, yc, w, h, orig_width, orig_height, 480, 288)
+
 # Apply NMS to filter overlapping boxes
 boxes = np.column_stack((xc, yc, w, h))  # Combine xc, yc, w, h into boxes
-boxes, scores = apply_nms(boxes, scores, nms_threshold=0.4)
+# boxes, scores = apply_nms(boxes, scores, nms_threshold=0.4)
 
 # Unpack the boxes back into separate variables after NMS
 xc, yc, w, h = boxes[:, 0], boxes[:, 1], boxes[:, 2], boxes[:, 3]
