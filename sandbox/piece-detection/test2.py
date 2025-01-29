@@ -4,17 +4,35 @@ import numpy as np
 import matplotlib.pyplot as plt
 from torchvision import transforms
 import onnxruntime as ort
+import onnx
+from onnxsim import simplify
 
-# Define class names
-class_names = {
-    0: 'black-bishop', 1: 'black-king', 2: 'black-knight', 3: 'black-pawn', 4: 'black-queen',
-    5: 'black-rook', 6: 'white-bishop', 7: 'white-king', 8: 'white-knight', 9: 'white-pawn',
-    10: 'white-queen', 11: 'white-rook'
-}
-
-# Load ONNX model (replace with your actual path)
+# Load ONNX model
 model_path = "sandbox/piece-detection/models/480M_leyolo_pieces.onnx"
-ort_session = ort.InferenceSession(model_path)
+model = onnx.load(model_path)
+
+# Extract class names from model metadata
+metadata = model.metadata_props
+class_names = {}
+
+for item in metadata:
+    if item.key == "names":
+        # Parse the names field (assuming it's a JSON-like string)
+        class_names = eval(item.value)  # Be cautious with eval(), consider using json.loads(item.value)
+        break
+
+# Print to check class names
+print(class_names)
+
+# For simplification of the model
+model_simplified, check = simplify(model)
+
+# Save the simplified model
+simplified_model_path = "sandbox/piece-detection/models/480M_leyolo_pieces_simplified.onnx"
+onnx.save(model_simplified, simplified_model_path)
+
+# Now you can use the simplified model instead of the original
+ort_session = ort.InferenceSession(simplified_model_path)
 
 # Define image preprocessing function
 def preprocess_image(image, target_width, target_height):
@@ -24,10 +42,9 @@ def preprocess_image(image, target_width, target_height):
     image = image.transpose(2, 0, 1)  # Convert HWC to CHW format
     return image[np.newaxis, ...].astype(np.float16)  # Add batch dimension and convert to float16
 
-def predict(image_path, target_width=480, target_height=288, confidence_threshold=0.4):
+def predict(image, target_width=480, target_height=288, confidence_threshold=0.01):
     """Predict bounding boxes, class indices, and scores using the ONNX model."""
-    # Load and preprocess the image
-    image = cv2.imread(image_path)
+    # Preprocess the image
     preprocessed_image = preprocess_image(image, target_width, target_height)
 
     # Get model inputs and outputs
@@ -69,14 +86,14 @@ def predict(image_path, target_width=480, target_height=288, confidence_threshol
     return xc, yc, w, h, scores, class_indices
 
 def scale_boxes(xc, yc, w, h, orig_width, orig_height, target_width, target_height):
-    """Skalere koordinatene tilbake til original bildestørrelse."""
+    """Scale coordinates back to the original image size."""
     xc = xc * (orig_width / target_width)
     yc = yc * (orig_height / target_height)
     w = w * (orig_width / target_width)
     h = h * (orig_height / target_height)
     return xc, yc, w, h
 
-def apply_nms(boxes, scores, nms_threshold=0.0):
+def apply_nms(boxes, scores, nms_threshold=0.5):
     """Apply Non-Maximum Suppression to remove overlapping boxes."""
     indices = cv2.dnn.NMSBoxes(boxes.tolist(), scores.tolist(), score_threshold=0.0, nms_threshold=nms_threshold)
     indices = indices.flatten() if indices is not None else []
@@ -106,35 +123,61 @@ def visualize_boxes_and_labels(image, xc, yc, w, h, class_indices, scores, class
 
     return image
 
-# Load the image
-image_path = 'sandbox/piece-detection/images/chessboard.jpg'  # Replace with your actual image path
+# Process video
+video_path = 'sandbox/piece-detection/videos/chessvideo.mp4'  # Replace with your actual video path
+cap = cv2.VideoCapture(video_path)
 
-# Get predictions
-xc, yc, w, h, scores, class_indices = predict(image_path)
+# Get video properties
+frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+fps = cap.get(cv2.CAP_PROP_FPS)
+print(fps)
+print(frame_width)
+print(frame_height)
 
-# Skalere boksene tilbake til original bildestørrelse
-orig_image = cv2.imread(image_path)
-orig_height, orig_width, _ = orig_image.shape
-xc, yc, w, h = scale_boxes(xc, yc, w, h, orig_width, orig_height, 480, 288)
+# Create VideoWriter to save the processed video
+output_path = 'sandbox/piece-detection/output_video.avi'
+fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Codec for video
+out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
 
-# Apply NMS to filter overlapping boxes
-boxes = np.column_stack((xc, yc, w, h))  # Combine xc, yc, w, h into boxes
-# boxes, scores = apply_nms(boxes, scores, nms_threshold=0.4)
+frame_counter = 0  # Frame counter to process every second frame
 
-# Unpack the boxes back into separate variables after NMS
-xc, yc, w, h = boxes[:, 0], boxes[:, 1], boxes[:, 2], boxes[:, 3]
+while cap.isOpened():
+    ret, frame = cap.read()
+    if not ret:
+        break
 
-# Load the original image for visualization (in BGR format)
-image = cv2.imread(image_path)
+    # Process every second frame
+    if frame_counter % 5 == 0:
+        # Get predictions for the current frame
+        xc, yc, w, h, scores, class_indices = predict(frame)
 
-# Visualize the boxes and labels
-visualized_image = visualize_boxes_and_labels(image.copy(), xc, yc, w, h, class_indices, scores, class_names)
+        # Scale bounding boxes back to original frame size
+        xc, yc, w, h = scale_boxes(xc, yc, w, h, frame_width, frame_height, 480, 288)
 
-# Convert BGR to RGB for Matplotlib
-visualized_image = cv2.cvtColor(visualized_image, cv2.COLOR_BGR2RGB)
+        # Apply NMS to filter overlapping boxes
+        boxes = np.column_stack((xc, yc, w, h))  # Combine xc, yc, w, h into boxes
+        boxes, scores = apply_nms(boxes, scores)
 
-# Display the image using Matplotlib
-plt.figure(figsize=(10, 6))
-plt.imshow(visualized_image)
-plt.axis('off')
-plt.show()
+        # Unpack the boxes back into separate variables after NMS
+        xc, yc, w, h = boxes[:, 0], boxes[:, 1], boxes[:, 2], boxes[:, 3]
+
+        # Visualize bounding boxes on the frame
+        visualized_frame = visualize_boxes_and_labels(frame.copy(), xc, yc, w, h, class_indices, scores, class_names)
+
+        # Write the frame to the output video
+        out.write(visualized_frame)
+
+        resized_frame = cv2.resize(visualized_frame, (1280, 720))
+        cv2.imshow('Video', resized_frame)
+
+    frame_counter += 1
+
+    # Break the loop if the 'q' key is pressed
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+# Release resources
+cap.release()
+out.release()
+cv2.destroyAllWindows()
