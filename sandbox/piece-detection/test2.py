@@ -67,12 +67,14 @@ def predict(image, target_width=480, target_height=288, confidence_threshold=0.0
     w = predsT[:, :, 2]
     h = predsT[:, :, 3]
 
-    # Extract scores (objectness) and class probabilities
-    scores = predsT[:, :, 4]  # Objectness score
-    class_probs = predsT[:, :, 5:16]  # Class probabilities (assuming 12 classes)
+    # Extract class probabilities (objectness is folded into the class scores)
+    class_probs = predsT[:, :, 4:]  # Class probabilities (from index 4 onwards)
 
     # Extract class indices (max probability class)
     class_indices = np.argmax(class_probs, axis=-1)
+
+    # Extract scores (using the class probabilities as the "score")
+    scores = np.max(class_probs, axis=-1)
 
     # Apply confidence threshold
     mask = scores > confidence_threshold  # Create a mask for predictions above the threshold
@@ -85,6 +87,7 @@ def predict(image, target_width=480, target_height=288, confidence_threshold=0.0
 
     return xc, yc, w, h, scores, class_indices
 
+
 def scale_boxes(xc, yc, w, h, orig_width, orig_height, target_width, target_height):
     """Scale coordinates back to the original image size."""
     xc = xc * (orig_width / target_width)
@@ -93,13 +96,15 @@ def scale_boxes(xc, yc, w, h, orig_width, orig_height, target_width, target_heig
     h = h * (orig_height / target_height)
     return xc, yc, w, h
 
-def apply_nms(boxes, scores, nms_threshold=0.5):
+def apply_nms(boxes, scores, class_indices, nms_threshold=0.5):
     """Apply Non-Maximum Suppression to remove overlapping boxes."""
     indices = cv2.dnn.NMSBoxes(boxes.tolist(), scores.tolist(), score_threshold=0.0, nms_threshold=nms_threshold)
     indices = indices.flatten() if indices is not None else []
     boxes = boxes[indices]
     scores = scores[indices]
-    return boxes, scores
+    class_indices = class_indices[indices]  # Apply mask to class indices as well
+    return boxes, scores, class_indices
+
 
 def visualize_boxes_and_labels(image, xc, yc, w, h, class_indices, scores, class_names):
     """Visualizes bounding boxes and labels on an image."""
@@ -157,7 +162,8 @@ while cap.isOpened():
 
         # Apply NMS to filter overlapping boxes
         boxes = np.column_stack((xc, yc, w, h))  # Combine xc, yc, w, h into boxes
-        boxes, scores = apply_nms(boxes, scores)
+        boxes, scores, class_indices = apply_nms(boxes, scores, class_indices)
+
 
         # Unpack the boxes back into separate variables after NMS
         xc, yc, w, h = boxes[:, 0], boxes[:, 1], boxes[:, 2], boxes[:, 3]
