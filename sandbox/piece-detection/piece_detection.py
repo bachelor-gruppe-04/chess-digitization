@@ -141,7 +141,7 @@ print(frame_width)
 print(frame_height)
 
 # Create VideoWriter to save the processed video
-output_path = 'sandbox/piece-detection/output_video.avi'
+output_path = 'sandbox/piece-detection/videos/output_video.avi'
 fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Codec for video
 out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
 
