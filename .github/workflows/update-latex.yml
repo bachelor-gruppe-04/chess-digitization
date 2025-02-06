@@ -28,7 +28,7 @@ jobs:
 
       - name: Commit and Push Changes
         run: |
-          cd latex-document
+          cd documentation
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add .
