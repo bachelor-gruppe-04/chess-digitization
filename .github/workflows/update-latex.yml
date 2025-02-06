@@ -32,7 +32,7 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add .
-          git commit -m "Update code from project repository"
-          git push
+          git commit -m "Update code from project repository" || echo "No changes to commit"
+          git push https://x-access-token:${{ secrets.ORG_PAT }}@github.com/bachelor-gruppe-04/documentation.git main
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_AUTH: ${{ secrets.ORG_PAT }}
