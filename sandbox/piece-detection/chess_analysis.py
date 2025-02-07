@@ -1,4 +1,5 @@
 import requests
+import chess
 
 def stockfish_api(fen, depth):
     url = "https://chess-api.com/v1"
@@ -21,11 +22,16 @@ def stockfish_api(fen, depth):
         print(f"Error communicating with Chess API: {e}")
         return None
 
-def analyze_position(fen):
-    evaluation_result = stockfish_api(fen, depth=18)  # max depth 18
+def fetch_evaluation(fen):
+    evaluation_result = stockfish_api(fen, depth=18)  # Max depth 18
 
-    if evaluation_result:
-        if "eval" in evaluation_result:
-            print(f"Stockfish evaluation: {evaluation_result['eval']}")
+    if evaluation_result and "eval" in evaluation_result:
+        return evaluation_result["eval"]
+    
+    return 0  
 
-    return evaluation_result
+def fetch_best_move(fen):
+    fetch_best_move = stockfish_api(fen, depth=18)  # Max depth 18
+
+    if fetch_best_move and "eval" in fetch_best_move:
+        return fetch_best_move["eval"]

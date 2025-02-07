@@ -42,7 +42,7 @@ def preprocess_image(image, target_width, target_height):
     image = image.transpose(2, 0, 1)  # Convert HWC to CHW format
     return image[np.newaxis, ...].astype(np.float16)  # Add batch dimension and convert to float16
 
-def predict(image, target_width=480, target_height=288, confidence_threshold=0.01):
+def predict(image, target_width=480, target_height=288, confidence_threshold=0.2):
     """Predict bounding boxes, class indices, and scores using the ONNX model."""
     # Preprocess the image
     preprocessed_image = preprocess_image(image, target_width, target_height)
@@ -59,7 +59,7 @@ def predict(image, target_width=480, target_height=288, confidence_threshold=0.0
 
     # Extract predictions (assuming output shape [1, 2835, 16])
     preds = predictions[0]  # Get the first output (assuming it's the prediction output)
-    predsT = np.transpose(preds, (0, 2, 1))  # Transpose to [1, 2835, 16]
+    predsT = np.transpose(preds, (0, 2, 1))  # Transpose to [1, 16, 2835]
 
     # Extract bounding box coordinates
     xc = predsT[:, :, 0]
@@ -129,7 +129,7 @@ def visualize_boxes_and_labels(image, xc, yc, w, h, class_indices, scores, class
     return image
 
 # Process video
-video_path = 'sandbox/piece-detection/videos/chessvideo.mp4'  # Replace with your actual video path
+video_path = 'sandbox/piece-detection/videos/chessvideo.mp4'
 cap = cv2.VideoCapture(video_path)
 
 # Get video properties
@@ -145,7 +145,7 @@ output_path = 'sandbox/piece-detection/videos/output_video.avi'
 fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Codec for video
 out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
 
-frame_counter = 0  # Frame counter to process every second frame
+frame_counter = 0
 
 while cap.isOpened():
     ret, frame = cap.read()
