@@ -6,6 +6,7 @@ import chess.svg
 from PIL import Image, ImageTk
 import io
 import cairosvg
+import chess_analysis
 
 class ChessBoard:
     def __init__(self, root):
@@ -50,7 +51,8 @@ class ChessBoard:
             image = image.resize((50, 50), Image.LANCZOS)  # Resize to fit the squares
             self.piece_images[symbol] = ImageTk.PhotoImage(image)
 
-    def draw_board(self, best_move="e2e4"):
+ 
+    def draw_board(self):
         """Draws the chessboard with pieces and optional best move arrow"""
         self.canvas.delete("all")  # Clear previous drawings
         colors = ["#D18B47", "#FFCE9E"]
@@ -71,9 +73,9 @@ class ChessBoard:
             self.canvas.create_image(x + square_size / 2, y + square_size / 2,
                                     image=self.piece_images[piece_symbol])
 
-        # Draw best move arrow if provided
-        if best_move:
-            self.draw_arrow(best_move)
+        best_move = chess_analysis.fetch_best_move(self.board.fen())
+        self.draw_arrow(best_move)
+
 
     def draw_arrow(self, move):
         """Draws an arrow from the start square to the end square"""

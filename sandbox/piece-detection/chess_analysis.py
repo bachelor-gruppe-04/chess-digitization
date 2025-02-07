@@ -27,11 +27,9 @@ def fetch_evaluation(fen):
 
     if evaluation_result and "eval" in evaluation_result:
         return evaluation_result["eval"]
-    
-    return 0  
 
 def fetch_best_move(fen):
     fetch_best_move = stockfish_api(fen, depth=18)  # Max depth 18
 
-    if fetch_best_move and "eval" in fetch_best_move:
-        return fetch_best_move["eval"]
+    if fetch_best_move and "move" in fetch_best_move:
+        return fetch_best_move["move"]
