@@ -1,10 +1,10 @@
 import tkinter as tk
-import chess_analysis
+import logic.analysis.chess_analysis as chess_analysis
 
 class ChessEvalBar:
     def __init__(self, root, board):
         self.root = root
-        self.board = board  # Store the board reference
+        self.board = board
         self.canvas = tk.Canvas(root, width=50, height=400, bg="gray")
         self.canvas.pack()
 

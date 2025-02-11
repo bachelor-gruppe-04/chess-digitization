@@ -1,19 +1,18 @@
 import tkinter as tk
 import chess
 import random
-from eval_bar import ChessEvalBar
+from view.eval_bar import ChessEvalBar
 import chess.svg
 from PIL import Image, ImageTk
 import io
 import cairosvg
-import chess_analysis
+import logic.analysis.chess_analysis as chess_analysis
 
 class ChessBoard:
     def __init__(self, root):
         self.root = root
         self.root.title("Chessboard")
 
-        # Create frames for layout
         self.frame_left = tk.Frame(root)
         self.frame_left.pack(side="left", padx=10, pady=10)
 
@@ -22,19 +21,15 @@ class ChessBoard:
 
         self.board = chess.Board()
 
-        # Create canvas for the chessboard and place it in the right frame
         self.canvas = tk.Canvas(self.frame_right, width=400, height=400)
         self.canvas.pack()
 
-        # Create an instance of ChessEvalBar and place it in the left frame
         self.eval_bar = ChessEvalBar(self.frame_left, self.board)
 
-        self.piece_images = {}  # Store piece images
+        self.piece_images = {}
         self.load_piece_images()
 
         self.draw_board()
-
-        # Schedule the first move
         self.schedule_random_move()
 
         # Bind the custom event to update the evaluation bar
@@ -54,7 +49,7 @@ class ChessBoard:
  
     def draw_board(self):
         """Draws the chessboard with pieces and optional best move arrow"""
-        self.canvas.delete("all")  # Clear previous drawings
+        self.canvas.delete("all")
         colors = ["#D18B47", "#FFCE9E"]
         square_size = 50
 
@@ -65,7 +60,6 @@ class ChessBoard:
                                             (col + 1) * square_size, (row + 1) * square_size,
                                             fill=color, outline="black")
 
-        # Draw pieces using images
         for square, piece in self.board.piece_map().items():
             piece_symbol = str(piece)
             row, col = divmod(square, 8)
@@ -107,7 +101,7 @@ class ChessBoard:
             self.event_update_eval_bar()
 
     def schedule_random_move(self):
-        self.root.after(2000, self.make_random_move)  # Schedule the next move in 3 seconds
+        self.root.after(2000, self.make_random_move) 
 
     def make_random_move(self):
         legal_moves = list(self.board.legal_moves)
@@ -121,4 +115,4 @@ class ChessBoard:
 
     def update_eval_bar(self, event):
         """Handles the event to update the eval bar"""
-        self.eval_bar.fetch_eval()  # Fetch and update the evaluation score
+        self.eval_bar.fetch_eval() 
