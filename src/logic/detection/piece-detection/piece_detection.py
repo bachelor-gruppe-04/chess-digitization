@@ -8,7 +8,7 @@ import onnx
 from onnxsim import simplify
 
 # Load ONNX model
-model_path = "sandbox/models/480M_leyolo_pieces.onnx"
+model_path = "src/logic/models/480M_leyolo_pieces.onnx"
 model = onnx.load(model_path)
 
 # Extract class names from model metadata
@@ -28,7 +28,7 @@ print(class_names)
 model_simplified, check = simplify(model)
 
 # Save the simplified model
-simplified_model_path = "sandbox/models/480M_leyolo_pieces_simplified.onnx"
+simplified_model_path = "src/logic/models/480M_leyolo_pieces_simplified.onnx"
 onnx.save(model_simplified, simplified_model_path)
 
 # Now you can use the simplified model instead of the original
@@ -129,7 +129,7 @@ def visualize_boxes_and_labels(image, xc, yc, w, h, class_indices, scores, class
     return image
 
 # Process video
-video_path = 'sandbox/videos/chessvideo.mp4'
+video_path = 'resources/videos/chessvideo.mp4'
 cap = cv2.VideoCapture(video_path)
 
 # Get video properties
@@ -141,7 +141,7 @@ print(frame_width)
 print(frame_height)
 
 # Create VideoWriter to save the processed video
-output_path = 'sandbox/videos/output_video.avi'
+output_path = 'resources/videos/output_video.avi'
 fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Codec for video
 out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
 

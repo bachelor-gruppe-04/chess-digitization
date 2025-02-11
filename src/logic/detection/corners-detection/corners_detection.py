@@ -8,8 +8,8 @@ import onnx
 from onnxsim import simplify
 
 # Load ONNX models for both object detection and corner detection
-model_path = "sandbox/models/480M_leyolo_pieces.onnx"
-corner_model_path = "sandbox/models/480L_leyolo_xcorners.onnx"
+model_path = "src/logic/models/480M_leyolo_pieces.onnx"
+corner_model_path = "src/logic/models/480L_leyolo_xcorners.onnx"
 
 # Load ONNX sessions
 ort_session = ort.InferenceSession(model_path)
@@ -130,14 +130,14 @@ def visualize_corners(image, corners, target_width=480, target_height=288, confi
     return image
 
 # Process video and integrate both object detection and corner detection
-video_path = 'sandbox/videos/chessvideo.mp4'
+video_path = 'resources/videos/chessvideo.mp4'
 cap = cv2.VideoCapture(video_path)
 
 frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 fps = cap.get(cv2.CAP_PROP_FPS)
 
-output_path = 'sandbox/videos/output_video_combined.avi'
+output_path = 'resources/videos/output_video_combined.avi'
 fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Codec for video
 out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
 
