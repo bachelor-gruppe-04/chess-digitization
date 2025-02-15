@@ -1,9 +1,11 @@
 name: Update Document with Code
 
 on:
-  push:
+  pull_request:
+    types:
+      - closed
     branches:
-      - documentation/4-github-workflows # Switch to 'main' when you're ready to use this workflow
+      - main
 
 jobs:
   update-latex:
