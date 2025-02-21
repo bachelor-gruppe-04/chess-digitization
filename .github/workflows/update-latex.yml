@@ -1,11 +1,9 @@
 name: Update Document with Code
 
 on:
-  pull_request:
-    types:
-      - closed
+  push:
     branches:
-      - main
+      - documentation/16-github-workflows-bug # Switch to 'main' when ready
 
 jobs:
   update-latex:
@@ -23,7 +21,7 @@ jobs:
       - name: Clone documentation repository
         run: |
           git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/bachelor-gruppe-04/documentation.git
-          cp -r src documentation/code
+          cp -r / documentation/code
 
       - name: Commit and push changes
         run: |
