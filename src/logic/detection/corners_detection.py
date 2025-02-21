@@ -7,7 +7,7 @@ import onnxruntime as ort
 import tensorflow as tf
 from detect import get_centers
 from maths import clamp
-from find_corners import get_quads, score_quad, perspective_transform
+from quad_transformation import get_quads, score_quad, perspective_transform
 
 
 corner_model_path = "src/logic/models/480L_leyolo_xcorners.onnx"
@@ -136,9 +136,7 @@ def process_boxes_and_scores(boxes, scores):
     return res_array
 
 def run_pieces_model(video_ref, pieces_model_ref):
-    video_width = video_ref.video_width
-    video_height = video_ref.video_height
-
+    video_height, video_width, _ = video_ref.shape
     image4d, width, height, padding, roi = get_input(video_ref)
 
     # Predict using the model
@@ -153,7 +151,7 @@ def run_pieces_model(video_ref, pieces_model_ref):
 
 
 
-def run_xcorners_model(video_frame, pieces):
+async def run_xcorners_model(video_frame):
         """
         Runs the xcorners model on a video frame and returns processed xCorners.
 
@@ -197,6 +195,7 @@ def run_xcorners_model(video_frame, pieces):
 
 def find_corners_from_xcorners(x_corners):
     quads = get_quads(x_corners)
+
     
     if len(quads) == 0:
         return None
@@ -233,6 +232,7 @@ def find_corners_from_xcorners(x_corners):
     for i in range(4):
         corners[i][0] = clamp(corners[i][0], 0, MODEL_WIDTH)
         corners[i][1] = clamp(corners[i][1], 0, MODEL_HEIGHT)
+
     
     return corners
 
@@ -272,11 +272,6 @@ def get_boxes_and_scores(preds, width, height, video_width, video_height):
     # Squeeze to remove unnecessary dimensions (if any)
     boxes = np.squeeze(boxes, axis=0)
     scores = np.squeeze(scores, axis=0)
-
-    print(boxes.shape)
-    print(scores.shape)
-
-
     return boxes, scores
 
 def get_center(points):

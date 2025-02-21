@@ -2,8 +2,7 @@ from constants import MODEL_WIDTH, MODEL_HEIGHT, MARKER_DIAMETER
 import tensorflow as tf
 
 def get_input(video_ref, keypoints=None, padding_ratio=12):
-    video_width = video_ref.video_width
-    video_height = video_ref.video_height
+    video_height, video_width, _ = video_ref.shape
     roi = None
 
     if keypoints is not None:
@@ -37,7 +36,7 @@ def get_input(video_ref, keypoints=None, padding_ratio=12):
         roi = [0, 0, video_width, video_height]
 
     # Image processing part
-    image = tf.image.decode_image(video_ref.read())  # Assuming video_ref is an image reader
+    image = tf.image.decode_image(video_ref)  # Assuming video_ref is an image reader
     
     # Cropping
     image = image[roi[1]:roi[3], roi[0]:roi[2], :]

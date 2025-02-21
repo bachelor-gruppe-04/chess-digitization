@@ -1,6 +1,6 @@
 import cv2
 
-def render_corners(frame, xCorners, target_width=480, target_height=288, video_width=1920, video_height=1080):
+def render_corners(video_frame, xCorners, target_width=480, target_height=288, video_width=1920, video_height=1080):
     """
     Renders corners on the frame by calling draw_points.
 
@@ -19,9 +19,12 @@ def render_corners(frame, xCorners, target_width=480, target_height=288, video_w
     scale_x = video_width / target_width
     scale_y = video_height / target_height
 
+    # print(frame)
+    print("ddd")
+
     # Use draw_points to render the corners with the scaling factors
-    frame_with_corners = draw_points(frame.copy(), xCorners, "blue", scale_x, scale_y)
-    
+    frame_with_corners = draw_points(video_frame.copy(), xCorners, "blue", scale_x, scale_y)
+
     return frame_with_corners
 
 
