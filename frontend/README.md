@@ -1,3 +1,3 @@
 # Live Digigization of Chess Games Application
 
-This is the application for the chess display. 
+The Live Chess Game Digitization project provides a solution for automatically recording chess games played on a traditional board. Using computer vision and machine learning, the application captures moves via a webcam and converts them into Portable Game Notation (PGN) format. This can replace the expensive electronic chessboards while ensuring accurate move recognition and rule validation in real time.
