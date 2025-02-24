@@ -1,13 +1,12 @@
 from constants import MODEL_WIDTH, MODEL_HEIGHT
-from detect import get_input
 
 import cv2
 import numpy as np
 import onnxruntime as ort
 import tensorflow as tf
-from detect import get_centers
 from maths import clamp
 from quad_transformation import get_quads, score_quad, perspective_transform
+from detection_methods import get_centers
 
 
 corner_model_path = "src/logic/models/480L_leyolo_xcorners.onnx"
@@ -113,6 +112,8 @@ def visualize_corners(image, corners, target_width=480, target_height=288, confi
 
     #use cv2.circle to draw the points
 
+
+
 def process_boxes_and_scores(boxes, scores):
     max_scores = tf.reduce_max(scores, axis=1)
     argmax_scores = tf.argmax(scores, axis=1)
@@ -134,21 +135,6 @@ def process_boxes_and_scores(boxes, scores):
     res_array = res.numpy()
     
     return res_array
-
-def run_pieces_model(video_ref, pieces_model_ref):
-    video_height, video_width, _ = video_ref.shape
-    image4d, width, height, padding, roi = get_input(video_ref)
-
-    # Predict using the model
-    pieces_preds = pieces_model_ref.predict(image4d)
-
-    # Extract boxes and scores
-    boxes_and_scores = get_boxes_and_scores(pieces_preds, width, height, video_width, video_height, padding, roi)
-
-    # Process boxes and scores
-    pieces = process_boxes_and_scores(boxes_and_scores['boxes'], boxes_and_scores['scores'])
-
-
 
 
 async def run_xcorners_model(video_frame):

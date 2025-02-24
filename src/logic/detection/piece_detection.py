@@ -7,6 +7,11 @@ import onnxruntime as ort
 import onnx
 from onnxsim import simplify
 
+from detection_methods import get_input, get_boxes_and_scores, process_boxes_and_scores
+
+
+pieces_model_path = "src/logic/models/480M_leyolo_pieces.onnx"
+pieces_ort_session = ort.InferenceSession(pieces_model_path)
 
 #**IMPORTANT:** Break the loop by pressing 'Q'!!
 
@@ -43,33 +48,55 @@ def predict_pieces(image, ort_session, target_width=480, target_height=288, conf
     )
 
     preds = predictions[0]
-    predsT = np.transpose(preds, (0, 2, 1)) # Transpose to [1, 16, 2835]
+
+    return preds
+    # predsT = np.transpose(preds, (0, 2, 1)) # Transpose to [1, 16, 2835]
 
     # Extract bounding box coordinates and other information
-    xc = predsT[:, :, 0]
-    yc = predsT[:, :, 1]
-    w = predsT[:, :, 2]
-    h = predsT[:, :, 3]
+    # xc = predsT[:, :, 0]
+    # yc = predsT[:, :, 1]
+    # w = predsT[:, :, 2]
+    # h = predsT[:, :, 3]
 
-    # Extract class probabilities (objectness is folded into the class scores)
-    class_probs = predsT[:, :, 4:]
+    # # Extract class probabilities (objectness is folded into the class scores)
+    # class_probs = predsT[:, :, 4:]
 
-    # Extract class indices (max probability class)
-    class_indices = np.argmax(class_probs, axis=-1)
+    # # Extract class indices (max probability class)
+    # class_indices = np.argmax(class_probs, axis=-1)
 
-    # Extract scores (using the class probabilities as the "score")
-    scores = np.max(class_probs, axis=-1)
+    # # Extract scores (using the class probabilities as the "score")
+    # scores = np.max(class_probs, axis=-1)
 
-    # Apply confidence threshold
-    mask = scores > confidence_threshold 
-    xc = xc[mask]
-    yc = yc[mask]
-    w = w[mask]
-    h = h[mask]
-    scores = scores[mask]
-    class_indices = class_indices[mask]
+    # # Apply confidence threshold
+    # mask = scores > confidence_threshold 
+    # xc = xc[mask]
+    # yc = yc[mask]
+    # w = w[mask]
+    # h = h[mask]
+    # scores = scores[mask]
+    # class_indices = class_indices[mask]
 
-    return xc, yc, w, h, scores, class_indices
+    # return xc, yc, w, h, scores, class_indices
+
+
+async def run_pieces_model(video_ref):
+    video_height, video_width, _ = video_ref.shape
+    
+    # image4d, width, height, padding, roi = get_input(video_ref)
+
+    pieces_prediction = predict_pieces(video_ref, pieces_ort_session)
+    
+    boxes, scores = get_boxes_and_scores(pieces_prediction, 1920, 1080, video_width, video_height)
+
+    
+    # pieces = process_boxes_and_scores(boxes_and_scores["boxes"], boxes_and_scores["scores"])
+
+    pieces = process_boxes_and_scores(boxes, scores)
+    
+    del pieces_prediction
+    
+    return pieces
+
 
 def preprocess_image(image, target_width, target_height):
     """Resize and normalize the image for ONNX model inference."""
