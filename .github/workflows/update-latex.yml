@@ -1,4 +1,4 @@
-name: Update Document with Code
+name: Update documentation with code
 
 on:
   push:
