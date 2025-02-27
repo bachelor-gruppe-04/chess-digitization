@@ -3,7 +3,7 @@ name: Update documentation with code
 on:
   push:
     branches:
-      - documentation/16-github-workflows-bug # Switch to 'main' when ready.
+      - main
 
 jobs:
   update-latex:
