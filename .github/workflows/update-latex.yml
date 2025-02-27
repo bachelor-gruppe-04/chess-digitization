@@ -21,8 +21,8 @@ jobs:
       - name: Clone documentation repository
         run: |
           git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/bachelor-gruppe-04/documentation.git
-          cp -r frontend/src documentation/code
-          cp -r backend/logic documentation/code
+          cp -r frontend/src documentation/code/frontend
+          cp -r backend/logic documentation/code/backend
 
       - name: Commit and push changes
         run: |
