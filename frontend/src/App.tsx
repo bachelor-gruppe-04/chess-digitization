@@ -1,18 +1,11 @@
-import './App.css'
-import Chessboard from './features/display/chessboard'
+import FileInput from './features/file_handler/file_input';
 
-/**
- * This is the main entry component of the application.
- */
 function App() {
-
   return (
     <>
-      <div className='chessboard'>
-        <Chessboard />
-      </div>
+      <FileInput />
     </>
-  )
+  );
 }
 
-export default App
+export default App;
