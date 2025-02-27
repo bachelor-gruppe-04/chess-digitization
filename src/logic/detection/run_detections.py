@@ -11,57 +11,45 @@ from warp import get_inv_transform, transform_centers, transform_boundary
 from render import render_state
 
 
+async def find_corners(video_ref, pieces_model_ref, xcorners_model_ref):
 
-async def find3_corners(video_ref, dispatch, 
-                         canvas_ref=None, set_text=None):
-    
-
-    video_height, video_width, _ = video_ref.shape
-
-
-    pieces = await run_pieces_model(video_ref)
+    pieces = await run_pieces_model(video_ref, pieces_model_ref)
     black_pieces = [x for x in pieces if x[2] <= 5]
     white_pieces = [x for x in pieces if x[2] > 5]
-    
+
     if len(black_pieces) == 0 or len(white_pieces) == 0:
-        set_text(["No pieces to label corners"])
         return
 
-    x_corners = await run_xcorners_model(video_ref)
+    x_corners = await run_xcorners_model(video_ref, xcorners_model_ref, pieces)
+
     if len(x_corners) < 5:
-        # With <= 5 xCorners, no quads are found
-        set_text([f"Need ≥5 xCorners", f"Detected {len(x_corners)}"])
         return
+
 
     corners = find_corners_from_xcorners(x_corners)
-    if corners is None:
-        set_text(["Failed to find corners"])
-        return
 
+    print(corners)
+    print("ww")
 
-    keypoints: list[list[float]] = get_keypoints(corners, video_ref)
-
-
-    centers = find_centers_of_squares(keypoints, video_ref)
-
-    print("hdd")
-    print(centers)
-
+    keypoints = calculate_keypoints(black_pieces, white_pieces, corners)
 
     # for key in CORNER_KEYS:
-    #     xy = keypoints[CORNER_MAPPING[key]]
+    #     xy = keypoints[key]
     #     payload = {
-    #         "type": "SET_CORNER",
-    #         "key": key,
-    #         "xy": get_marker_xy(xy, video_height, video_width)
+    #         "xy": get_marker_xy(xy, canvas_ref.height, canvas_ref.width),
+    #         "key": key
     #     }
-    #     dispatch(payload)  # Use dispatch instead of direct function call
-    #     print(payload)
+    #     dispatch(corners_set(payload))
 
-    render_state2 = render_state(video_ref, centers)
-    # set_text(["Found corners", "Ready to record"])
+    centers = find_centers_of_squares(corners, video_ref)
 
-    return render_state2
+    a= render_state(video_ref, centers)
+
+
+
+    return a
+
+
 
 
 def find_centers_of_squares(corners, canvas):

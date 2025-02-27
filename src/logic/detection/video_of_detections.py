@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import onnxruntime as ort
 import asyncio
-from run_detections import find3_corners
+from run_detections import find_corners
 from corner_slice import corners_set
 
 def dispatch(action):
@@ -14,7 +14,7 @@ def dispatch(action):
     
 
 
-async def process_video(video_path, piece_ort_session, corner_ort_session, output_path):
+async def process_video(video_path, piece_model_ref, corner_model_ref, output_path):
     cap = cv2.VideoCapture(video_path)
     frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -32,7 +32,7 @@ async def process_video(video_path, piece_ort_session, corner_ort_session, outpu
 
         if frame_counter % 1 == 0:
             # Call the async function to process the frame
-            result_frame = await find3_corners(video_frame, dispatch=dispatch)
+            result_frame = await find_corners(video_frame, piece_model_ref, corner_model_ref)
             print(result_frame)
 
 

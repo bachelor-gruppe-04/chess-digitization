@@ -109,6 +109,8 @@ def visualize_centers_opencv(canvas, centers):
     """
     # Get the dimensions of the canvas/frame
 
+
+
     # Calculate scaling factors
     scale_x = 1920 / 480
     scale_y = 1080 / 288
@@ -125,7 +127,7 @@ def visualize_centers_opencv(canvas, centers):
     
     for center in centers:
         # Scale the points (if needed)
-        x = int(center[0] * 20)
+        x = int(center[0] * 2)
         y = int(center[1] * 2)
 
         print(x, y)

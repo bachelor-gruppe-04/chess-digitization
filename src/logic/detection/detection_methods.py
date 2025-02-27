@@ -6,7 +6,7 @@ import onnxruntime as ort
 import tensorflow as tf
 
 
-def process_boxes_and_scores(boxes, scores):
+async def process_boxes_and_scores(boxes, scores):
     max_scores = tf.reduce_max(scores, axis=1)
     argmax_scores = tf.argmax(scores, axis=1)
     nms = tf.image.non_max_suppression(boxes, max_scores, max_output_size=100, iou_threshold=0.3, score_threshold=0.1)
@@ -28,9 +28,7 @@ def process_boxes_and_scores(boxes, scores):
     
     return res_array
 
-
-
-def get_boxes_and_scores(preds, width, height, video_width, video_height):
+def get_boxes_and_scores(preds, width, height, video_width, video_height, padding, roi):
     # preds is assumed to be a NumPy array with shape (batch_size, num_boxes, num_predictions)
     preds_t = np.transpose(preds, (0, 2, 1))  # Transpose preds to match the desired shape
 
@@ -44,11 +42,22 @@ def get_boxes_and_scores(preds, width, height, video_width, video_height):
     r = l + w  # Right
     b = t + h  # Bottom
 
+    l = l - padding[0]
+    r = r - padding[0]
+    t = t - padding[2]
+    b = b - padding[2]
+
     # Scale the bounding box coordinates
-    l = l * (width / MODEL_WIDTH)
-    r = r * (width / MODEL_WIDTH)
-    t = t * (height / MODEL_HEIGHT)
-    b = b * (height / MODEL_HEIGHT)
+    l = l * (width / (MODEL_WIDTH - padding[0] - padding[1]))
+    r = r * (width / (MODEL_WIDTH - padding[0] - padding[1]))
+    t = t * (height / (MODEL_HEIGHT - padding[2] - padding[3]))
+    b = b * (height / (MODEL_HEIGHT - padding[2] - padding[3]))
+
+        # Add ROI
+    l = l + roi[0]
+    r = r + roi[0]
+    t = t + roi[1]
+    b = b + roi[1]
 
     # Scale based on video size
     l = l * (MODEL_WIDTH / video_width)
@@ -66,6 +75,7 @@ def get_boxes_and_scores(preds, width, height, video_width, video_height):
     boxes = np.squeeze(boxes, axis=0)
     scores = np.squeeze(scores, axis=0)
     return boxes, scores
+
 
 def get_center(points):
     center = [sum(x[0] for x in points), sum(x[1] for x in points)]
@@ -138,14 +148,11 @@ def get_input(video_ref, keypoints=None, padding_ratio=12):
     else:
         roi = [0, 0, video_width, video_height]
 
-    # Image processing part
-    image = tf.image.decode_image(video_ref)  # Assuming video_ref is an image reader
-    
     # Cropping
-    image = image[roi[1]:roi[3], roi[0]:roi[2], :]
+    video_ref = video_ref[roi[1]:roi[3], roi[0]:roi[2], :]
     
     # Resizing
-    height, width, _ = image.shape
+    height, width, _ = video_ref.shape
     ratio = height / width
     desired_ratio = MODEL_HEIGHT / MODEL_WIDTH
     resize_height = MODEL_HEIGHT
@@ -155,24 +162,24 @@ def get_input(video_ref, keypoints=None, padding_ratio=12):
     else:
         resize_height = int(MODEL_WIDTH * ratio)
     
-    image = tf.image.resize(image, [resize_height, resize_width])
+    video_ref = tf.image.resize(video_ref, [resize_height, resize_width])
     
     # Padding
-    dx = MODEL_WIDTH - image.shape[1]
-    dy = MODEL_HEIGHT - image.shape[0]
+    dx = MODEL_WIDTH - video_ref.shape[1]
+    dy = MODEL_HEIGHT - video_ref.shape[0]
     pad_right = dx // 2
     pad_left = dx - pad_right
     pad_bottom = dy // 2
     pad_top = dy - pad_bottom
     padding = [pad_left, pad_right, pad_top, pad_bottom]
     
-    image = tf.image.resize_with_crop_or_pad(image, MODEL_HEIGHT, MODEL_WIDTH)
+    video_ref = tf.image.resize_with_crop_or_pad(video_ref, MODEL_HEIGHT, MODEL_WIDTH)
     
     # Normalize the image
-    image = image / 255.0
+    video_ref = video_ref / 255.0
 
     # Expand dimensions for batch
-    image4d = tf.expand_dims(image, axis=0)
+    image4d = tf.expand_dims(video_ref, axis=0)
     
     return image4d, width, height, padding, roi
 

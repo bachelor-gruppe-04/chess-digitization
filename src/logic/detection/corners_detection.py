@@ -6,7 +6,7 @@ import onnxruntime as ort
 import tensorflow as tf
 from maths import clamp
 from quad_transformation import get_quads, score_quad, perspective_transform
-from detection_methods import get_centers
+from detection_methods import get_centers, get_input, get_boxes_and_scores
 
 
 corner_model_path = "src/logic/models/480L_leyolo_xcorners.onnx"
@@ -137,46 +137,31 @@ def process_boxes_and_scores(boxes, scores):
     return res_array
 
 
-async def run_xcorners_model(video_frame):
-        """
-        Runs the xcorners model on a video frame and returns processed xCorners.
+async def run_xcorners_model(video_ref, corners_model_ref, pieces):
+    video_height, video_width, _ = video_ref.shape
 
-        Parameters:
-            video_frame (numpy array): The video frame to process.
-            xcorners_model (tf.keras.Model): The trained xcorners model.
-            pieces (list of lists): Keypoints as [x, y] coordinates.
+    keypoints = [[x[0], x[1]] for x in pieces]
 
-        Returns:
-            list of lists: xCorners as [x_center, y_center] after processing.
-        """
-        # Convert pieces to keypoints (list of [x, y] coordinates)
-        #DO LATER FOR OPTIMIZING WHAT TO READ FROM IMAGE
-        # keypoints = [[x[0], x[1]] for x in pieces]
+    image4d, width, height, padding, roi = get_input(video_ref, keypoints)
 
-        # Get video dimensions
-        video_height, video_width, _ = video_frame.shape
+    corner_predictions = get_prediction_corners(video_ref, corners_model_ref)
 
-        # # Step 1: Preprocess input (getInput equivalent)
-        #DO LATER FOR OPTIMIZING WHAT TO READ FROM IMAGE
-        # image4D, width, height = get_input(video_frame, keypoints)
-
-        # Step 2: Run the model prediction
-        corner_predictions = get_prediction_corners(video_frame, corner_ort_session)
+    boxes,scores = get_boxes_and_scores(corner_predictions, width, height, video_width, video_height, padding, roi)
 
 
-        # Step 3: Post-process to get boxes and scores
-        boxes, scores = get_boxes_and_scores(corner_predictions, 1920, 1080, video_width, video_height)
+    print(boxes)
+    print("Hll")
+    del corner_predictions
+    del image4d
 
-        # Step 4: Clean up tensors
-        tf.keras.backend.clear_session()
+    x_corners = process_boxes_and_scores(boxes,scores)
 
-        # Step 5: Process boxes and scores
-        x_corners = process_boxes_and_scores(boxes, scores)
 
-        # Step 6: Extract the centers
-        x_corners = [[x[0], x[1]] for x in x_corners]  # Keep only the centers
 
-        return x_corners
+    x_corners = [[x[0], x[1]] for x in x_corners]
+
+    return x_corners
+
 
 
 def find_corners_from_xcorners(x_corners):
@@ -218,47 +203,9 @@ def find_corners_from_xcorners(x_corners):
     for i in range(4):
         corners[i][0] = clamp(corners[i][0], 0, MODEL_WIDTH)
         corners[i][1] = clamp(corners[i][1], 0, MODEL_HEIGHT)
-
-    
+            
     return corners
 
-
-def get_boxes_and_scores(preds, width, height, video_width, video_height):
-    # preds is assumed to be a NumPy array with shape (batch_size, num_boxes, num_predictions)
-    preds_t = np.transpose(preds, (0, 2, 1))  # Transpose preds to match the desired shape
-
-    # Extract width (w) and height (h)
-    w = preds_t[:, :, 2:3]  # Shape: (batch_size, num_boxes, 1)
-    h = preds_t[:, :, 3:4]  # Shape: (batch_size, num_boxes, 1)
-    
-    # xc, yc, w, h -> l, t, r, b (left, top, right, bottom)
-    l = preds_t[:, :, 0:1] - (w / 2)  # Left
-    t = preds_t[:, :, 1:2] - (h / 2)  # Top
-    r = l + w  # Right
-    b = t + h  # Bottom
-
-    # Scale the bounding box coordinates
-    l = l * (width / MODEL_WIDTH)
-    r = r * (width / MODEL_WIDTH)
-    t = t * (height / MODEL_HEIGHT)
-    b = b * (height / MODEL_HEIGHT)
-
-    # Scale based on video size
-    l = l * (MODEL_WIDTH / video_width)
-    r = r * (MODEL_WIDTH / video_width)
-    t = t * (MODEL_HEIGHT / video_height)
-    b = b * (MODEL_HEIGHT / video_height)
-
-    # Concatenate the left, top, right, and bottom coordinates to form the bounding boxes
-    boxes = np.concatenate([l, t, r, b], axis=2)  # Shape: (batch_size, num_boxes, 4)
-
-    # Extract the scores (assuming score is in the 5th element onward)
-    scores = preds_t[:, :, 4:]  # Shape: (batch_size, num_boxes, num_classes)
-
-    # Squeeze to remove unnecessary dimensions (if any)
-    boxes = np.squeeze(boxes, axis=0)
-    scores = np.squeeze(scores, axis=0)
-    return boxes, scores
 
 def get_center(points):
     center = [sum(x[0] for x in points), sum(x[1] for x in points)]
