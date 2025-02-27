@@ -6,9 +6,9 @@ from detection_methods import get_marker_xy
 from corners_detection import run_xcorners_model, find_corners_from_xcorners, calculate_keypoints
 from piece_detection import run_pieces_model
 
-from detection_methods import get_keypoints
+from detection_methods import get_corners_of_chess_board
 from warp import get_inv_transform, transform_centers, transform_boundary
-from render import render_state
+from render import visualize_centers_opencv
 
 
 async def find_corners(video_ref, pieces_model_ref, xcorners_model_ref):
@@ -25,11 +25,8 @@ async def find_corners(video_ref, pieces_model_ref, xcorners_model_ref):
     if len(x_corners) < 5:
         return
 
-
     corners = find_corners_from_xcorners(x_corners)
 
-    print(corners)
-    print("ww")
 
     keypoints = calculate_keypoints(black_pieces, white_pieces, corners)
 
@@ -43,7 +40,7 @@ async def find_corners(video_ref, pieces_model_ref, xcorners_model_ref):
 
     centers = find_centers_of_squares(corners, video_ref)
 
-    a= render_state(video_ref, centers)
+    a= visualize_centers_opencv(video_ref, centers)
 
 
 
@@ -55,7 +52,7 @@ async def find_corners(video_ref, pieces_model_ref, xcorners_model_ref):
 def find_centers_of_squares(corners, canvas):
 
     
-    keypoints = get_keypoints(corners, canvas)
+    keypoints = get_corners_of_chess_board(corners, canvas)
     inv_transform = get_inv_transform(keypoints)
     centers, centers3D = transform_centers(inv_transform)
     boundary, boundary3D = transform_boundary(inv_transform)

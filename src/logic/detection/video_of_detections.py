@@ -33,7 +33,6 @@ async def process_video(video_path, piece_model_ref, corner_model_ref, output_pa
         if frame_counter % 1 == 0:
             # Call the async function to process the frame
             result_frame = await find_corners(video_frame, piece_model_ref, corner_model_ref)
-            print(result_frame)
 
 
 

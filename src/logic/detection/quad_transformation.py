@@ -15,12 +15,12 @@ def score_quad(quad, x_corners):
     
     @return: A tuple containing the score, transformation matrix, and best offset.
     """
-    M = get_perspective_transform(IDEAL_QUAD, quad)
-    warped_x_corners = perspective_transform(x_corners, M)
+    perspective_matrix = get_perspective_transform(IDEAL_QUAD, quad)
+    warped_x_corners = perspective_transform(x_corners, perspective_matrix)
     offset = find_offset(warped_x_corners)
 
     score = calculate_offset_score(warped_x_corners, offset)
-    return score, M, offset
+    return score, perspective_matrix, offset
 
 def find_offset(warped_xcorners):
     """
@@ -137,36 +137,33 @@ def perspective_transform(src, transform):
     warped_src_array = warped_src[:, :2]
     return warped_src_array.tolist()
 
-def get_quads(x_corners):
-    """
-    Finds quadrilaterals from a list of corner points using Delaunay triangulation.
-    
-    @param x_corners: List of points representing corners of the grid.
-    
-    @return: List of quadrilaterals (each a list of 4 points).
-    """
-    int_x_corners = np.round(np.array(x_corners).flatten()).astype(int)
-    points = np.array(x_corners)
-    delaunay = Delaunay(points)
-    triangles = delaunay.simplices
 
+def get_quads(x_corners):
+    # Flatten and round the coordinates
+    int_x_corners = np.round(np.array(x_corners).flatten()).astype(int)
+    
+    # Perform Delaunay triangulation
+    delaunay = Delaunay(int_x_corners.reshape(-1, 2))
+    triangles = delaunay.simplices
     quads = []
     
     for i in range(0, len(triangles), 3):
         t1, t2, t3 = triangles[i]
         quad = [t1, t2, t3, -1]
-
+        
         for j in range(0, len(triangles), 3):
             if i == j:
                 continue
             cond1 = (t1 == triangles[j][0] and t2 == triangles[j][1]) or (t1 == triangles[j][1] and t2 == triangles[j][0])
             cond2 = (t2 == triangles[j][0] and t3 == triangles[j][1]) or (t2 == triangles[j][1] and t3 == triangles[j][0])
             cond3 = (t3 == triangles[j][0] and t1 == triangles[j][1]) or (t3 == triangles[j][1] and t1 == triangles[j][0])
+            
             if cond1 or cond2 or cond3:
                 quad[3] = triangles[j][2]
                 break
-
+        
         if quad[3] != -1:
             quads.append([x_corners[x] for x in quad])
-
+    
     return quads
+

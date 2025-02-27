@@ -22,9 +22,4 @@ def get_corners():
 # Set new coordinates for a corner
 corners_set("h1", [100, -200])
 
-# Get the current state
-print(get_corners())
-
-# Reset to the initial state
 corners_reset()
-print(get_corners())

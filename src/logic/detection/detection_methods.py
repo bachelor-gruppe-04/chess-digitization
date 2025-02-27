@@ -12,7 +12,7 @@ async def process_boxes_and_scores(boxes, scores):
     nms = tf.image.non_max_suppression(boxes, max_scores, max_output_size=100, iou_threshold=0.3, score_threshold=0.1)
     
     # Use get_centers function to get the centers from the selected boxes
-    centers = get_centers(tf.gather(boxes, nms, axis=0))
+    centers = get_centers_of_bbox(tf.gather(boxes, nms, axis=0))
 
     # Gather the class indices of the selected boxes and expand dimensions
     cls = tf.expand_dims(tf.gather(argmax_scores, nms, axis=0), axis=1)
@@ -183,7 +183,7 @@ def get_input(video_ref, keypoints=None, padding_ratio=12):
     
     return image4d, width, height, padding, roi
 
-def get_keypoints(corners, canvas_ref):
+def get_corners_of_chess_board(corners, canvas_ref):
     canvas_height, canvas_width, _ = canvas_ref.shape
     return [get_xy(corners[CORNER_MAPPING[x]], canvas_height, canvas_width) for x in CORNER_KEYS]
 
@@ -229,7 +229,7 @@ def get_marker_xy(xy, height, width):
     return marker_xy
 
 
-def get_centers(boxes):
+def get_centers_of_bbox(boxes):
     # Ensure boxes are of type float16 (as your model is using float16)
     boxes = tf.cast(boxes, dtype=tf.float16)
 

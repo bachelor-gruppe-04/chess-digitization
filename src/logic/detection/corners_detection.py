@@ -6,7 +6,7 @@ import onnxruntime as ort
 import tensorflow as tf
 from maths import clamp
 from quad_transformation import get_quads, score_quad, perspective_transform
-from detection_methods import get_centers, get_input, get_boxes_and_scores
+from detection_methods import get_centers_of_bbox, get_input, get_boxes_and_scores
 
 
 corner_model_path = "src/logic/models/480L_leyolo_xcorners.onnx"
@@ -79,40 +79,6 @@ def get_prediction_corners(image, corner_ort_session, target_width=480, target_h
 
     return corner_predictions
 
-def visualize_corners(image, corners, target_width=480, target_height=288, confidence_threshold=0.2):
-    """
-    Visualizes corner points on an image.
-
-    Args:
-        image (numpy.ndarray): The image on which to visualize corners.
-        corners (numpy.ndarray): Predicted corner points (coordinates and confidence scores).
-        target_width (int, optional): The width to resize the image. Default is 480.
-        target_height (int, optional): The height to resize the image. Default is 288.
-        confidence_threshold (float, optional): The threshold for filtering low-confidence corner predictions. Default is 0.2.
-
-    Returns:
-        numpy.ndarray: The image with corner points visualized.
-    """
-    frame_height, frame_width = image.shape[:2]
-    for corner in corners.T: 
-        x, y, w, h, conf = corner
-
-        if conf < confidence_threshold:
-            continue 
-
-        x = int(x * frame_width / target_width)
-        y = int(y * frame_height / target_height)
-
-        cv2.circle(image, (x, y), radius=5, color=(0, 255, 0), thickness=-1)
-    return image
-
-    #We find the x and y coordinates from the corners we found in predictions[0]. We only
-    #want to draw the points with high confidence threshold (conf < confidence_thrsehold). Then multiply by
-    #frame_width and frame_height to get the actual coordinates of the corners in the image and
-
-    #use cv2.circle to draw the points
-
-
 
 def process_boxes_and_scores(boxes, scores):
     max_scores = tf.reduce_max(scores, axis=1)
@@ -120,7 +86,7 @@ def process_boxes_and_scores(boxes, scores):
     nms = tf.image.non_max_suppression(boxes, max_scores, max_output_size=100, iou_threshold=0.3, score_threshold=0.1)
     
     # Use get_centers function to get the centers from the selected boxes
-    centers = get_centers(tf.gather(boxes, nms, axis=0))
+    centers = get_centers_of_bbox(tf.gather(boxes, nms, axis=0))
 
     # Gather the class indices of the selected boxes and expand dimensions
     cls = tf.expand_dims(tf.gather(argmax_scores, nms, axis=0), axis=1)
@@ -144,13 +110,11 @@ async def run_xcorners_model(video_ref, corners_model_ref, pieces):
 
     image4d, width, height, padding, roi = get_input(video_ref, keypoints)
 
+
     corner_predictions = get_prediction_corners(video_ref, corners_model_ref)
 
     boxes,scores = get_boxes_and_scores(corner_predictions, width, height, video_width, video_height, padding, roi)
 
-
-    print(boxes)
-    print("Hll")
     del corner_predictions
     del image4d
 
@@ -166,7 +130,6 @@ async def run_xcorners_model(video_ref, corners_model_ref, pieces):
 
 def find_corners_from_xcorners(x_corners):
     quads = get_quads(x_corners)
-
     
     if len(quads) == 0:
         return None
