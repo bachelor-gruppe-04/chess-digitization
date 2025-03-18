@@ -5,12 +5,12 @@ import asyncio
 from run_detections import find_corners
 from corner_slice import corners_set
 
-def dispatch(action):
-    """Handles dispatched actions and updates the state."""
-    if action["type"] == "SET_CORNER":
-        corners_set(action["key"], action["xy"])
-    else:
-        raise ValueError(f"Unknown action type: {action['type']}")
+# def dispatch(action):
+#     """Handles dispatched actions and updates the state."""
+#     if action["type"] == "SET_CORNER":
+#         corners_set(action["key"], action["xy"])
+#     else:
+#         raise ValueError(f"Unknown action type: {action['type']}")
     
 
 
@@ -19,6 +19,9 @@ async def process_video(video_path, piece_model_ref, corner_model_ref, output_pa
     frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv2.CAP_PROP_FPS)
+
+    print(frame_height)
+    print(frame_width)
 
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))

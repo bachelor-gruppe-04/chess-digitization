@@ -57,6 +57,7 @@ def visualize_centers_opencv(canvas, centers):
         y = int(center[1] * canvas_height/MODEL_HEIGHT)
 
         cv2.circle(canvas, (x, y), 5, (255, 0, 0), -1)  # Blå farge i BGR-format
+        cv2.circle(canvas, (200,350),5, (255, 0, 0), -1)
 
     
     return canvas  # Return the modified image

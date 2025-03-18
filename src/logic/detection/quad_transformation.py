@@ -138,32 +138,51 @@ def perspective_transform(src, transform):
     return warped_src_array.tolist()
 
 
+import numpy as np
+from scipy.spatial import Delaunay
+
 def get_quads(x_corners):
-    # Flatten and round the coordinates
-    int_x_corners = np.round(np.array(x_corners).flatten()).astype(int)
-    
-    # Perform Delaunay triangulation
-    delaunay = Delaunay(int_x_corners.reshape(-1, 2))
+    """
+    Finds quads from a set of x_corners using Delaunay triangulation.
+
+    Args:
+        x_corners: A list of lists, where each inner list represents an (x, y) coordinate.
+
+    Returns:
+        A list of lists of lists, where each inner list of lists represents a quad.
+    """
+    int_x_corners = [round(x) for sublist in x_corners for x in sublist]
+    points = np.array(x_corners)
+    delaunay = Delaunay(points)
     triangles = delaunay.simplices
     quads = []
-    
-    for i in range(0, len(triangles), 3):
+
+    for i in range(0, len(triangles), 1):
         t1, t2, t3 = triangles[i]
         quad = [t1, t2, t3, -1]
-        
-        for j in range(0, len(triangles), 3):
+
+        for j in range(0, len(triangles), 1):
             if i == j:
                 continue
-            cond1 = (t1 == triangles[j][0] and t2 == triangles[j][1]) or (t1 == triangles[j][1] and t2 == triangles[j][0])
-            cond2 = (t2 == triangles[j][0] and t3 == triangles[j][1]) or (t2 == triangles[j][1] and t3 == triangles[j][0])
-            cond3 = (t3 == triangles[j][0] and t1 == triangles[j][1]) or (t3 == triangles[j][1] and t1 == triangles[j][0])
-            
+
+            j_tri = triangles[j]
+            cond1 = (t1 in j_tri and t2 in j_tri)
+            cond2 = (t2 in j_tri and t3 in j_tri)
+            cond3 = (t3 in j_tri and t1 in j_tri)
+
             if cond1 or cond2 or cond3:
-                quad[3] = triangles[j][2]
-                break
-        
+                # find the other point
+                other_point = None
+                for point in j_tri:
+                    if point not in quad:
+                        other_point = point
+                        break
+                if other_point is not None:
+                  quad[3] = other_point
+                  break
+
         if quad[3] != -1:
             quads.append([x_corners[x] for x in quad])
-    
+
     return quads
 
