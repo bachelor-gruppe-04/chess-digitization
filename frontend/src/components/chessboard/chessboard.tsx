@@ -1,3 +1,4 @@
+import Tile from "../tile/tile";
 import "./Chessboard.css";
 
 /**
@@ -23,15 +24,7 @@ function Chessboard() {
   for (let j = verticalAxis.length - 1; j >= 0; j--) {
     for (let i = 0; i < horizontalAxis.length; i++) {
       const number = j + i + 2;
-      if(number % 2 === 0) {
-        board.push(
-          <div className="tile black-tile"></div>
-        );
-      } else {
-        board.push(
-          <div className="tile white-tile"></div>
-        );
-      }
+      board.push(<Tile number={number} />)
     }
   }
 
