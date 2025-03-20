@@ -48,19 +48,54 @@ for(let i = 0; i < 8; i++) {
   pieces.push({image: "assets/images/pawn_w.png", x: i, y: 1});
 }
 
+let activePiece: HTMLElement | null = null;
+
 /**
  * Handles grabbing a chess piece when clicked.
  * If the clicked element is a piece, its position is updated dynamically.
  */
 
-function grabPiece(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+function grabPiece(e: React.MouseEvent) {
   const element = e.target as HTMLElement;
+
   if(element.classList.contains("chess-piece")) {
     const x = e.clientX - 50;
     const y = e.clientY- 50;
     element.style.position = "absolute";
     element.style.left = `${x}px`;
     element.style.top = `${y}px`;
+
+    activePiece = element;
+  }
+}
+
+/**
+ * Moves the active chess piece to follow the mouse cursor.
+ * If a piece is currently active (clicked and held), its position is updated
+ * based on the cursor's x and y coordinates, ensuring it moves smoothly.
+ */
+
+function movePiece(e: React.MouseEvent) {
+
+  if(activePiece) {
+    const x = e.clientX - 50;
+    const y = e.clientY- 50;
+    activePiece.style.position = "absolute";
+    activePiece.style.left = `${x}px`;
+    activePiece.style.top = `${y}px`;
+  }
+}
+
+/**
+ * Drops the active chess piece when the mouse is released.
+ * This function resets `activePiece` to `null`, indicating that no piece
+ * is currently being dragged.
+ */
+
+function dropPiece(e: React.MouseEvent) {
+
+  if(activePiece) {
+    activePiece = null;
   }
 }
 
@@ -94,7 +129,12 @@ function Chessboard() {
 
   return (
     <>
-      <div onMouseDown={e => grabPiece(e)} id="chessboard">{board}</div>
+      <div 
+        onMouseMove={e => movePiece(e)} 
+        onMouseDown={e => grabPiece(e)}
+        onMouseUp={e => dropPiece(e)}
+        id="chessboard">{board}
+      </div>
     </>
   );
 }
