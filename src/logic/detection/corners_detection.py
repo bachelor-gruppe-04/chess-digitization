@@ -7,41 +7,8 @@ from maths import clamp
 from quad_transformation import get_quads, score_quad, perspective_transform
 from detection_methods import get_centers_of_bbox, get_input, get_boxes_and_scores
 
-def preprocess_corner_image(image, target_width, target_height):
-    """
-    Preprocess the input image for corner detection model.
 
-    Args:
-        image (numpy.ndarray): The input image to preprocess.
-        target_width (int): The target width for resizing the image.
-        target_height (int): The target height for resizing the image.
-
-    Returns:
-        numpy.ndarray: Preprocessed image ready for inference (with batch dimension and normalized).
-    """
-    image = cv2.resize(image, (target_width, target_height))  # Resize image
-    image = image / 255.0  # Normalize pixel values to [0, 1]
-    image = image.transpose(2, 0, 1)  # Convert Height, Width, Channels (HWC) to Channels, Height, Width format (CHW)
-    return image[np.newaxis, ...].astype(np.float16)  # Add batch dimension and convert to float16
-
-    #After adding a batch dimension the image is in the shape (1,C,H,W)
-    #In CHW the C or channels represents the color channels in the image, in our case RGB (3)
-    #And in grayscale images there is only 1 channel
-
-    #We need to add a batch dimension to the image to match the input shape expected by the model
-    #The model expects the input shape to be (1, 3, 288, 480) for the corner detection model. 
-    #This you can confrim in netron.app by loading the model and checking the input shape.
-
-    #We convert it to float16 to match the model's input data type. Also float16 saves memory
-    #and speeds up computation during inference. Inference is the process of using a trained model to 
-    #make predictions on new data.
-
-    #One other thing, normalizing the pixel values helps improve model performance by
-    #Ensuring consistent input range, as many models are trained with inputs in the [0, 1] range.
-
-
-
-def get_prediction_corners(image, corner_ort_session, target_width=480, target_height=288):
+def get_prediction_corners(image, corner_ort_session):
     """
     Perform corner detection on the input image.
 
@@ -55,14 +22,17 @@ def get_prediction_corners(image, corner_ort_session, target_width=480, target_h
     Returns:
         numpy.ndarray: Array of predicted corner points (coordinates and confidence scores).
     """
-    preprocessed_image = preprocess_corner_image(image, target_width, target_height)
+
+    print(image.shape)
+
 
     # Run inference for corner detection
     model_inputs = corner_ort_session.get_inputs()
     model_outputs = corner_ort_session.get_outputs()
+
     predictions = corner_ort_session.run(
         output_names=[output.name for output in model_outputs],
-        input_feed={model_inputs[0].name: preprocessed_image}
+        input_feed={model_inputs[0].name: image}
     )
 
     #After doing the inference we get a prediction of where the corners are in this image. The format
@@ -99,32 +69,34 @@ def process_boxes_and_scores(boxes, scores):
 
 
 async def run_xcorners_model(video_ref, corners_model_ref, pieces):
-    # video_height, video_width, _ = video_ref.shape
+    video_height, video_width, _ = video_ref.shape
 
-    # keypoints = [[x[0], x[1]] for x in pieces]
+    keypoints = [[x[0], x[1]] for x in pieces]
 
-    # image4d, width, height, padding, roi = get_input(video_ref, keypoints)
-
-
-    corner_predictions = get_prediction_corners(video_ref, corners_model_ref)
-
-    # boxes,scores = get_boxes_and_scores(corner_predictions, width, height, video_width, video_height, padding, roi)
-
-    # del corner_predictions
-    # del image4d
-
-    # x_corners = process_boxes_and_scores(boxes,scores)
+    image4d, width, height, padding, roi = get_input(video_ref, keypoints)
 
 
-    # x_corners = [[x[0], x[1]] for x in corner_predictions]
+    corner_predictions = get_prediction_corners(image4d, corners_model_ref)
 
-    return corner_predictions
+    boxes,scores = get_boxes_and_scores(corner_predictions, width, height, video_width, video_height, padding, roi)
+
+    del corner_predictions
+    del image4d
+
+    x_corners = process_boxes_and_scores(boxes,scores)
+
+
+    preds = [[x[0], x[1]] for x in x_corners]
+
+    return preds
 
 
 
 def find_corners_from_xcorners(x_corners):
     quads = get_quads(x_corners)
-    
+    print(quads)
+    print(np.array(quads).shape)
+
     if len(quads) == 0:
         return None
     

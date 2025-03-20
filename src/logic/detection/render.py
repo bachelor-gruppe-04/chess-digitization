@@ -38,58 +38,53 @@ def draw_box(frame, color, x, y, text, font_height, line_width):
 
 
 
-def visualize_centers_opencv(canvas, centers, confidence_threshold=0.2):
-    """
-    Draws the centers as circles on an OpenCV image (canvas) and returns the modified frame.
-    Scales the coordinates according to the given model dimensions.
+# def visualize_centers_opencv(canvas, centers, confidence_threshold=0.2):
+#     """
+#     Draws the centers as circles on an OpenCV image (canvas) and returns the modified frame.
+#     Scales the coordinates according to the given model dimensions.
     
-    :param canvas: The image or frame to draw on.
-    :param centers: List of (x, y) coordinates.
-    :param model_width: Width of the model (for scaling).
-    :param model_height: Height of the model (for scaling).
-    :return: The modified frame with drawn centers.
-    """
-
-    print("Shape of centers:", np.array(centers).shape)
-
-    frame_height, frame_width = canvas.shape[:2]
-    for corner in centers.T: 
-        x, y, w, h, conf = corner
-
-        if conf < confidence_threshold:
-            continue 
-
-        x = int(x * frame_width /MODEL_WIDTH)
-        y = int(y * frame_height / MODEL_HEIGHT)
-
-        cv2.circle(canvas, (x, y), radius=5, color=(0, 255, 0), thickness=-1)
-    return canvas
-
-
-
-# def visualize_corners(image, corners, target_width=480, target_height=288, confidence_threshold=0.2):
+#     :param canvas: The image or frame to draw on.
+#     :param centers: List of (x, y) coordinates.
+#     :param model_width: Width of the model (for scaling).
+#     :param model_height: Height of the model (for scaling).
+#     :return: The modified frame with drawn centers.
 #     """
-#     Visualizes corner points on an image.
 
-#     Args:
-#         image (numpy.ndarray): The image on which to visualize corners.
-#         corners (numpy.ndarray): Predicted corner points (coordinates and confidence scores).
-#         target_width (int, optional): The width to resize the image. Default is 480.
-#         target_height (int, optional): The height to resize the image. Default is 288.
-#         confidence_threshold (float, optional): The threshold for filtering low-confidence corner predictions. Default is 0.2.
+#     print("Shape of centers:", np.array(centers).shape)
 
-#     Returns:
-#         numpy.ndarray: The image with corner points visualized.
-#     """
-#     frame_height, frame_width = image.shape[:2]
-#     for corner in corners.T: 
+#     frame_height, frame_width = canvas.shape[:2]
+#     for corner in centers.T: 
 #         x, y, w, h, conf = corner
 
 #         if conf < confidence_threshold:
 #             continue 
 
-#         x = int(x * frame_width / target_width)
-#         y = int(y * frame_height / target_height)
+#         x = int(x * frame_width /MODEL_WIDTH)
+#         y = int(y * frame_height / MODEL_HEIGHT)
 
-#         cv2.circle(image, (x, y), radius=5, color=(0, 255, 0), thickness=-1)
-#     return image
+
+#         cv2.circle(canvas, (x, y), radius=5, color=(0, 255, 0), thickness=-1)
+#     return canvas
+
+
+def visualize_centers_opencv(canvas, centers):
+    """
+    Draws the centers as circles on an OpenCV image (canvas) and returns the modified frame.
+    
+    :param canvas: The image or frame to draw on.
+    :param centers: List of (x, y) coordinates, shape (64, 2).
+    :param confidence_threshold: Threshold for drawing points.
+    :return: The modified frame with drawn centers.
+    """
+
+    frame_height, frame_width = canvas.shape[:2]
+
+    for i, (x, y) in enumerate(centers):  # Assuming shape (64, 2)
+        # print(f"Point {i}: x={x}, y={y}")  # Prints only x and y
+
+        x = int(x * frame_width/MODEL_WIDTH)
+        y = int(y * frame_height/MODEL_HEIGHT)
+
+        cv2.circle(canvas, (x, y), radius=5, color=(0, 255, 0), thickness=-1)
+
+    return canvas

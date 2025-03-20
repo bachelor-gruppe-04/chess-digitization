@@ -1,3 +1,6 @@
+from constants import MODEL_WIDTH, MODEL_HEIGHT
+
+
 import torch
 import cv2
 import numpy as np
@@ -8,17 +11,12 @@ import onnx
 from onnxsim import simplify
 
 from detection_methods import get_input, get_boxes_and_scores, process_boxes_and_scores
+from preprocess import preprocess_image
 
 #**IMPORTANT:** Break the loop by pressing 'Q'!!
 
-def preprocess_image(image, target_width, target_height):
-    """Resize and normalize the image for ONNX model inference."""
-    image = cv2.resize(image, (target_width, target_height))  
-    image = image / 255.0 
-    image = image.transpose(2, 0, 1)  
-    return image[np.newaxis, ...].astype(np.float16) 
 
-def predict_pieces(image, ort_session, target_width=480, target_height=288, confidence_threshold=0.2):
+def predict_pieces(image, ort_session):
     """
     Predict bounding boxes, class indices, and scores using the ONNX model.
 
@@ -32,7 +30,7 @@ def predict_pieces(image, ort_session, target_width=480, target_height=288, conf
     Returns:
         tuple: Bounding box coordinates (xc, yc, w, h), confidence scores, and class indices.
     """
-    preprocessed_image = preprocess_image(image, target_width, target_height)
+    preprocessed_image = preprocess_image(image)
 
     model_inputs = ort_session.get_inputs()
     model_outputs = ort_session.get_outputs()
@@ -67,14 +65,6 @@ async def run_pieces_model(video_ref, pieces_model_ref):
 
     return pieces
 
-
-
-def preprocess_image(image, target_width, target_height):
-    """Resize and normalize the image for ONNX model inference."""
-    image = cv2.resize(image, (target_width, target_height))
-    image = image / 255.0 
-    image = image.transpose(2, 0, 1)
-    return image[np.newaxis, ...].astype(np.float16)
 
 def scale_boxes(xc, yc, w, h, orig_width, orig_height, target_width, target_height):
     """

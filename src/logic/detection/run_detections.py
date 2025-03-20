@@ -20,7 +20,7 @@ async def find_corners(video_ref, pieces_model_ref, xcorners_model_ref):
     # if len(x_corners) < 5:
     #     return
 
-    # corners = find_corners_from_xcorners(x_corners)
+    corners = find_corners_from_xcorners(x_corners)
 
 
     # keypoints = calculate_keypoints(black_pieces, white_pieces, corners)
@@ -35,7 +35,7 @@ async def find_corners(video_ref, pieces_model_ref, xcorners_model_ref):
 
     # centers = find_centers_of_squares(corners, video_ref)
     
-    a= visualize_centers_opencv(video_ref, x_corners)
+    a= visualize_centers_opencv(video_ref, corners)
 
     return a
 
