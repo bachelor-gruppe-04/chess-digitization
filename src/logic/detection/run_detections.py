@@ -1,9 +1,12 @@
+from constants import CORNER_KEYS
+
 from corners_detection import run_xcorners_model, find_corners_from_xcorners, calculate_keypoints
 from piece_detection import run_pieces_model
 
-from detection_methods import get_corners_of_chess_board
+from detection_methods import get_corners_of_chess_board, get_marker_xy
 from warp import get_inv_transform, transform_centers, transform_boundary
 from render import visualize_centers_opencv
+from corner_slice import corners_set
 
 
 async def find_corners(video_ref, pieces_model_ref, xcorners_model_ref):
@@ -23,17 +26,21 @@ async def find_corners(video_ref, pieces_model_ref, xcorners_model_ref):
     corners = find_corners_from_xcorners(x_corners)
 
 
-    # keypoints = calculate_keypoints(black_pieces, white_pieces, corners)
+    keypoints = calculate_keypoints(black_pieces, white_pieces, corners)
 
-    # for key in CORNER_KEYS:
-    #     xy = keypoints[key]
-    #     payload = {
-    #         "xy": get_marker_xy(xy, canvas_ref.height, canvas_ref.width),
-    #         "key": key
-    #     }
-    #     dispatch(corners_set(payload))
 
-    # centers = find_centers_of_squares(corners, video_ref)
+    video_height, video_width, _ = video_ref.shape
+    for key in CORNER_KEYS:
+        xy = keypoints[key]
+        payload = {
+            "xy": get_marker_xy(xy, video_height, video_width),
+            "key": key
+        }
+        print("Hhh")
+        print(payload)
+        # a = corners_set(payload)
+
+    centers = find_centers_of_squares(corners, video_ref)
     
     a= visualize_centers_opencv(video_ref, corners)
 
@@ -42,10 +49,10 @@ async def find_corners(video_ref, pieces_model_ref, xcorners_model_ref):
 
 
 
-def find_centers_of_squares(corners, canvas):
+def find_centers_of_squares(corners, video_ref):
 
     
-    keypoints = get_corners_of_chess_board(corners, canvas)
+    keypoints = get_corners_of_chess_board(corners, video_ref)
     inv_transform = get_inv_transform(keypoints)
     centers, centers3D = transform_centers(inv_transform)
     boundary, boundary3D = transform_boundary(inv_transform)

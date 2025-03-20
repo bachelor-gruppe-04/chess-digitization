@@ -66,7 +66,6 @@ def draw_box(frame, color, x, y, text, font_height, line_width):
 #         cv2.circle(canvas, (x, y), radius=5, color=(0, 255, 0), thickness=-1)
 #     return canvas
 
-
 def visualize_centers_opencv(canvas, centers):
     """
     Draws the centers as circles on an OpenCV image (canvas) and returns the modified frame.
@@ -79,12 +78,21 @@ def visualize_centers_opencv(canvas, centers):
 
     frame_height, frame_width = canvas.shape[:2]
 
+    # print(centers)
+    # print(len(centers))
+    # print(type(centers))
+
     for i, (x, y) in enumerate(centers):  # Assuming shape (64, 2)
         # print(f"Point {i}: x={x}, y={y}")  # Prints only x and y
 
-        x = int(x * frame_width/MODEL_WIDTH)
-        y = int(y * frame_height/MODEL_HEIGHT)
+        x = round(x * frame_width / MODEL_WIDTH)  # Round to 1 decimal place
+        y = round(y * frame_height / MODEL_HEIGHT)  # Round to 1 decimal place
 
-        cv2.circle(canvas, (x, y), radius=5, color=(0, 255, 0), thickness=-1)
+        # print("Shape of centers (rows, columns):", len(centers), len(centers[0]) if centers else "empty list")
+
+        # print(x)
+        # print(y)
+
+        cv2.circle(canvas, (x, y), radius=5, color=(0, 0, 255), thickness=-1)
 
     return canvas

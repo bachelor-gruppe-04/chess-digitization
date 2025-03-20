@@ -23,9 +23,6 @@ def get_prediction_corners(image, corner_ort_session):
         numpy.ndarray: Array of predicted corner points (coordinates and confidence scores).
     """
 
-    print(image.shape)
-
-
     # Run inference for corner detection
     model_inputs = corner_ort_session.get_inputs()
     model_outputs = corner_ort_session.get_outputs()
@@ -94,9 +91,6 @@ async def run_xcorners_model(video_ref, corners_model_ref, pieces):
 
 def find_corners_from_xcorners(x_corners):
     quads = get_quads(x_corners)
-    print(quads)
-    print(np.array(quads).shape)
-
     if len(quads) == 0:
         return None
     
