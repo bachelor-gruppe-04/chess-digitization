@@ -16,30 +16,24 @@ interface Piece {
 
 const pieces: Piece[] = [];
 
-// Black pieces
-pieces.push({image: "assets/images/rook_b.png", x: 0, y: 7}); // Rook
-pieces.push({image: "assets/images/rook_b.png", x: 7, y: 7}); // ROok
-pieces.push({image: "assets/images/knight_b.png", x: 1, y: 7}); // knight
-pieces.push({image: "assets/images/knight_b.png", x: 6, y: 7}); // knight
-pieces.push({image: "assets/images/bishop_b.png", x: 2, y: 7}); // Bishop
-pieces.push({image: "assets/images/bishop_b.png", x: 5, y: 7}); // Bishop
-pieces.push({image: "assets/images/queen_b.png", x: 3, y: 7}); // Queen
-pieces.push({image: "assets/images/king_b.png", x: 4, y: 7}); // King
+for(let p = 0; p < 2; p++) {
+  const type = (p === 0) ? "b" : "w";
+  const y = (p === 0) ? 7 : 0;
+  
+  pieces.push({image: `assets/images/rook_${type}.png`, x: 0, y: y})
+  pieces.push({image: `assets/images/rook_${type}.png`, x: 7, y: y});
+  pieces.push({image: `assets/images/knight_${type}.png`, x: 1, y: y});
+  pieces.push({image: `assets/images/knight_${type}.png`, x: 6, y: y}); 
+  pieces.push({image: `assets/images/bishop_${type}.png`, x: 2, y: y});
+  pieces.push({image: `assets/images/bishop_${type}.png`, x: 5, y: y});
+  pieces.push({image: `assets/images/queen_${type}.png`, x: 3, y: y});
+  pieces.push({image: `assets/images/king_${type}.png`, x: 4, y: y});
+}
 
 // Black pawns
 for(let i = 0; i < 8; i++) {
   pieces.push({image: "assets/images/pawn_b.png", x: i, y: 6});
 }
-
-// White pieces
-pieces.push({image: "assets/images/rook_w.png", x: 0, y: 0}); // Rook
-pieces.push({image: "assets/images/rook_w.png", x: 7, y: 0}); // Rook
-pieces.push({image: "assets/images/knight_w.png", x: 1, y: 0}); // knight
-pieces.push({image: "assets/images/knight_w.png", x: 6, y: 0}); // knight
-pieces.push({image: "assets/images/bishop_w.png", x: 2, y: 0}); // Bishop
-pieces.push({image: "assets/images/bishop_w.png", x: 5, y: 0}); // Bishop
-pieces.push({image: "assets/images/queen_w.png", x: 3, y: 0}); // Queen
-pieces.push({image: "assets/images/king_w.png", x: 4, y: 0}); // King
 
 // White pawns
 for(let i = 0; i < 8; i++) {
