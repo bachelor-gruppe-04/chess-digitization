@@ -8,11 +8,6 @@ from render import visualize_centers_opencv
 
 async def find_corners(video_ref, pieces_model_ref, xcorners_model_ref):
 
-    video_height, video_width, _ = video_ref.shape
-    print("tesestt")
-    print(video_width)
-
-
     pieces = await run_pieces_model(video_ref, pieces_model_ref)
     black_pieces = [x for x in pieces if x[2] <= 5]
     white_pieces = [x for x in pieces if x[2] > 5]
