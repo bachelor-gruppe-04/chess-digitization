@@ -1,5 +1,5 @@
 import './App.css'
-import Chessboard from './components/Chessboard';
+import Chessboard from './components/chessboard/Chessboard';
 
 /**
  * This is the main entry component of the application.
