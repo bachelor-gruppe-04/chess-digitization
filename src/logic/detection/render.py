@@ -38,7 +38,7 @@ def draw_box(frame, color, x, y, text, font_height, line_width):
 
 
 
-def visualize_centers_opencv(canvas, centers):
+def visualize_centers_opencv(canvas, centers, confidence_threshold=0.2):
     """
     Draws the centers as circles on an OpenCV image (canvas) and returns the modified frame.
     Scales the coordinates according to the given model dimensions.
@@ -50,14 +50,46 @@ def visualize_centers_opencv(canvas, centers):
     :return: The modified frame with drawn centers.
     """
 
-    canvas_height, canvas_width, _ = canvas.shape
-    
-    for center in centers:
-        x = int(center[0] * canvas_width/MODEL_WIDTH)
-        y = int(center[1] * canvas_height/MODEL_HEIGHT)
+    print("Shape of centers:", np.array(centers).shape)
 
-        cv2.circle(canvas, (x, y), 5, (255, 0, 0), -1)  # Blå farge i BGR-format
-        cv2.circle(canvas, (200,350),5, (255, 0, 0), -1)
+    frame_height, frame_width = canvas.shape[:2]
+    for corner in centers.T: 
+        x, y, w, h, conf = corner
 
-    
-    return canvas  # Return the modified image
+        if conf < confidence_threshold:
+            continue 
+
+        x = int(x * frame_width /MODEL_WIDTH)
+        y = int(y * frame_height / MODEL_HEIGHT)
+
+        cv2.circle(canvas, (x, y), radius=5, color=(0, 255, 0), thickness=-1)
+    return canvas
+
+
+
+# def visualize_corners(image, corners, target_width=480, target_height=288, confidence_threshold=0.2):
+#     """
+#     Visualizes corner points on an image.
+
+#     Args:
+#         image (numpy.ndarray): The image on which to visualize corners.
+#         corners (numpy.ndarray): Predicted corner points (coordinates and confidence scores).
+#         target_width (int, optional): The width to resize the image. Default is 480.
+#         target_height (int, optional): The height to resize the image. Default is 288.
+#         confidence_threshold (float, optional): The threshold for filtering low-confidence corner predictions. Default is 0.2.
+
+#     Returns:
+#         numpy.ndarray: The image with corner points visualized.
+#     """
+#     frame_height, frame_width = image.shape[:2]
+#     for corner in corners.T: 
+#         x, y, w, h, conf = corner
+
+#         if conf < confidence_threshold:
+#             continue 
+
+#         x = int(x * frame_width / target_width)
+#         y = int(y * frame_height / target_height)
+
+#         cv2.circle(image, (x, y), radius=5, color=(0, 255, 0), thickness=-1)
+#     return image

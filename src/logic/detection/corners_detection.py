@@ -99,27 +99,26 @@ def process_boxes_and_scores(boxes, scores):
 
 
 async def run_xcorners_model(video_ref, corners_model_ref, pieces):
-    video_height, video_width, _ = video_ref.shape
+    # video_height, video_width, _ = video_ref.shape
 
-    keypoints = [[x[0], x[1]] for x in pieces]
+    # keypoints = [[x[0], x[1]] for x in pieces]
 
-    image4d, width, height, padding, roi = get_input(video_ref, keypoints)
+    # image4d, width, height, padding, roi = get_input(video_ref, keypoints)
 
 
     corner_predictions = get_prediction_corners(video_ref, corners_model_ref)
 
-    boxes,scores = get_boxes_and_scores(corner_predictions, width, height, video_width, video_height, padding, roi)
+    # boxes,scores = get_boxes_and_scores(corner_predictions, width, height, video_width, video_height, padding, roi)
 
-    del corner_predictions
-    del image4d
+    # del corner_predictions
+    # del image4d
 
-    x_corners = process_boxes_and_scores(boxes,scores)
+    # x_corners = process_boxes_and_scores(boxes,scores)
 
 
+    # x_corners = [[x[0], x[1]] for x in corner_predictions]
 
-    x_corners = [[x[0], x[1]] for x in x_corners]
-
-    return x_corners
+    return corner_predictions
 
 
 
