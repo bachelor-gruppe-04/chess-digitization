@@ -151,7 +151,6 @@ def get_quads(x_corners):
     Returns:
         A list of lists of lists, where each inner list of lists represents a quad.
     """
-    int_x_corners = [round(x) for sublist in x_corners for x in sublist]
     points = np.array(x_corners)
     delaunay = Delaunay(points)
     triangles = delaunay.simplices

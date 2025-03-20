@@ -9,8 +9,6 @@ from render import visualize_centers_opencv
 async def find_corners(video_ref, pieces_model_ref, xcorners_model_ref):
 
     video_height, video_width, _ = video_ref.shape
-    print("tesestt")
-    print(video_width)
 
 
     pieces = await run_pieces_model(video_ref, pieces_model_ref)
@@ -22,13 +20,13 @@ async def find_corners(video_ref, pieces_model_ref, xcorners_model_ref):
 
     x_corners = await run_xcorners_model(video_ref, xcorners_model_ref, pieces)
 
-    if len(x_corners) < 5:
-        return
+    # if len(x_corners) < 5:
+    #     return
 
-    corners = find_corners_from_xcorners(x_corners)
+    # corners = find_corners_from_xcorners(x_corners)
 
 
-    keypoints = calculate_keypoints(black_pieces, white_pieces, corners)
+    # keypoints = calculate_keypoints(black_pieces, white_pieces, corners)
 
     # for key in CORNER_KEYS:
     #     xy = keypoints[key]
@@ -38,11 +36,9 @@ async def find_corners(video_ref, pieces_model_ref, xcorners_model_ref):
     #     }
     #     dispatch(corners_set(payload))
 
-    centers = find_centers_of_squares(corners, video_ref)
-
+    # centers = find_centers_of_squares(corners, video_ref)
+    
     a= visualize_centers_opencv(video_ref, x_corners)
-
-
 
     return a
 
