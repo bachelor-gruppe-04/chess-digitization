@@ -1,8 +1,3 @@
-from constants import CORNER_KEYS, CORNER_MAPPING
-# from render import render_corners
-# from corner_slice import corners_set
-
-from detection_methods import get_marker_xy
 from corners_detection import run_xcorners_model, find_corners_from_xcorners, calculate_keypoints
 from piece_detection import run_pieces_model
 

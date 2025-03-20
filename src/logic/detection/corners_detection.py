@@ -2,15 +2,10 @@ from constants import MODEL_WIDTH, MODEL_HEIGHT
 
 import cv2
 import numpy as np
-import onnxruntime as ort
 import tensorflow as tf
 from maths import clamp
 from quad_transformation import get_quads, score_quad, perspective_transform
 from detection_methods import get_centers_of_bbox, get_input, get_boxes_and_scores
-
-
-corner_model_path = "src/logic/models/480L_leyolo_xcorners.onnx"
-corner_ort_session = ort.InferenceSession(corner_model_path)
 
 def preprocess_corner_image(image, target_width, target_height):
     """
