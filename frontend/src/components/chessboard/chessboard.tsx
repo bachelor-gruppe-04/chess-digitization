@@ -48,6 +48,22 @@ for(let i = 0; i < 8; i++) {
   pieces.push({image: "assets/images/pawn_w.png", x: i, y: 1});
 }
 
+/**
+ * Handles grabbing a chess piece when clicked.
+ * If the clicked element is a piece, its position is updated dynamically.
+ */
+
+function grabPiece(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+  const element = e.target as HTMLElement;
+  if(element.classList.contains("chess-piece")) {
+    const x = e.clientX - 50;
+    const y = e.clientY- 50;
+    element.style.position = "absolute";
+    element.style.left = `${x}px`;
+    element.style.top = `${y}px`;
+  }
+}
+
 function Chessboard() {
   const verticalAxis = ["1", "2", "3", "4", "5", "6", "7", "8"];
   const horizontalAxis = ["a", "b", "c", "d", "e", "f", "g", "h"];
@@ -78,7 +94,7 @@ function Chessboard() {
 
   return (
     <>
-      <div id="chessboard">{board}</div>
+      <div onMouseDown={e => grabPiece(e)} id="chessboard">{board}</div>
     </>
   );
 }
