@@ -1,11 +1,13 @@
+import { useEffect, useState } from "react";
+import { Chess } from "chess.ts";
 import Tile from "../tile/tile";
 import "./chessboard.css";
 
 /**
  * Chessboard Component
  * 
- * This component renders a simple chessboard with pieces. The board consists of 
- * 64 alternating black and white tiles, dynamically generated along with chess pieces.
+ * This component renders a simple chessboard with pieces using the `chess.ts` library.
+ * It supports piece initialization from FEN, move execution, and basic drag-and-drop.
  */
 
 interface Piece {
@@ -14,53 +16,21 @@ interface Piece {
   y: number;
 }
 
-const pieces: Piece[] = [];
-
-/**
- * Initialize pieces for both black and white.
- * The loop runs twice: once for black (p = 0) and once for white (p = 1).
- * The pieces are placed according to standard chess rules.
- */
-
-for(let p = 0; p < 2; p++) {
-  const type = (p === 0) ? "b" : "w"; // Set piece color (black or white)
-  const y = (p === 0) ? 7 : 0; // Define row position for each side
-  
-  pieces.push({image: `assets/images/rook_${type}.png`, x: 0, y: y})
-  pieces.push({image: `assets/images/rook_${type}.png`, x: 7, y: y});
-  pieces.push({image: `assets/images/knight_${type}.png`, x: 1, y: y});
-  pieces.push({image: `assets/images/knight_${type}.png`, x: 6, y: y}); 
-  pieces.push({image: `assets/images/bishop_${type}.png`, x: 2, y: y});
-  pieces.push({image: `assets/images/bishop_${type}.png`, x: 5, y: y});
-  pieces.push({image: `assets/images/queen_${type}.png`, x: 3, y: y});
-  pieces.push({image: `assets/images/king_${type}.png`, x: 4, y: y});
-}
-
-/**
- * Initialize black and white pawns.
- * Each pawn is placed in its respective row (black on row 6, white on row 1).
- */
-
-for(let i = 0; i < 8; i++) {
-  pieces.push({image: "assets/images/pawn_b.png", x: i, y: 6});
-}
-for(let i = 0; i < 8; i++) {
-  pieces.push({image: "assets/images/pawn_w.png", x: i, y: 1});
-}
-
 let activePiece: HTMLElement | null = null;
 
 /**
- * Handles grabbing a chess piece when clicked.
- * If the clicked element is a piece, its position is updated dynamically.
+ * Handles grabbing a chess piece when the user clicks on it.
+ * Sets the piece to absolute positioning and updates its location to follow the mouse.
+ * 
+ * Is not neccessary. To be removed.
  */
 
 function grabPiece(e: React.MouseEvent) {
   const element = e.target as HTMLElement;
 
-  if(element.classList.contains("chess-piece")) {
+  if (element.classList.contains("chess-piece")) {
     const x = e.clientX - 50;
-    const y = e.clientY- 50;
+    const y = e.clientY - 50;
     element.style.position = "absolute";
     element.style.left = `${x}px`;
     element.style.top = `${y}px`;
@@ -70,16 +40,16 @@ function grabPiece(e: React.MouseEvent) {
 }
 
 /**
- * Moves the active chess piece to follow the mouse cursor.
- * If a piece is currently active (clicked and held), its position is updated
- * based on the cursor's x and y coordinates, ensuring it moves smoothly.
+ * Moves the currently active chess piece based on mouse movement.
+ * Continually updates the piece's position as the mouse moves.
+ * 
+ * Is not neccessary. To be removed.
  */
 
 function movePiece(e: React.MouseEvent) {
-
-  if(activePiece) {
+  if (activePiece) {
     const x = e.clientX - 50;
-    const y = e.clientY- 50;
+    const y = e.clientY - 50;
     activePiece.style.position = "absolute";
     activePiece.style.left = `${x}px`;
     activePiece.style.top = `${y}px`;
@@ -87,29 +57,85 @@ function movePiece(e: React.MouseEvent) {
 }
 
 /**
- * Drops the active chess piece when the mouse is released.
- * This function resets `activePiece` to `null`, indicating that no piece
- * is currently being dragged.
+ * Drops the currently dragged piece.
+ * Resets the active piece to null.
+ * 
+ * Is not neccessary. To be removed.
  */
 
-function dropPiece(e: React.MouseEvent) {
-
-  if(activePiece) {
+function dropPiece(_e: React.MouseEvent) {
+  if (activePiece) {
     activePiece = null;
   }
 }
 
+/**
+ * Converts a FEN string into a list of pieces with their image, x, and y coordinates.
+ * Used to populate the board with the correct position from a game state.
+ */
+
+function generatePositionFromFen(fen: string): Piece[] {
+  const board = fen.split(" ")[0];
+  const rows = board.split("/");
+  const pieceMap: { [key: string]: string } = {
+    p: "pawn_b", P: "pawn_w",
+    r: "rook_b", R: "rook_w",
+    n: "knight_b", N: "knight_w",
+    b: "bishop_b", B: "bishop_w",
+    q: "queen_b", Q: "queen_w",
+    k: "king_b", K: "king_w",
+  };
+
+  const pieces: Piece[] = [];
+
+  // Parse each row from top (8) to bottom (1)
+  for (let y = 0; y < rows.length; y++) {
+    let x = 0;
+    for (const char of rows[y]) {
+      if (isNaN(Number(char))) {
+        const image = `assets/images/${pieceMap[char]}.png`;
+        pieces.push({ image, x, y: 7 - y }); // Flip y to match board orientation
+        x++;
+      } else {
+        x += parseInt(char); // Empty tiles
+      }
+    }
+  }
+
+  return pieces;
+}
+
 function Chessboard() {
+  const [pieces, setPieces] = useState<Piece[]>([]);
+  const chess = new Chess();
+
+  /**
+   * On component mount, set initial board state using FEN.
+   * Also expose a `makeMove` function on the `window` for manual move execution in console.
+   */
+
+  useEffect(() => {
+    setPieces(generatePositionFromFen(chess.fen()));
+
+    // Expose move handler for console
+    (window as any).makeMove = (notation: string) => {
+      if (chess.move(notation)) {
+        setPieces(generatePositionFromFen(chess.fen()));
+      } else {
+        console.warn("Illegal move:", notation);
+      }
+    };
+  }, []);
+
   const verticalAxis = ["1", "2", "3", "4", "5", "6", "7", "8"];
   const horizontalAxis = ["a", "b", "c", "d", "e", "f", "g", "h"];
-  
 
   let board = [];
 
   /**
-   * Generate the chessboard by iterating over rows (vertical axis) and columns (horizontal axis).
-   * The outer loop starts from the highest row (8) down to 1 to maintain traditional chess notation.
-   * The inner loop iterates through each column to create tiles, and checks if a piece exists at the position.
+   * Generate the chessboard tiles and place pieces on them.
+   * The outer loop iterates through each row from 8 to 1 (top to bottom).
+   * The inner loop creates each tile and adds a piece if one exists at that coordinate.
    */
 
   for (let j = verticalAxis.length - 1; j >= 0; j--) {
@@ -123,20 +149,20 @@ function Chessboard() {
         }
       });
 
-      board.push(<Tile key={`${j},${i}`} image={image}  number={number} />)
+      board.push(<Tile key={`${j},${i}`} image={image} number={number} />);
     }
   }
 
   return (
-    <>
-      <div 
-        onMouseMove={e => movePiece(e)} 
-        onMouseDown={e => grabPiece(e)}
-        onMouseUp={e => dropPiece(e)}
-        id="chessboard">{board}
-      </div>
-    </>
+    <div
+      onMouseMove={e => movePiece(e)}
+      onMouseDown={e => grabPiece(e)}
+      onMouseUp={e => dropPiece(e)}
+      id="chessboard"
+    >
+      {board}
+    </div>
   );
 }
 
-export default Chessboard
+export default Chessboard;
