@@ -20,49 +20,77 @@ def predict_pieces(image, ort_session):
     """
     Predict bounding boxes, class indices, and scores using the ONNX model.
 
+    This function processes the input image, runs inference on an ONNX model, 
+    and returns the predicted bounding boxes, class indices, and confidence scores.
+
     Args:
-        image (numpy array): Input image for prediction.
-        ort_session: ONNX Runtime InferenceSession object.
-        target_width (int): Width to resize the input image to before inference.
-        target_height (int): Height to resize the input image to before inference.
-        confidence_threshold (float): Minimum score to keep predictions.
+        image (numpy array): Input image for prediction. Expected shape is (height, width, channels).
+        ort_session: ONNX Runtime InferenceSession object used to run inference on the ONNX model.
 
     Returns:
-        tuple: Bounding box coordinates (xc, yc, w, h), confidence scores, and class indices.
+        tuple: A tuple containing the predictions, which typically include:
+               - Bounding box coordinates (xc, yc, w, h)
+               - Confidence scores for each box
+               - Class indices indicating which object each bounding box corresponds to
     """
+    # Preprocess the image (resize, normalize, etc.) before feeding it to the model
     preprocessed_image = preprocess_image(image)
 
-    model_inputs = ort_session.get_inputs()
-    model_outputs = ort_session.get_outputs()
+    # Get input and output information from the ONNX model
+    model_inputs = ort_session.get_inputs()  # Get the input layers of the model
+    model_outputs = ort_session.get_outputs()  # Get the output layers of the model
 
-    # Run inference
+    # Run inference on the preprocessed image using the ONNX model
     predictions = ort_session.run(
-        output_names=[output.name for output in model_outputs],
-        input_feed={model_inputs[0].name: preprocessed_image}
+        output_names=[output.name for output in model_outputs],  # Specify the model outputs to collect
+        input_feed={model_inputs[0].name: preprocessed_image}  # Feed the preprocessed image to the model
     )
 
+    # Extract the predicted values (bounding boxes, class indices, and scores) from the output
     preds = predictions[0]
 
     return preds
 
 
 
+
 async def run_pieces_model(video_ref, pieces_model_ref):
+    """
+    Processes a video reference using a given pieces detection model to predict chess pieces in the video.
+    
+    Parameters:
+    - video_ref: A reference to the video data (likely a 3D NumPy array representing video frames).
+    - pieces_model_ref: A reference to the pieces detection model used to make predictions on the video frames.
+    
+    Returns:
+    - pieces: A list of detected chess pieces with their associated bounding boxes and class labels.
+    """
+    
+    # Extract the height, width from image
     video_height, video_width, _ = video_ref.shape
 
+    # Prepare the input data for the pieces detection model
     image4d, width, height, padding, roi = get_input(video_ref)
 
+    # Predict the pieces. This includes bounding boxes and which chess-piece
     pieces_prediction = predict_pieces(video_ref, pieces_model_ref)
 
-    boxes,scores = get_boxes_and_scores(pieces_prediction, width, height, video_width, video_height, padding, roi)
+    # Extract the bounding boxes and scores for the predicted pieces
+    # This function processes the raw prediction to provide:
+    # - boxes: Bounding boxes around the detected pieces
+    # - scores: Confidence scores for each predicted bounding box
+    boxes, scores = get_boxes_and_scores(pieces_prediction, width, height, video_width, video_height, padding, roi)
 
+    # Process the boxes and scores using non-max suppression and other techniques
+    # This will clean up the results by removing redundant boxes and associating classes (piece types) with them
     pieces = await process_boxes_and_scores(boxes, scores)
 
-    del pieces_prediction
-    del image4d
-    del boxes
-    # del pieces
+    # Cleanup: Delete intermediate variables to free up memory
+    del pieces_prediction  # Remove the raw pieces prediction data
+    del image4d  # Remove the input image tensor to save memory
+    del boxes  # Remove the bounding boxes as they are no longer needed
 
+    # Return the processed pieces, which contains their bounding boxes and predicted class labels
     return pieces
 
 

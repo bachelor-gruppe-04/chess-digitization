@@ -37,15 +37,12 @@ async def find_corners(video_ref, pieces_model_ref, xcorners_model_ref):
             "key": key
         }
         corners_mapping[key] = payload #Store the payload in the corners dictionary
-    
-    print(payload)
-    print(corners_mapping)
 
     centers = find_centers_of_squares(corners_mapping, video_ref)
     
-    a= visualize_centers_opencv(video_ref, centers)
+    frame = visualize_centers_opencv(video_ref, centers)
 
-    return a
+    return frame
 
 
 

@@ -37,35 +37,6 @@ def draw_box(frame, color, x, y, text, font_height, line_width):
     cv2.putText(frame, text, (x + 5, y - 5), font, 0.5, (255, 255, 255), 1, cv2.LINE_AA)  # White text
 
 
-
-# def visualize_centers_opencv(canvas, centers, confidence_threshold=0.2):
-#     """
-#     Draws the centers as circles on an OpenCV image (canvas) and returns the modified frame.
-#     Scales the coordinates according to the given model dimensions.
-    
-#     :param canvas: The image or frame to draw on.
-#     :param centers: List of (x, y) coordinates.
-#     :param model_width: Width of the model (for scaling).
-#     :param model_height: Height of the model (for scaling).
-#     :return: The modified frame with drawn centers.
-#     """
-
-#     print("Shape of centers:", np.array(centers).shape)
-
-#     frame_height, frame_width = canvas.shape[:2]
-#     for corner in centers.T: 
-#         x, y, w, h, conf = corner
-
-#         if conf < confidence_threshold:
-#             continue 
-
-#         x = int(x * frame_width /MODEL_WIDTH)
-#         y = int(y * frame_height / MODEL_HEIGHT)
-
-
-#         cv2.circle(canvas, (x, y), radius=5, color=(0, 255, 0), thickness=-1)
-#     return canvas
-
 def visualize_centers_opencv(canvas, centers):
     """
     Draws the centers as circles on an OpenCV image (canvas) and returns the modified frame.
@@ -78,20 +49,10 @@ def visualize_centers_opencv(canvas, centers):
 
     frame_height, frame_width = canvas.shape[:2]
 
-    # print(centers)
-    # print(len(centers))
-    # print(type(centers))
-
     for i, (x, y) in enumerate(centers):  # Assuming shape (64, 2)
-        # print(f"Point {i}: x={x}, y={y}")  # Prints only x and y
 
         x = round(x * frame_width / MODEL_WIDTH)  # Round to 1 decimal place
         y = round(y * frame_height / MODEL_HEIGHT)  # Round to 1 decimal place
-
-        # print("Shape of centers (rows, columns):", len(centers), len(centers[0]) if centers else "empty list")
-
-        # print(x)
-        # print(y)
 
         cv2.circle(canvas, (x, y), radius=5, color=(0, 0, 255), thickness=-1)
 
