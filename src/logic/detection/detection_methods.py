@@ -1,4 +1,4 @@
-from constants import MODEL_WIDTH, MODEL_HEIGHT, MARKER_DIAMETER, CORNER_KEYS, CORNER_MAPPING
+from constants import MODEL_WIDTH, MODEL_HEIGHT, MARKER_DIAMETER, CORNER_KEYS
 
 import cv2
 import numpy as np
@@ -188,18 +188,21 @@ def get_input(video_ref, keypoints=None, padding_ratio=12):
     
     return image4d, width, height, padding, roi
 
-def get_corners_of_chess_board(corners, canvas_ref):
+def get_corners_of_chess_board(corners_mapping, canvas_ref):
     canvas_height, canvas_width, _ = canvas_ref.shape
-    return [get_xy(corners[CORNER_MAPPING[x]], canvas_height, canvas_width) for x in CORNER_KEYS]
+    print(type(corners_mapping))
+    print(CORNER_KEYS)
+    print(corners_mapping)
+    return [get_xy(corners_mapping[x]['xy'], canvas_height, canvas_width) for x in CORNER_KEYS]
 
 
 def get_xy(marker_xy, height, width):
     sx = MODEL_WIDTH / width
     sy = MODEL_HEIGHT / height
+    print(marker_xy)
+    print("fakodawk")
     xy = [sx * marker_xy[0], sy * (marker_xy[1] + height + MARKER_DIAMETER)]
     return xy
-
-
 
 
 
