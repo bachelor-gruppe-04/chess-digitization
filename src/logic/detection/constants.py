@@ -12,12 +12,4 @@ PALETTE = [
     "#2C99A8", "#00C2FF"
 ]
 
-# Mapping of named corner keys to list indices
-# CORNER_MAPPING = {
-#     "h1": 0,  # First corner in the list
-#     "a1": 1,  # Second corner in the list
-#     "a8": 2,  # Third corner in the list
-#     "h8": 3   # Fourth corner in the list
-# }
-
 LABELS = ["b", "k", "n", "p", "q", "r", "B", "K", "N", "P", "Q", "R"]

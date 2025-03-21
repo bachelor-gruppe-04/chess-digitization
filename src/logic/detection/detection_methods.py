@@ -173,14 +173,6 @@ def get_input(video_ref, keypoints=None, padding_ratio=12):
     pad_bottom = dy // 2
     pad_top = dy - pad_bottom
     padding = [pad_left, pad_right, pad_top, pad_bottom]
-    
-    # video_ref = tf.image.resize_with_crop_or_pad(video_ref, MODEL_HEIGHT, MODEL_WIDTH)
-    
-    # Normalize the image
-    # video_ref = video_ref / 255.0
-
-    # Expand dimensions for batch
-    # image4d = tf.expand_dims(video_ref, axis=0)
 
     image4d = preprocess_image(video_ref.numpy())
 
