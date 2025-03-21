@@ -4,6 +4,8 @@ import onnxruntime as ort
 import asyncio
 from run_detections import find_corners
 
+#**IMPORTANT:** Break the loop by pressing 'Q'!!
+
 async def process_video(video_path, piece_model_ref, corner_model_ref, output_path):
     """
     Processes a video, detecting corners in every 10th frame, and saves the processed video.

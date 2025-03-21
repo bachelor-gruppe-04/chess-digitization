@@ -1,6 +1,3 @@
-from constants import MODEL_WIDTH, MODEL_HEIGHT
-
-
 import torch
 import cv2
 import numpy as np
@@ -13,10 +10,7 @@ from onnxsim import simplify
 from detection_methods import get_input, get_boxes_and_scores, process_boxes_and_scores
 from preprocess import preprocess_image
 
-#**IMPORTANT:** Break the loop by pressing 'Q'!!
-
-
-def predict_pieces(image, ort_session):
+def predict_pieces(frame, ort_session):
     """
     Predict bounding boxes, class indices, and scores using the ONNX model.
 
@@ -34,7 +28,7 @@ def predict_pieces(image, ort_session):
                - Class indices indicating which object each bounding box corresponds to
     """
     # Preprocess the image (resize, normalize, etc.) before feeding it to the model
-    preprocessed_image = preprocess_image(image)
+    preprocessed_image = preprocess_image(frame)
 
     # Get input and output information from the ONNX model
     model_inputs = ort_session.get_inputs()  # Get the input layers of the model
@@ -47,50 +41,49 @@ def predict_pieces(image, ort_session):
     )
 
     # Extract the predicted values (bounding boxes, class indices, and scores) from the output
-    preds = predictions[0]
+    pieces_predictions = predictions[0]
 
-    return preds
-
-
+    return pieces_predictions
 
 
-async def run_pieces_model(video_ref, pieces_model_ref):
+
+
+async def run_pieces_model(frame, pieces_model_ref):
     """
     Processes a video reference using a given pieces detection model to predict chess pieces in the video.
     
     Parameters:
-    - video_ref: A reference to the video data (likely a 3D NumPy array representing video frames).
-    - pieces_model_ref: A reference to the pieces detection model used to make predictions on the video frames.
+    - frame: A reference to the video data.
+    - pieces_model_ref: A reference to the pieces detection model used to make predictions on the video frame.
     
     Returns:
     - pieces: A list of detected chess pieces with their associated bounding boxes and class labels.
     """
     
-    # Extract the height, width from image
-    video_height, video_width, _ = video_ref.shape
+    frame_height, frame_width, _ = frame.shape
 
     # Prepare the input data for the pieces detection model
-    image4d, width, height, padding, roi = get_input(video_ref)
+    image4d, width, height, padding, roi = get_input(frame)
 
     # Predict the pieces. This includes bounding boxes and which chess-piece
-    pieces_prediction = predict_pieces(video_ref, pieces_model_ref)
+    pieces_prediction = predict_pieces(frame, pieces_model_ref)
 
     # Extract the bounding boxes and scores for the predicted pieces
     # This function processes the raw prediction to provide:
     # - boxes: Bounding boxes around the detected pieces
     # - scores: Confidence scores for each predicted bounding box
-    boxes, scores = get_boxes_and_scores(pieces_prediction, width, height, video_width, video_height, padding, roi)
+    boxes, scores = get_boxes_and_scores(pieces_prediction, width, height, frame_width, frame_height, padding, roi)
 
     # Process the boxes and scores using non-max suppression and other techniques
     # This will clean up the results by removing redundant boxes and associating classes (piece types) with them
+    # Basically returns the best 16 pieces for white and best 16 pieces for black
     pieces = await process_boxes_and_scores(boxes, scores)
 
     # Cleanup: Delete intermediate variables to free up memory
-    del pieces_prediction  # Remove the raw pieces prediction data
-    del image4d  # Remove the input image tensor to save memory
-    del boxes  # Remove the bounding boxes as they are no longer needed
+    del pieces_prediction
+    del image4d  
+    del boxes  
 
-    # Return the processed pieces, which contains their bounding boxes and predicted class labels
     return pieces
 
 

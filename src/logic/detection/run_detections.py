@@ -10,22 +10,30 @@ from render import visualize_centers_opencv
 
 async def find_corners(video_ref, pieces_model_ref, xcorners_model_ref):
 
+
+    # We extract the top 16 predicted pieces for both black and white players
     pieces = await run_pieces_model(video_ref, pieces_model_ref)
+
+    # Metadata of model tells us white pieces index range from 0-5 
+    # while black pieces index from 6-11
     black_pieces = [x for x in pieces if x[2] <= 5]
     white_pieces = [x for x in pieces if x[2] > 5]
 
     if len(black_pieces) == 0 or len(white_pieces) == 0:
         return
 
+    # Extracts the top 49 predicted x_corners for the chess board (inner 7x7 grid)
     x_corners = await run_xcorners_model(video_ref, xcorners_model_ref, pieces)
 
     if len(x_corners) < 5:
+        print("Not enough x_corners)")
         return
 
-    corners = find_corners_from_xcorners(x_corners)
+    # Extracts the 4 outer corners of the chess board
+    board_corners = find_corners_from_xcorners(x_corners)
 
 
-    keypoints = calculate_keypoints(black_pieces, white_pieces, corners)
+    keypoints = calculate_keypoints(black_pieces, white_pieces, board_corners)
 
 
     video_height, video_width, _ = video_ref.shape

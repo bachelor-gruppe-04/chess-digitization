@@ -65,27 +65,48 @@ def process_boxes_and_scores(boxes, scores):
     return res_array
 
 
-async def run_xcorners_model(video_ref, corners_model_ref, pieces):
-    video_height, video_width, _ = video_ref.shape
+async def run_xcorners_model(frame, corners_model_ref, pieces):
+    """
+    Processes a video reference using a corners detection model to predict x_corners pieces in the video.
 
-    keypoints = [[x[0], x[1]] for x in pieces]
+    Parameters:
+    - frame: A reference to the video data.
+    - corners_model_ref: A reference to the corner detection model used to predict the corners of the pieces.
+    - pieces: A list of detected chess pieces, each containing information about their bounding box and class.
 
-    image4d, width, height, padding, roi = get_input(video_ref, keypoints)
+    Returns:
+    - preds: A list of predicted x_corner positions
+    """
+    video_height, video_width, _ = frame.shape
 
+    # Extract the keypoints (coordinates of the chess pieces) from the pieces list.
+    # These will serve as input to the corner detection model to help refine predictions.
+    # Basically minimizes the area it needs to analyze
+    keypoints = [[x[0], x[1]] for x in pieces]  # List of (x, y) positions of the pieces
 
-    corner_predictions = get_prediction_corners(image4d, corners_model_ref)
+    # Prepare the input image for the x_corner detection model, including keypoints as an additional input.
+    image4d, width, height, padding, roi = get_input(frame, keypoints)
 
-    boxes,scores = get_boxes_and_scores(corner_predictions, width, height, video_width, video_height, padding, roi)
+    # Run the x_corner detection model on the preprocessed image to get predictions.
+    x_corner_predictions = get_prediction_corners(image4d, corners_model_ref)
 
-    del corner_predictions
-    del image4d
+    # Extract the bounding boxes and scores from the x_corner predictions
+    boxes, scores = get_boxes_and_scores(x_corner_predictions, width, height, video_width, video_height, padding, roi)
 
-    x_corners = process_boxes_and_scores(boxes,scores)
+    # Clean up intermediate variables to free up memory
+    del x_corner_predictions  # Remove corner prediction data
+    del image4d  # Remove the input image tensor as it's no longer needed
+   
+    # Process the boxes and scores using non-max suppression and other techniques
+    # This helps to clean up redundant boxes and refine the corner detection.
+    # Should return 49 x_corners (7x7 grid)
+    x_corners_optimized = process_boxes_and_scores(boxes, scores)
 
+    # Extracts the x and y values from x_corners_optimized 
+    x_corners = [[x[0], x[1]] for x in x_corners_optimized]
 
-    preds = [[x[0], x[1]] for x in x_corners]
+    return x_corners
 
-    return preds
 
 
 
