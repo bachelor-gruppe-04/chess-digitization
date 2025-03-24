@@ -12,6 +12,7 @@
   "dependencies": {
     "chess": "^1.2.2",
     "chess.ts": "^0.16.2",
+    "frontend": "file:",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
