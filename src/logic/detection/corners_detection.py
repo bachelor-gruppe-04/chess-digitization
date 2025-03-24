@@ -2,14 +2,14 @@ import numpy as np
 import tensorflow as tf
 import onnxruntime as ort
 
-from typing import Optional, Tuple
+from typing import List, Optional, Dict
 from constants import MODEL_WIDTH, MODEL_HEIGHT
 from maths import clamp
 from quad_transformation import get_quads, score_quad, perspective_transform
-from detection_methods import get_input, get_boxes_and_scores, euclidean, get_center, get_centers_of_bbox
+from detection_methods import get_input, get_boxes_and_scores, euclidean, get_center, process_boxes_and_scores
 
 
-def get_prediction_corners(image: np.ndarray, corner_ort_session: ort.InferenceSession,):
+def get_results_corner_model(image: np.ndarray, corner_ort_session: ort.InferenceSession,):
     """
     Perform corner detection on the input image.
 
@@ -40,30 +40,7 @@ def get_prediction_corners(image: np.ndarray, corner_ort_session: ort.InferenceS
     return corner_predictions
 
 
-def process_boxes_and_scores(boxes, scores):
-    max_scores = tf.reduce_max(scores, axis=1)
-    argmax_scores = tf.argmax(scores, axis=1)
-    nms = tf.image.non_max_suppression(boxes, max_scores, max_output_size=100, iou_threshold=0.3, score_threshold=0.1)
-    
-    # Use get_centers function to get the centers from the selected boxes
-    centers = get_centers_of_bbox(tf.gather(boxes, nms, axis=0))
-
-    # Gather the class indices of the selected boxes and expand dimensions
-    cls = tf.expand_dims(tf.gather(argmax_scores, nms, axis=0), axis=1)
-
-    # Cast cls to float16 (ensure it's compatible with centers)
-    cls = tf.cast(cls, dtype=tf.float16)
-
-    # Concatenate the centers with the class indices
-    res = tf.concat([centers, cls], axis=1)
-
-    # Convert the result to a NumPy array (for further handling outside TensorFlow)
-    res_array = res.numpy()
-    
-    return res_array
-
-
-async def run_xcorners_model(frame, corners_model_ref, pieces):
+async def run_xcorners_model(frame: np.ndarray, corners_model_ref: tf.keras.Model, pieces: List[dict]) -> List[List[float]]:
     """
     Processes a video reference using a corners detection model to predict x_corners pieces in the video.
 
@@ -79,16 +56,22 @@ async def run_xcorners_model(frame, corners_model_ref, pieces):
 
     # Extract the keypoints (coordinates of the chess pieces) from the pieces list.
     # These will serve as input to the corner detection model to help refine predictions.
-    # Basically minimizes the area it needs to analyze
-    keypoints = [[x[0], x[1]] for x in pieces]  # List of (x, y) positions of the pieces
+    keypoints: List[List[float]] = [[x[0], x[1]] for x in pieces]  # List of (x, y) positions of the pieces
 
     # Prepare the input image for the x_corner detection model, including keypoints as an additional input.
+    image4d: np.ndarray
+    width: int
+    height: int
+    padding: List[int]
+    roi: List[int]
     image4d, width, height, padding, roi = get_input(frame, keypoints)
 
     # Run the x_corner detection model on the preprocessed image to get predictions.
-    x_corner_predictions = get_prediction_corners(image4d, corners_model_ref)
+    x_corner_predictions: tf.Tensor = get_results_corner_model(image4d, corners_model_ref)
 
     # Extract the bounding boxes and scores from the x_corner predictions
+    boxes: tf.Tensor
+    scores: tf.Tensor
     boxes, scores = get_boxes_and_scores(x_corner_predictions, width, height, video_width, video_height, padding, roi)
 
     # Clean up intermediate variables to free up memory
@@ -98,24 +81,35 @@ async def run_xcorners_model(frame, corners_model_ref, pieces):
     # Process the boxes and scores using non-max suppression and other techniques
     # This helps to clean up redundant boxes and refine the corner detection.
     # Should return 49 x_corners (7x7 grid)
-    x_corners_optimized = process_boxes_and_scores(boxes, scores)
+    x_corners_optimized: np.ndarray = process_boxes_and_scores(boxes, scores)
 
     # Extracts the x and y values from x_corners_optimized 
-    x_corners = [[x[0], x[1]] for x in x_corners_optimized]
+    x_corners: List[List[float]] = [[x[0], x[1]] for x in x_corners_optimized]
 
     return x_corners
 
 
 
 
-def find_corners_from_xcorners(x_corners):
-    quads = get_quads(x_corners)
+def find_corners_from_xcorners(x_corners: np.ndarray) -> Optional[List[List[float]]]:
+    """
+    Given the detected x_corners, find the corners of a quadrilateral using perspective transformation.
+    
+    Parameters:
+    - x_corners: A NumPy array representing the optimized x_corner predictions (should be of shape (N, 2)).
+    
+    Returns:
+    - A list of four corners (each represented as [x, y] coordinates) if a valid quadrilateral is found.
+    - None if no valid quadrilateral could be determined.
+    """
+    quads: List[np.ndarray] = get_quads(x_corners)
+    
     if len(quads) == 0:
         return None
     
-    best_score = None
-    best_m = None
-    best_offset = None
+    best_score: float = None
+    best_m: np.ndarray = None
+    best_offset: np.ndarray = None
     
     # Assume score_quad returns score, M, offset
     best_score, best_m, best_offset = score_quad(quads[0], x_corners)
@@ -128,10 +122,10 @@ def find_corners_from_xcorners(x_corners):
             best_offset = offset
     
     # Inverse matrix calculation
-    inv_m = np.linalg.inv(best_m)
+    inv_m: np.ndarray = np.linalg.inv(best_m)
     
     # Define warped corners based on offset
-    warped_corners = [
+    warped_corners: List[List[float]] = [
         [best_offset[0] - 1, best_offset[1] - 1],
         [best_offset[0] - 1, best_offset[1] + 7],
         [best_offset[0] + 7, best_offset[1] + 7],
@@ -139,36 +133,48 @@ def find_corners_from_xcorners(x_corners):
     ]
     
     # Apply perspective transform
-    corners = perspective_transform(warped_corners, inv_m)
+    corners: List[List[float]] = perspective_transform(warped_corners, inv_m)
     
     # Clip corners
     for i in range(4):
         corners[i][0] = clamp(corners[i][0], 0, MODEL_WIDTH)
         corners[i][1] = clamp(corners[i][1], 0, MODEL_HEIGHT)
-            
+    
     return corners
 
 
-def assign_labels_to_board_corners(black_pieces, white_pieces, corners):
-    black_center = get_center(black_pieces)
-    white_center = get_center(white_pieces)
+def assign_labels_to_board_corners(black_pieces: List[np.ndarray], white_pieces: List[np.ndarray], corners: List[List[float]]) -> Dict[str, List[float]]:
+    """
+    Assigns labels (a1, h1, h8, a8) to the corners of a chessboard based on the positions of the black and white pieces.
+
+    Parameters:
+    - black_pieces: A list of NumPy arrays representing the positions of the black pieces (each element should be an [x, y] coordinate).
+    - white_pieces: A list of NumPy arrays representing the positions of the white pieces (each element should be an [x, y] coordinate).
+    - corners: A list of four lists of floats representing the coordinates of the corners of the chessboard.
+
+    Returns:
+    - A dictionary mapping board labels (e.g., "a1", "h1", "h8", "a8") to the corresponding corner coordinates.
+    """
+    black_center: List[float] = get_center(black_pieces)
+    white_center: List[float] = get_center(white_pieces)
     
-    best_shift = 0
-    best_score = 0
+    best_shift: int = 0
+    best_score: float = 0
     for shift in range(4):
-        cw = [(corners[shift % 4][0] + corners[(shift + 1) % 4][0]) / 2,
-              (corners[shift % 4][1] + corners[(shift + 1) % 4][1]) / 2]
-        cb = [(corners[(shift + 2) % 4][0] + corners[(shift + 3) % 4][0]) / 2,
-              (corners[(shift + 2) % 4][1] + corners[(shift + 3) % 4][1]) / 2]
-        score = 1 / (1 + euclidean(white_center, cw) + euclidean(black_center, cb))
+        cw: List[float] = [(corners[shift % 4][0] + corners[(shift + 1) % 4][0]) / 2,
+                           (corners[shift % 4][1] + corners[(shift + 1) % 4][1]) / 2]
+        cb: List[float] = [(corners[(shift + 2) % 4][0] + corners[(shift + 3) % 4][0]) / 2,
+                           (corners[(shift + 2) % 4][1] + corners[(shift + 3) % 4][1]) / 2]
+        score: float = 1 / (1 + euclidean(white_center, cw) + euclidean(black_center, cb))
         if score > best_score:
             best_score = score
             best_shift = shift
 
-    keypoints = {
+    keypoints: Dict[str, List[float]] = {
         "a1": corners[best_shift % 4],
         "h1": corners[(best_shift + 1) % 4],
         "h8": corners[(best_shift + 2) % 4],
         "a8": corners[(best_shift + 3) % 4]
     }
+    
     return keypoints

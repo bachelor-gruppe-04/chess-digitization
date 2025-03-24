@@ -7,7 +7,7 @@ from constants import MODEL_WIDTH, MODEL_HEIGHT, MARKER_DIAMETER, CORNER_KEYS
 from preprocess import preprocess_image
 
 
-async def process_boxes_and_scores(boxes: tf.Tensor, scores: tf.Tensor) -> np.ndarray:
+def process_boxes_and_scores(boxes: tf.Tensor, scores: tf.Tensor) -> np.ndarray:
     """
     Processes bounding boxes and scores to apply non-max suppression (NMS),
     extract centers of selected boxes, and concatenate them with their class indices.
@@ -244,6 +244,7 @@ def extract_xy_from_corners_mapping(corners_mapping: Dict[str, Dict[str, Tuple[i
     return [get_xy(corners_mapping[x]['xy'], canvas_height, canvas_width) for x in CORNER_KEYS]
 
 
+
 def get_xy(marker_xy: Tuple[int, int], height: int, width: int) -> Tuple[float, float]:
     """
     Converts marker coordinates to a normalized system based on canvas dimensions.
@@ -260,7 +261,6 @@ def get_xy(marker_xy: Tuple[int, int], height: int, width: int) -> Tuple[float, 
     sy: float = MODEL_HEIGHT / height
     xy: Tuple[float, float] = (sx * marker_xy[0], sy * (marker_xy[1] + height + MARKER_DIAMETER))
     return xy
-
 
 
 def get_bbox(points: List[Tuple[float, float]]) -> Dict[str, float]:

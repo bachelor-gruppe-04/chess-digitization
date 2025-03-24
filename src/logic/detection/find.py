@@ -76,9 +76,6 @@ async def find_corners(
     return frame 
 
 
-
-
-
 def find_centers(
     corners_mapping: Dict[str, Dict[str, Tuple[int, int]]], 
     frame: np.ndarray

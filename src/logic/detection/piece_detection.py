@@ -71,7 +71,7 @@ async def run_pieces_model(frame, pieces_model_ref):
     # This will clean up the results by removing redundant boxes
     # Basically returns the best 16 pieces for white and best 16 pieces for black. 
     # Format for each entry is (x,y,pieceTypeIndex)
-    pieces = await process_boxes_and_scores(boxes, scores)
+    pieces = process_boxes_and_scores(boxes, scores)
 
     # Cleanup: Delete intermediate variables to free up memory
     del pieces_prediction
