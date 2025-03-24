@@ -9,32 +9,64 @@ app = FastAPI()
 clients = []
 move_history: List[str] = []
 
-camera = cv2.VideoCapture(0) # 0 is the default camera
+# camera = cv2.VideoCapture(0) # 0 is the default camera
 
-def generate_frames() -> Generator[bytes, None, None]:
-    """ Generate frames from the laptop webcam.
+class Camera:
   
-    Yields:
-      Generator[bytes, None, None]: Image frames
-    """
-    while True:
-        success, frame = camera.read()
-        if not success:
-            break
-
-        _, buffer = cv2.imencode(".jpg", frame)
-        frame_bytes = buffer.tobytes()
-
-        yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n")
-
-@app.get("/video")
-def video_feed() -> StreamingResponse:
-    """ Live video stream from the laptop webcam.
+  def __init__(self, cam_id: int) -> None:
+    self.cam_id = cam_id
+    self.camera = cv2.VideoCapture(self.cam_id)
     
-    Returns:
-      StreamingResponse: Video stream
-    """
-    return StreamingResponse(generate_frames(), media_type="multipart/x-mixed-replace; boundary=frame")
+  def get_cam_id(self) -> int:
+    return self.cam_id
+
+  def generate_frames(self) -> Generator[bytes, None, None]:
+      """ Generate frames from the laptop webcam.
+    
+      Yields:
+        Generator[bytes, None, None]: Image frames
+      """
+      while True:
+          success, frame = self.camera.read()
+          if not success:
+              break
+
+          _, buffer = cv2.imencode(".jpg", frame)
+          frame_bytes = buffer.tobytes()
+
+          yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n")
+          
+camera_0 = Camera(0)
+camera_1 = Camera(1)
+camera_2 = Camera(2)
+
+@app.get(f"/video-{camera_0.get_cam_id()}")
+def video_feed() -> StreamingResponse:
+  """ Live video stream from the laptop webcam.
+  
+  Returns:
+    StreamingResponse: Video stream
+  """
+  return StreamingResponse(camera_0.generate_frames(), media_type="multipart/x-mixed-replace; boundary=frame")
+
+
+@app.get(f"/video-{camera_1.get_cam_id()}")
+def video_feed() -> StreamingResponse:
+  """ Live video stream from the laptop webcam.
+  
+  Returns:
+    StreamingResponse: Video stream
+  """
+  return StreamingResponse(camera_1.generate_frames(), media_type="multipart/x-mixed-replace; boundary=frame")
+
+@app.get(f"/video-{camera_2.get_cam_id()}")
+def video_feed() -> StreamingResponse:
+  """ Live video stream from the laptop webcam.
+  
+  Returns:
+    StreamingResponse: Video stream
+  """
+  return StreamingResponse(camera_2.generate_frames(), media_type="multipart/x-mixed-replace; boundary=frame")
 
 @app.websocket("/moves")
 async def websocket_endpoint(websocket: WebSocket) -> None:
