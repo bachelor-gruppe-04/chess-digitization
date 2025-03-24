@@ -24,7 +24,6 @@ async def process_boxes_and_scores(boxes, scores):
     # Concatenate the centers with the class indices
     res = tf.concat([centers, cls], axis=1)
 
-    # Convert the result to a NumPy array (for further handling outside TensorFlow)
     res_array = res.numpy()
     
     return res_array
@@ -54,7 +53,7 @@ def get_boxes_and_scores(preds, width, height, video_width, video_height, paddin
     t = t * (height / (MODEL_HEIGHT - padding[2] - padding[3]))
     b = b * (height / (MODEL_HEIGHT - padding[2] - padding[3]))
 
-        # Add ROI
+    # Add ROI
     l = l + roi[0]
     r = r + roi[0]
     t = t + roi[1]

@@ -138,9 +138,6 @@ def perspective_transform(src, transform):
     return warped_src_array.tolist()
 
 
-import numpy as np
-from scipy.spatial import Delaunay
-
 def get_quads(x_corners):
     """
     Finds quads from a set of x_corners using Delaunay triangulation.

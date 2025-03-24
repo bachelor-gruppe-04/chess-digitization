@@ -1,12 +1,10 @@
 from typing import List, Dict, Tuple, Optional
 
 from constants import CORNER_KEYS
-
-
 from corners_detection import run_xcorners_model, find_corners_from_xcorners, assign_labels_to_board_corners
 from piece_detection import run_pieces_model
 from detection_methods import extract_xy_from_corners_mapping, scale_labeled_board_corners
-from warp import get_inv_transform, transform_centers
+from logic.detection.perspective_transformation import get_inv_transform, transform_centers
 from render import visualize_centers
 
 import numpy as np
@@ -70,7 +68,7 @@ async def find_corners(
         corners_mapping[key] = payload  # Store the payload in the corners dictionary
 
     # Find the centers of the chessboard squares
-    centers: List[List[Tuple[float, float]]] = find_centers_of_squares(corners_mapping, video_ref)
+    centers: List[List[Tuple[float, float]]] = find_centers(corners_mapping, video_ref)
 
     # Visualize the detected centers on the video frame
     frame: np.ndarray = visualize_centers(video_ref, centers)
@@ -81,7 +79,7 @@ async def find_corners(
 
 
 
-def find_centers_of_squares(
+def find_centers(
     corners_mapping: Dict[str, Dict[str, Tuple[int, int]]], 
     frame: np.ndarray
 ) -> List[List[Tuple[float, float]]]:

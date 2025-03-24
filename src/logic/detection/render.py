@@ -1,9 +1,8 @@
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
 from constants import MODEL_WIDTH, MODEL_HEIGHT
 
-def draw_points(frame, centers, color, sx, sy):
+def draw_points(frame, centers, sx, sy):
     """
     Draw points on an image using OpenCV.
     
@@ -15,19 +14,12 @@ def draw_points(frame, centers, color, sx, sy):
     for center in centers:
         x = int(center[0] * sx)
         y = int(center[1] * sy)
-        cv2.circle(frame, (x, y), 5, (255, 0, 0), -1)  # Blå farge i BGR-format
+        cv2.circle(frame, (x, y), 5, (255, 0, 0), -1) 
 
     return frame
 
 
-def draw_polygon(frame, boundary, color, sx, sy):
-    """
-    Draw a polygon on an image using OpenCV.
-    """
-    scaled_boundary = np.array([(int(x * sx), int(y * sy)) for x, y in boundary], np.int32)
-    cv2.polylines(frame, [scaled_boundary], isClosed=True, color=color, thickness=2)
-
-def draw_box(frame, color, x, y, text, font_height, line_width):
+def draw_box(frame, color, x, y, text, font_height):
     """
     Draw a labeled box on an image.
     """
@@ -37,7 +29,7 @@ def draw_box(frame, color, x, y, text, font_height, line_width):
     cv2.putText(frame, text, (x + 5, y - 5), font, 0.5, (255, 255, 255), 1, cv2.LINE_AA)  # White text
 
 
-def visualize_centers_opencv(canvas, centers):
+def visualize_centers(canvas, centers):
     """
     Draws the centers as circles on an OpenCV image (canvas) and returns the modified frame.
     
@@ -51,8 +43,8 @@ def visualize_centers_opencv(canvas, centers):
 
     for i, (x, y) in enumerate(centers):  # Assuming shape (64, 2)
 
-        x = round(x * frame_width / MODEL_WIDTH)  # Round to 1 decimal place
-        y = round(y * frame_height / MODEL_HEIGHT)  # Round to 1 decimal place
+        x = round(x * frame_width / MODEL_WIDTH) 
+        y = round(y * frame_height / MODEL_HEIGHT) 
 
         cv2.circle(canvas, (x, y), radius=5, color=(0, 0, 255), thickness=-1)
 

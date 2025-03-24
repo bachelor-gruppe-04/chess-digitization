@@ -94,8 +94,8 @@ async def run_xcorners_model(frame, corners_model_ref, pieces):
     boxes, scores = get_boxes_and_scores(x_corner_predictions, width, height, video_width, video_height, padding, roi)
 
     # Clean up intermediate variables to free up memory
-    del x_corner_predictions  # Remove corner prediction data
-    del image4d  # Remove the input image tensor as it's no longer needed
+    del x_corner_predictions 
+    del image4d 
    
     # Process the boxes and scores using non-max suppression and other techniques
     # This helps to clean up redundant boxes and refine the corner detection.
