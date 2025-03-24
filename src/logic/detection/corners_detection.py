@@ -1,23 +1,21 @@
-from constants import MODEL_WIDTH, MODEL_HEIGHT
-
-import cv2
 import numpy as np
 import tensorflow as tf
+import onnxruntime as ort
+
+from typing import Optional, Tuple
+from constants import MODEL_WIDTH, MODEL_HEIGHT
 from maths import clamp
 from quad_transformation import get_quads, score_quad, perspective_transform
-from detection_methods import get_centers_of_bbox, get_input, get_boxes_and_scores
+from detection_methods import get_input, get_boxes_and_scores, euclidean, get_center, get_centers_of_bbox
 
 
-def get_prediction_corners(image, corner_ort_session):
+def get_prediction_corners(image: np.ndarray, corner_ort_session: ort.InferenceSession,):
     """
     Perform corner detection on the input image.
 
     Args:
         image (numpy.ndarray): The input image to detect corners.
         corner_ort_session: The ONNX Runtime InferenceSession object for the corner detection model.
-        target_width (int, optional): The width to resize the image. Default is 480.
-        target_height (int, optional): The height to resize the image. Default is 288.
-        confidence_threshold (float, optional): The threshold for filtering low-confidence corner predictions. Default is 0.2.
 
     Returns:
         numpy.ndarray: Array of predicted corner points (coordinates and confidence scores).
@@ -149,19 +147,6 @@ def find_corners_from_xcorners(x_corners):
         corners[i][1] = clamp(corners[i][1], 0, MODEL_HEIGHT)
             
     return corners
-
-
-def get_center(points):
-    center = [sum(x[0] for x in points), sum(x[1] for x in points)]
-    center = [x / len(points) for x in center]
-    return center
-
-def euclidean(a, b):
-    dx = a[0] - b[0]
-    dy = a[1] - b[1]
-    dist = (dx ** 2 + dy ** 2) ** 0.5
-    return dist
-
 
 
 def assign_labels_to_board_corners(black_pieces, white_pieces, corners):

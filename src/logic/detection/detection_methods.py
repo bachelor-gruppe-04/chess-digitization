@@ -1,90 +1,165 @@
-from constants import MODEL_WIDTH, MODEL_HEIGHT, MARKER_DIAMETER, CORNER_KEYS
 
 import numpy as np
 import tensorflow as tf
+
+from typing import Tuple, List, Dict
+from constants import MODEL_WIDTH, MODEL_HEIGHT, MARKER_DIAMETER, CORNER_KEYS
 from preprocess import preprocess_image
 
 
-async def process_boxes_and_scores(boxes, scores):
-    max_scores = tf.reduce_max(scores, axis=1)
-    argmax_scores = tf.argmax(scores, axis=1)
-    nms = tf.image.non_max_suppression(boxes, max_scores, max_output_size=100, iou_threshold=0.3, score_threshold=0.1)
+async def process_boxes_and_scores(boxes: tf.Tensor, scores: tf.Tensor) -> np.ndarray:
+    """
+    Processes bounding boxes and scores to apply non-max suppression (NMS),
+    extract centers of selected boxes, and concatenate them with their class indices.
+
+    Args:
+        boxes (tf.Tensor): A tensor of shape (num_boxes, 4), representing bounding box coordinates [x_min, y_min, x_max, y_max].
+        scores (tf.Tensor): A tensor of shape (num_boxes, num_classes), representing the classification scores for each box.
+
+    Returns:
+        np.ndarray: A NumPy array containing the centers of the selected bounding boxes and their corresponding class indices.
+    """
+    max_scores: tf.Tensor = tf.reduce_max(scores, axis=1)
+    argmax_scores: tf.Tensor = tf.argmax(scores, axis=1)
+    nms: tf.Tensor = tf.image.non_max_suppression(boxes, max_scores, max_output_size=100, iou_threshold=0.3, score_threshold=0.1)
     
     # Use get_centers function to get the centers from the selected boxes
-    centers = get_centers_of_bbox(tf.gather(boxes, nms, axis=0))
+    centers_bbox: tf.Tensor = get_centers_of_bbox(tf.gather(boxes, nms, axis=0))
 
     # Gather the class indices of the selected boxes and expand dimensions
-    cls = tf.expand_dims(tf.gather(argmax_scores, nms, axis=0), axis=1)
+    class_indices: tf.Tensor = tf.expand_dims(tf.gather(argmax_scores, nms, axis=0), axis=1)
 
     # Cast cls to float16 (ensure it's compatible with centers)
-    cls = tf.cast(cls, dtype=tf.float16)
+    class_indices: tf.Tensor = tf.cast(class_indices, dtype=tf.float16)
 
     # Concatenate the centers with the class indices
-    res = tf.concat([centers, cls], axis=1)
+    res: tf.Tensor = tf.concat([centers_bbox, class_indices], axis=1)
 
-    res_array = res.numpy()
+    res_array: np.ndarray = res.numpy()
     
     return res_array
 
-def get_boxes_and_scores(preds, width, height, video_width, video_height, padding, roi):
-    # preds is assumed to be a NumPy array with shape (batch_size, num_boxes, num_predictions)
-    preds_t = np.transpose(preds, (0, 2, 1))  # Transpose preds to match the desired shape
 
-    # Extract width (w) and height (h)
-    w = preds_t[:, :, 2:3]  # Shape: (batch_size, num_boxes, 1)
-    h = preds_t[:, :, 3:4]  # Shape: (batch_size, num_boxes, 1)
+def get_boxes_and_scores(
+    preds: np.ndarray, 
+    width: int, 
+    height: int, 
+    video_width: int, 
+    video_height: int, 
+    padding: Tuple[int, int, int, int], 
+    roi: Tuple[int, int]
+) -> Tuple[np.ndarray, np.ndarray]:
     
-    # xc, yc, w, h -> l, t, r, b (left, top, right, bottom)
-    l = preds_t[:, :, 0:1] - (w / 2)  # Left
-    t = preds_t[:, :, 1:2] - (h / 2)  # Top
-    r = l + w  # Right
-    b = t + h  # Bottom
+    """
+    This function processes predictions to extract bounding boxes and their associated scores.
 
-    l = l - padding[0]
-    r = r - padding[0]
-    t = t - padding[2]
-    b = b - padding[2]
+    Args:
+        preds (np.ndarray): The predictions array with shape (batch_size, num_boxes, num_predictions).
+        width (int): The width to scale the bounding box coordinates to.
+        height (int): The height to scale the bounding box coordinates to.
+        video_width (int): The width of the video for further scaling.
+        video_height (int): The height of the video for further scaling.
+        padding (Tuple[int, int, int, int]): The padding to adjust the bounding boxes.
+        roi (Tuple[int, int]): The region of interest, which is added to the bounding box coordinates.
 
-    # Scale the bounding box coordinates
-    l = l * (width / (MODEL_WIDTH - padding[0] - padding[1]))
-    r = r * (width / (MODEL_WIDTH - padding[0] - padding[1]))
-    t = t * (height / (MODEL_HEIGHT - padding[2] - padding[3]))
-    b = b * (height / (MODEL_HEIGHT - padding[2] - padding[3]))
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: A tuple containing the bounding boxes and scores.
+    """
+    
+    # Transpose preds to match the desired shape
+    preds_t: np.ndarray = np.transpose(preds, (0, 2, 1))  # Shape: (batch_size, num_predictions, num_boxes)
+    
+    # Extract width (w) and height (h) of the boxes
+    w: np.ndarray = preds_t[:, :, 2:3]  
+    h: np.ndarray = preds_t[:, :, 3:4]  
+    
+    # Convert xc, yc, w, h to l, t, r, b (left, top, right, bottom)
+    l: np.ndarray = preds_t[:, :, 0:1] - (w / 2)  # Left
+    t: np.ndarray = preds_t[:, :, 1:2] - (h / 2)  # Top
+    r: np.ndarray = l + w  # Right
+    b: np.ndarray = t + h  # Bottom
 
-    # Add ROI
-    l = l + roi[0]
-    r = r + roi[0]
-    t = t + roi[1]
-    b = b + roi[1]
+    # Apply padding to the bounding box coordinates
+    l -= padding[0]
+    r -= padding[0]
+    t -= padding[2]
+    b -= padding[2]
+
+    # Scale the bounding box coordinates to the target size
+    l *= (width / (MODEL_WIDTH - padding[0] - padding[1]))
+    r *= (width / (MODEL_WIDTH - padding[0] - padding[1]))
+    t *= (height / (MODEL_HEIGHT - padding[2] - padding[3]))
+    b *= (height / (MODEL_HEIGHT - padding[2] - padding[3]))
+
+    # Add ROI (Region of Interest)
+    l += roi[0]
+    r += roi[0]
+    t += roi[1]
+    b += roi[1]
 
     # Scale based on video size
-    l = l * (MODEL_WIDTH / video_width)
-    r = r * (MODEL_WIDTH / video_width)
-    t = t * (MODEL_HEIGHT / video_height)
-    b = b * (MODEL_HEIGHT / video_height)
+    l *= (MODEL_WIDTH / video_width)
+    r *= (MODEL_WIDTH / video_width)
+    t *= (MODEL_HEIGHT / video_height)
+    b *= (MODEL_HEIGHT / video_height)
 
     # Concatenate the left, top, right, and bottom coordinates to form the bounding boxes
-    boxes = np.concatenate([l, t, r, b], axis=2)  # Shape: (batch_size, num_boxes, 4)
+    boxes: np.ndarray = np.concatenate([l, t, r, b], axis=2) 
 
     # Extract the scores (assuming score is in the 5th element onward)
-    scores = preds_t[:, :, 4:]  # Shape: (batch_size, num_boxes, num_classes)
+    scores: np.ndarray = preds_t[:, :, 4:] 
 
     # Squeeze to remove unnecessary dimensions (if any)
     boxes = np.squeeze(boxes, axis=0)
     scores = np.squeeze(scores, axis=0)
+
     return boxes, scores
 
 
-def get_center(points):
-    center = [sum(x[0] for x in points), sum(x[1] for x in points)]
-    center = [x / len(points) for x in center]
+
+def get_center(points: List[Tuple[float, float]]) -> List[float]:
+    """
+    Calculates the center of a set of 2D points by averaging their x and y coordinates.
+
+    Args:
+        points (List[Tuple[float, float]]): A list of points where each point is a tuple of (x, y) coordinates.
+
+    Returns:
+        List[float]: A list containing the (x, y) coordinates of the center.
+    """
+    center_x: float = sum(x[0] for x in points)
+    center_y: float = sum(x[1] for x in points) 
+    center: List[float] = [center_x / len(points), center_y / len(points)]
+    
     return center
 
-def euclidean(a, b):
-    dx = a[0] - b[0]
-    dy = a[1] - b[1]
-    dist = (dx ** 2 + dy ** 2) ** 0.5
+
+
+
+
+def euclidean(a: Tuple[float, float], b: Tuple[float, float]) -> float:
+    """
+    Calculates the Euclidean distance between two points in 2D space.
+
+    Args:
+        a (Tuple[float, float]): The first point as a tuple of (x, y).
+        b (Tuple[float, float]): The second point as a tuple of (x, y).
+
+    Returns:
+        float: The Euclidean distance between the two points.
+    """
+    dx: float = a[0] - b[0]  # Difference in x-coordinates
+    dy: float = a[1] - b[1]  # Difference in y-coordinates
+    
+    # Calculate the Euclidean distance
+    dist: float = (dx ** 2 + dy ** 2) ** 0.5
+    
     return dist
+
+
+
+
+
 
 def get_input(video_ref, keypoints=None, padding_ratio=12):
     video_height, video_width, _ = video_ref.shape
@@ -151,32 +226,71 @@ def get_input(video_ref, keypoints=None, padding_ratio=12):
     
     return image4d, width, height, padding, roi
 
-def extract_xy_from_corners_mapping(corners_mapping, canvas_ref):
-    canvas_height, canvas_width, _ = canvas_ref.shape
+
+
+
+def extract_xy_from_corners_mapping(corners_mapping: Dict[str, Dict[str, Tuple[int, int]]], canvas_ref: np.ndarray) -> List[Tuple[int, int]]:
+    """
+    Extracts normalized (x, y) coordinates from a given corners mapping and a canvas reference.
+
+    Args:
+        corners_mapping (Dict[str, Dict[str, Tuple[int, int]]]): A mapping of corner names to their respective 'xy' coordinates.
+        canvas_ref (np.ndarray): A reference to the canvas as a numpy array, representing the image or drawing.
+
+    Returns:
+        List[Tuple[int, int]]: A list of (x, y) coordinates corresponding to each corner in the mapping.
+    """
+    canvas_height, canvas_width, _ = canvas_ref.shape 
     return [get_xy(corners_mapping[x]['xy'], canvas_height, canvas_width) for x in CORNER_KEYS]
 
 
-def get_xy(marker_xy, height, width):
-    sx = MODEL_WIDTH / width
-    sy = MODEL_HEIGHT / height
-    xy = [sx * marker_xy[0], sy * (marker_xy[1] + height + MARKER_DIAMETER)]
+def get_xy(marker_xy: Tuple[int, int], height: int, width: int) -> Tuple[float, float]:
+    """
+    Converts marker coordinates to a normalized system based on canvas dimensions.
+
+    Args:
+        marker_xy (Tuple[int, int]): The (x, y) coordinates of the marker.
+        height (int): The height of the canvas.
+        width (int): The width of the canvas.
+
+    Returns:
+        Tuple[float, float]: The normalized (x, y) coordinates of the marker.
+    """
+    sx: float = MODEL_WIDTH / width 
+    sy: float = MODEL_HEIGHT / height
+    xy: Tuple[float, float] = (sx * marker_xy[0], sy * (marker_xy[1] + height + MARKER_DIAMETER))
     return xy
 
 
 
-def get_bbox(points):
-    xs = [p[0] for p in points]
-    ys = [p[1] for p in points]
+def get_bbox(points: List[Tuple[float, float]]) -> Dict[str, float]:
+    """
+    Computes the bounding box for a list of 2D points.
+
+    The bounding box is the smallest rectangle that can contain all the points, 
+    with sides aligned to the axes. It is defined by the minimum and maximum 
+    x and y coordinates of the points.
+
+    Args:
+        points (List[Tuple[float, float]]): A list of 2D points, where each point 
+                                             is represented as a tuple (x, y).
+
+    Returns:
+        Dict[str, float]: A dictionary containing the bounding box parameters:
+                          "xmin", "xmax", "ymin", "ymax", "width", and "height".
+    """
+    xs: List[float] = [p[0] for p in points]
+    ys: List[float] = [p[1] for p in points]
     
-    xmin = min(xs)
-    xmax = max(xs)
-    ymin = min(ys)
-    ymax = max(ys)
+    xmin: float = min(xs)
+    xmax: float = max(xs)
+    ymin: float = min(ys)
+    ymax: float = max(ys)
 
-    width = xmax - xmin
-    height = ymax - ymin
+    width: float = xmax - xmin
+    height: float = ymax - ymin
 
-    bbox = {
+    bbox: Dict[str, float] = {
         "xmin": xmin,
         "xmax": xmax,
         "ymin": ymin,
@@ -188,14 +302,45 @@ def get_bbox(points):
     return bbox
 
 
-def scale_labeled_board_corners(xy, height, width):
-    sx = width / MODEL_WIDTH
-    sy = height / MODEL_HEIGHT
-    marker_xy = [sx * xy[0], sy * xy[1] - height - MARKER_DIAMETER]
+def scale_labeled_board_corners(xy: Tuple[float, float], height: int, width: int) -> List[float]:
+    """
+    Scales the (x, y) coordinates of a labeled board marker to fit within the canvas size.
+
+    This function adjusts the coordinates of the marker to match the scaling of the 
+    canvas, accounting for the difference between the model's size and the canvas's size.
+
+    Args:
+        xy (Tuple[float, float]): The (x, y) coordinates of the marker in the model's coordinate system.
+        height (int): The height of the canvas.
+        width (int): The width of the canvas.
+
+    Returns:
+        List[float]: A list containing the scaled (x, y) coordinates of the marker in the canvas coordinate system.
+    """
+    sx: float = width / MODEL_WIDTH
+    sy: float = height / MODEL_HEIGHT
+    marker_xy: List[float] = [sx * xy[0], sy * xy[1] - height - MARKER_DIAMETER]
+    
     return marker_xy
 
 
-def get_centers_of_bbox(boxes):
+def get_centers_of_bbox(boxes: tf.Tensor) -> tf.Tensor:
+    """
+    Calculates the center coordinates of bounding boxes.
+
+    This function computes the center (cx, cy) of each bounding box from 
+    the left, top, right, and bottom coordinates. It assumes that the input 
+    boxes are in the format [left, top, right, bottom] and casts them to `float16`
+    for consistency with the model's data type.
+
+    Args:
+        boxes (tf.Tensor): A tensor of shape (N, 4), where each row represents 
+                            a bounding box with the format [left, top, right, bottom].
+
+    Returns:
+        tf.Tensor: A tensor of shape (N, 2), where each row contains the center 
+                   coordinates [cx, cy] of the corresponding bounding box.
+    """
     # Ensure boxes are of type float16 (as your model is using float16)
     boxes = tf.cast(boxes, dtype=tf.float16)
 
@@ -209,7 +354,6 @@ def get_centers_of_bbox(boxes):
     cx = (l + r) / 2
     cy = (t + b) / 2
 
-    # Concatenate cx and cy to get the centers
     centers = tf.concat([cx, cy], axis=1)
     
     return centers

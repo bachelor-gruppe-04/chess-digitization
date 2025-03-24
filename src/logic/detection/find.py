@@ -1,3 +1,6 @@
+import numpy as np
+import onnxruntime as ort
+
 from typing import List, Dict, Tuple, Optional
 
 from constants import CORNER_KEYS
@@ -6,9 +9,6 @@ from piece_detection import run_pieces_model
 from detection_methods import extract_xy_from_corners_mapping, scale_labeled_board_corners
 from logic.detection.perspective_transformation import get_inv_transform, transform_centers
 from render import visualize_centers
-
-import numpy as np
-import onnxruntime as ort
 
 async def find_corners(
     video_ref: np.ndarray, 

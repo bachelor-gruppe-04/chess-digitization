@@ -27,7 +27,7 @@ def perspective_transform(src: List[List[float]], transform: np.ndarray) -> List
 
     # Step 2: Apply the perspective transformation using matrix multiplication.
     # The 'src' points are multiplied with the transpose of the transformation matrix.
-    warped_src = np.dot(src, transform.T)
+    warped_src: np.ndarray = np.dot(src, transform.T)
     # The result of np.dot is in homogeneous coordinates (x', y', w).
 
     # Step 3: Normalize the transformed points by dividing by the 'w' coordinate.
@@ -59,8 +59,8 @@ def get_perspective_transform(target: List[Tuple[float, float]], keypoints: List
     """
     
     # Initialize matrix A (coefficients) and vector B (constants) for the system of linear equations
-    A = np.zeros((8, 8))  
-    B = np.zeros((8, 1))  
+    A: np.darray = np.zeros((8, 8))  
+    B: np.darray = np.zeros((8, 1))  
 
     # For each of the four points, fill in the corresponding row of A and B
     for i in range(4):
@@ -77,10 +77,10 @@ def get_perspective_transform(target: List[Tuple[float, float]], keypoints: List
     
     # Solve the system of equations A * solution = B using numpy's linear solver
     # This returns the transformation parameters (flattened into a 1D array)
-    solution = np.linalg.solve(A, B).flatten() 
+    solution: np.darray = np.linalg.solve(A, B).flatten() 
 
     # Reshape the solution into a 3x3 matrix (perspective transformation matrix)
-    transform = np.vstack([solution.reshape(8, 1), [[1]]]).reshape(3, 3)
+    transform: np.darray = np.vstack([solution.reshape(8, 1), [[1]]]).reshape(3, 3)
 
     return transform
 
