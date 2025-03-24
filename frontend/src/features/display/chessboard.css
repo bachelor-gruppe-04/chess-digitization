@@ -1,0 +1,7 @@
+.chessboard {
+    font-family: monospace;
+    white-space: pre-wrap;
+    text-align: center;
+    display: block;
+    margin: auto;
+}

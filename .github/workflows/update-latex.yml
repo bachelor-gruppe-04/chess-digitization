@@ -1,0 +1,34 @@
+name: Update documentation with code
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  update-latex:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v4
+        
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Clone documentation repository
+        run: |
+          git clone https://x-access-token:${{ secrets.GH_PAT }}@github.com/bachelor-gruppe-04/documentation.git
+          cp -r frontend/src documentation/code/frontend
+          cp -r backend/logic documentation/code/backend
+
+      - name: Commit and push changes
+        run: |
+          cd documentation
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Updated code snippets from chess-digitization"
+          git push
