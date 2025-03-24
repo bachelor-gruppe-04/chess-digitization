@@ -1,11 +1,4 @@
-import torch
 import cv2
-import numpy as np
-import matplotlib.pyplot as plt
-from torchvision import transforms
-import onnxruntime as ort
-import onnx
-from onnxsim import simplify
 
 from detection_methods import get_input, get_boxes_and_scores, process_boxes_and_scores
 from preprocess import preprocess_image

@@ -1,8 +1,6 @@
 from constants import MODEL_WIDTH, MODEL_HEIGHT, MARKER_DIAMETER, CORNER_KEYS
 
-import cv2
 import numpy as np
-import onnxruntime as ort
 import tensorflow as tf
 from preprocess import preprocess_image
 
@@ -87,32 +85,6 @@ def euclidean(a, b):
     dy = a[1] - b[1]
     dist = (dx ** 2 + dy ** 2) ** 0.5
     return dist
-
-
-
-def calculate_keypoints(black_pieces, white_pieces, corners):
-    black_center = get_center(black_pieces)
-    white_center = get_center(white_pieces)
-    
-    best_shift = 0
-    best_score = 0
-    for shift in range(4):
-        cw = [(corners[shift % 4][0] + corners[(shift + 1) % 4][0]) / 2,
-              (corners[shift % 4][1] + corners[(shift + 1) % 4][1]) / 2]
-        cb = [(corners[(shift + 2) % 4][0] + corners[(shift + 3) % 4][0]) / 2,
-              (corners[(shift + 2) % 4][1] + corners[(shift + 3) % 4][1]) / 2]
-        score = 1 / (1 + euclidean(white_center, cw) + euclidean(black_center, cb))
-        if score > best_score:
-            best_score = score
-            best_shift = shift
-
-    keypoints = {
-        "a1": corners[best_shift % 4],
-        "h1": corners[(best_shift + 1) % 4],
-        "h8": corners[(best_shift + 2) % 4],
-        "a8": corners[(best_shift + 3) % 4]
-    }
-    return keypoints
 
 def get_input(video_ref, keypoints=None, padding_ratio=12):
     video_height, video_width, _ = video_ref.shape
