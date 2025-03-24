@@ -164,7 +164,7 @@ def euclidean(a, b):
 
 
 
-def calculate_keypoints(black_pieces, white_pieces, corners):
+def assign_labels_to_board_corners(black_pieces, white_pieces, corners):
     black_center = get_center(black_pieces)
     white_center = get_center(white_pieces)
     

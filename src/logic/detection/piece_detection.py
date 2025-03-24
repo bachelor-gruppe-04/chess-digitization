@@ -75,8 +75,9 @@ async def run_pieces_model(frame, pieces_model_ref):
     boxes, scores = get_boxes_and_scores(pieces_prediction, width, height, frame_width, frame_height, padding, roi)
 
     # Process the boxes and scores using non-max suppression and other techniques
-    # This will clean up the results by removing redundant boxes and associating classes (piece types) with them
-    # Basically returns the best 16 pieces for white and best 16 pieces for black
+    # This will clean up the results by removing redundant boxes
+    # Basically returns the best 16 pieces for white and best 16 pieces for black. 
+    # Format for each entry is (x,y,pieceTypeIndex)
     pieces = await process_boxes_and_scores(boxes, scores)
 
     # Cleanup: Delete intermediate variables to free up memory

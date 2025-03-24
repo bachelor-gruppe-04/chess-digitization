@@ -180,7 +180,7 @@ def get_input(video_ref, keypoints=None, padding_ratio=12):
     
     return image4d, width, height, padding, roi
 
-def get_corners_of_chess_board(corners_mapping, canvas_ref):
+def extract_xy_from_corners_mapping(corners_mapping, canvas_ref):
     canvas_height, canvas_width, _ = canvas_ref.shape
     return [get_xy(corners_mapping[x]['xy'], canvas_height, canvas_width) for x in CORNER_KEYS]
 
@@ -217,7 +217,7 @@ def get_bbox(points):
     return bbox
 
 
-def get_marker_xy(xy, height, width):
+def scale_labeled_board_corners(xy, height, width):
     sx = width / MODEL_WIDTH
     sy = height / MODEL_HEIGHT
     marker_xy = [sx * xy[0], sy * xy[1] - height - MARKER_DIAMETER]
