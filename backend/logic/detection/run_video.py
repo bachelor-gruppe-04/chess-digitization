@@ -67,11 +67,11 @@ async def process_video(
 
 
 async def main() -> None:
-    video_path: str = 'backend/resources/videoes/chessvideo.mp4'
-    output_path: str = 'backend/resources/videoes/output_video_combined.avi'
+    video_path: str = 'resources/videoes/chessvideo.mp4'
+    output_path: str = 'resources/videoes/output_video_combined.avi'
 
-    piece_model_path: str = "backend/resources/models/480M_leyolo_pieces.onnx"
-    corner_model_path: str = "backend/resources/models/480L_leyolo_xcorners.onnx"
+    piece_model_path: str = "resources/models/480M_leyolo_pieces.onnx"
+    corner_model_path: str = "resources/models/480L_leyolo_xcorners.onnx"
 
     piece_ort_session: ort.InferenceSession = ort.InferenceSession(piece_model_path)
     corner_ort_session: ort.InferenceSession = ort.InferenceSession(corner_model_path)
