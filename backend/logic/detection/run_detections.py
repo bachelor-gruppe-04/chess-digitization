@@ -1,22 +1,21 @@
+import numpy as np
+import onnxruntime as ort
+
 from typing import List, Dict, Tuple, Optional
-
 from constants import CORNER_KEYS
-
-
 from corners_detection import run_xcorners_model, find_corners_from_xcorners, assign_labels_to_board_corners
 from piece_detection import run_pieces_model
 from detection_methods import extract_xy_from_corners_mapping, scale_labeled_board_corners
 from warp import get_inv_transform, transform_centers
 from render import visualize_centers
 
-import numpy as np
-import onnxruntime as ort
 
 async def find_corners(
     video_ref: np.ndarray, 
     pieces_model_ref: ort.InferenceSession, 
     xcorners_model_ref: ort.InferenceSession
 ) -> Optional[np.ndarray]:
+    
     """
     Detects corners on a chessboard using ONNX models.
 
@@ -76,8 +75,6 @@ async def find_corners(
     frame: np.ndarray = visualize_centers(video_ref, centers)
 
     return frame 
-
-
 
 
 

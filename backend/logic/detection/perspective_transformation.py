@@ -2,7 +2,6 @@ from typing import List, Tuple
 import numpy as np
 from constants import SQUARE_SIZE, BOARD_SIZE
 
-
 def perspective_transform(src: List[List[float]], transform: np.ndarray) -> List[List[float]]:
     """
     Applies a perspective transformation to a set of 2D points using a 3x3 transformation matrix.
@@ -37,7 +36,6 @@ def perspective_transform(src: List[List[float]], transform: np.ndarray) -> List
 
     # Step 4: Return the 2D transformed points (excluding the homogeneous coordinate).
     return warped_src[:, :2].tolist()  
-
 
 
 
@@ -83,6 +81,7 @@ def get_perspective_transform(target: List[Tuple[float, float]], keypoints: List
     transform: np.darray = np.vstack([solution.reshape(8, 1), [[1]]]).reshape(3, 3)
 
     return transform
+
 
 
 def get_inv_transform(keypoints: List[Tuple[float, float]]) -> np.ndarray:
@@ -139,6 +138,7 @@ def get_inv_transform(keypoints: List[Tuple[float, float]]) -> np.ndarray:
     inv_transform: np.ndarray = np.linalg.inv(transform)
     
     return inv_transform
+
 
 
 def transform_centers(inv_transform: np.ndarray) -> List[List[float]]:

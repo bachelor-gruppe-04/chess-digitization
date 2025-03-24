@@ -19,6 +19,7 @@ def draw_points(frame: np.ndarray, centers: List[Tuple[float, float]], sx: float
     return frame
 
 
+
 def draw_box(frame: np.ndarray, color: Tuple[int, int, int], x: float, y: float, text: str, font_height: int) -> np.ndarray:
     """
     Draw a labeled box on an image.
@@ -29,6 +30,7 @@ def draw_box(frame: np.ndarray, color: Tuple[int, int, int], x: float, y: float,
     cv2.putText(frame, text, (x + 5, y - 5), font, 0.5, (255, 255, 255), 1, cv2.LINE_AA)  # White text
 
     return frame
+
 
 
 def visualize_centers(canvas: np.ndarray, centers: List[Tuple[float, float]]) -> np.ndarray:

@@ -7,7 +7,6 @@ y = list(range(7))
 GRID = [[(xx, yy) for xx in x] for yy in y]
 IDEAL_QUAD = [[0, 1], [1, 1], [1, 0], [0, 0]]
 
-
 def score_quad(quad: List[Tuple[float, float]], x_corners: List[Tuple[float, float]]) -> Tuple[float, np.ndarray, Tuple[float, float]]:
     """
     Scores a quadrilateral by warping it to fit the ideal quad and finding the offset.
@@ -24,7 +23,6 @@ def score_quad(quad: List[Tuple[float, float]], x_corners: List[Tuple[float, flo
     score: float = calculate_offset_score(warped_x_corners, offset)
     
     return score, perspective_matrix, offset
-
 
 
 
@@ -75,7 +73,6 @@ def cdist(a: List[Tuple[float, float]], b: List[Tuple[float, float]]) -> np.ndar
     b = np.array(b)
     dist = np.sqrt(np.sum((a[:, np.newaxis, :] - b[np.newaxis, :, :])**2, axis=2))
     return dist
-
 
 
 
@@ -140,6 +137,7 @@ def get_perspective_transform(target: List[Tuple[float, float]], keypoints: List
     return transform
 
 
+
 def perspective_transform(src: List[Tuple[float, float]], transform: np.ndarray) -> List[Tuple[float, float]]:
     """
     Applies a perspective transformation to a set of points.
@@ -165,6 +163,7 @@ def perspective_transform(src: List[Tuple[float, float]], transform: np.ndarray)
     
     warped_src_array: np.ndarray = warped_src[:, :2]  # Get only x, y coordinates
     return warped_src_array.tolist()  # Return the transformed points as a list of tuples
+  
 
 
 

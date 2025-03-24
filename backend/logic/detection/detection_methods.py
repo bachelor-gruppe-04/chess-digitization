@@ -2,10 +2,9 @@
 import numpy as np
 import tensorflow as tf
 
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Optional
 from constants import MODEL_WIDTH, MODEL_HEIGHT, MARKER_DIAMETER, CORNER_KEYS
 from preprocess import preprocess_image
-
 
 def process_boxes_and_scores(boxes: tf.Tensor, scores: tf.Tensor) -> np.ndarray:
     """
@@ -38,6 +37,7 @@ def process_boxes_and_scores(boxes: tf.Tensor, scores: tf.Tensor) -> np.ndarray:
     res_array: np.ndarray = res.numpy()
     
     return res_array
+
 
 
 def get_boxes_and_scores(
@@ -135,8 +135,6 @@ def get_center(points: List[Tuple[float, float]]) -> List[float]:
 
 
 
-
-
 def euclidean(a: Tuple[float, float], b: Tuple[float, float]) -> float:
     """
     Calculates the Euclidean distance between two points in 2D space.
@@ -158,10 +156,29 @@ def euclidean(a: Tuple[float, float], b: Tuple[float, float]) -> float:
 
 
 
+def get_input(
+    video_ref: np.ndarray, 
+    keypoints: Optional[np.ndarray] = None, 
+    padding_ratio: int = 12
+) -> Tuple[int, int, Optional[np.ndarray]]:
+    """
+    Processes the input video frame by extracting the region of interest (ROI),
+    resizing it to match the model's input dimensions, and applying necessary padding.
 
+    Args:
+        video_ref (np.ndarray): Input video frame represented as a NumPy array of shape (height, width, channels).
+        keypoints (Optional[np.ndarray]): Array of keypoints used to determine the bounding box (ROI). Defaults to None.
+        padding_ratio (int): Factor to compute padding around the detected bounding box. Defaults to 12.
 
+    Returns:
+        Tuple[np.ndarray, int, int, List[int], List[int]]:
+            - image4d (np.ndarray): Preprocessed and padded input ready for the model.
+            - width (int): Width of the cropped video region.
+            - height (int): Height of the cropped video region.
+            - padding (List[int]): Padding applied as [left, right, top, bottom].
+            - roi (List[int]): Coordinates of the region of interest in the format [xmin, ymin, xmax, ymax].
+    """
 
-def get_input(video_ref, keypoints=None, padding_ratio=12):
     video_height, video_width, _ = video_ref.shape
     roi = None
 
@@ -221,11 +238,8 @@ def get_input(video_ref, keypoints=None, padding_ratio=12):
     padding = [pad_left, pad_right, pad_top, pad_bottom]
 
     image4d = preprocess_image(video_ref.numpy())
-
-
     
     return image4d, width, height, padding, roi
-
 
 
 
@@ -261,6 +275,7 @@ def get_xy(marker_xy: Tuple[int, int], height: int, width: int) -> Tuple[float, 
     sy: float = MODEL_HEIGHT / height
     xy: Tuple[float, float] = (sx * marker_xy[0], sy * (marker_xy[1] + height + MARKER_DIAMETER))
     return xy
+
 
 
 def get_bbox(points: List[Tuple[float, float]]) -> Dict[str, float]:
@@ -302,6 +317,7 @@ def get_bbox(points: List[Tuple[float, float]]) -> Dict[str, float]:
     return bbox
 
 
+
 def scale_labeled_board_corners(xy: Tuple[float, float], height: int, width: int) -> List[float]:
     """
     Scales the (x, y) coordinates of a labeled board marker to fit within the canvas size.
@@ -322,6 +338,7 @@ def scale_labeled_board_corners(xy: Tuple[float, float], height: int, width: int
     marker_xy: List[float] = [sx * xy[0], sy * xy[1] - height - MARKER_DIAMETER]
     
     return marker_xy
+
 
 
 def get_centers_of_bbox(boxes: tf.Tensor) -> tf.Tensor:

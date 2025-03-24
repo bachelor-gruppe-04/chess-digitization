@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import onnxruntime as ort
 import asyncio
+
 from run_detections import find_corners
 from typing import Optional
 
@@ -62,6 +63,7 @@ async def process_video(
     cap.release()
     out.release()
     cv2.destroyAllWindows()
+
 
 
 async def main() -> None:

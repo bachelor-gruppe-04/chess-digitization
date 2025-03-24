@@ -8,7 +8,6 @@ from maths import clamp
 from quad_transformation import get_quads, score_quad, perspective_transform
 from detection_methods import get_input, get_boxes_and_scores, euclidean, get_center, process_boxes_and_scores
 
-
 def get_results_corner_model(image: np.ndarray, corner_ort_session: ort.InferenceSession,):
     """
     Perform corner detection on the input image.
@@ -38,6 +37,7 @@ def get_results_corner_model(image: np.ndarray, corner_ort_session: ort.Inferenc
     corner_predictions = predictions[0]  
 
     return corner_predictions
+
 
 
 async def run_xcorners_model(frame: np.ndarray, corners_model_ref: tf.keras.Model, pieces: List[dict]) -> List[List[float]]:
@@ -87,7 +87,6 @@ async def run_xcorners_model(frame: np.ndarray, corners_model_ref: tf.keras.Mode
     x_corners: List[List[float]] = [[x[0], x[1]] for x in x_corners_optimized]
 
     return x_corners
-
 
 
 
@@ -141,6 +140,7 @@ def find_corners_from_xcorners(x_corners: np.ndarray) -> Optional[List[List[floa
         corners[i][1] = clamp(corners[i][1], 0, MODEL_HEIGHT)
     
     return corners
+
 
 
 def assign_labels_to_board_corners(black_pieces: List[np.ndarray], white_pieces: List[np.ndarray], corners: List[List[float]]) -> Dict[str, List[float]]:

@@ -40,7 +40,6 @@ def predict_pieces(frame, ort_session):
 
 
 
-
 async def run_pieces_model(frame, pieces_model_ref):
     """
     Processes a video reference using a given pieces detection model to predict chess pieces in the video.
@@ -81,6 +80,7 @@ async def run_pieces_model(frame, pieces_model_ref):
     return pieces
 
 
+
 def scale_boxes(xc, yc, w, h, orig_width, orig_height, target_width, target_height):
     """
     Scale the bounding box coordinates back to the original image size.
@@ -98,6 +98,8 @@ def scale_boxes(xc, yc, w, h, orig_width, orig_height, target_width, target_heig
     w = w * (orig_width / target_width)
     h = h * (orig_height / target_height)
     return xc, yc, w, h
+
+
 
 def apply_nms(boxes, scores, class_indices, nms_threshold=0.5):
     """
@@ -118,6 +120,7 @@ def apply_nms(boxes, scores, class_indices, nms_threshold=0.5):
     scores = scores[indices]
     class_indices = class_indices[indices]
     return boxes, scores, class_indices
+
 
 
 def visualize_boxes_and_labels(image, xc, yc, w, h, class_indices, scores, class_names):
