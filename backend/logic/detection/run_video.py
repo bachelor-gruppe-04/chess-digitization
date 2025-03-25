@@ -3,7 +3,7 @@ import numpy as np
 import onnxruntime as ort
 import asyncio
 
-from run_detections import find_centers
+from run_detections import find_scaled_labeled_board_corners, find_centers_of_squares
 from map_pieces import find_pieces
 from render import render_centers
 from typing import Optional, List, Tuple
@@ -38,7 +38,7 @@ async def process_video(
     out: cv2.VideoWriter = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
 
     frame_counter: int = 0
-    centers = None  # Will hold the detected centers
+    board_corners_initial = None  # Will hold the detected centers
 
     while cap.isOpened():
         ret: bool
@@ -50,21 +50,22 @@ async def process_video(
 
         # Run find_centers only on the first frame
         if frame_counter == 0:
-            frame_with_centers: Optional[np.ndarray] = await find_centers(video_frame, piece_model_ref, corner_model_ref)
-            if frame_with_centers is not None:
-                centers = frame_with_centers
+            board_corners = await find_scaled_labeled_board_corners(video_frame, piece_model_ref, corner_model_ref)
+            if board_corners is not None:
+                board_corners_initial = board_corners
             else:
                 print("Failed to detect centers.")
                 break
 
-        if centers is not None:
+        if board_corners_initial is not None:
             # Now, use `centers` to render them on subsequent frames
-            frame_with_centers: np.ndarray = render_centers(video_frame, centers)
+            centers, centers3d = find_centers_of_squares(board_corners_initial,video_frame)
+            centers2 = render_centers(video_frame, centers)
 
             if frame_counter % 1 == 0:
-                resized_frame: np.ndarray = cv2.resize(frame_with_centers, (1280, 720))
+                resized_frame: np.ndarray = cv2.resize(centers2, (1280, 720))
                 cv2.imshow('Video', resized_frame)
-                out.write(frame_with_centers)
+                out.write(centers2)
 
         frame_counter += 1
 

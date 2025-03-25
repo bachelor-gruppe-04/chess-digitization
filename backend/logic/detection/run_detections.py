@@ -8,7 +8,7 @@ from piece_detection import run_pieces_model
 from detection_methods import extract_xy_from_corners_mapping, scale_labeled_board_corners
 from warp import get_inv_transform, transform_centers
 
-async def find_centers(
+async def find_scaled_labeled_board_corners(
     video_ref: np.ndarray, 
     pieces_model_ref: ort.InferenceSession, 
     xcorners_model_ref: ort.InferenceSession
@@ -54,6 +54,8 @@ async def find_centers(
     labeled_board_corners: Dict[str, Tuple[int, int]] = assign_labels_to_board_corners(black_pieces, white_pieces, board_corners)
 
     video_height, video_width, _ = video_ref.shape
+    
+    print(labeled_board_corners)
 
     # Stores extracted corner positions
     corners_mapping: Dict[str, Dict[str, Tuple[int, int]]] = {}
@@ -64,16 +66,9 @@ async def find_centers(
             "xy": scale_labeled_board_corners(xy, video_height, video_width),
             "key": key
         }
-        corners_mapping[key] = payload  # Store the payload in the corners dictionary
-
-    # Find the centers of the chessboard squares
-    centers: List[List[Tuple[float, float]]] = find_centers_of_squares(corners_mapping, video_ref)
-
-    # # Visualize the detected centers on the video frame
-    # frame: np.ndarray = visualize_centers(video_ref, centers)
-
-    return centers 
-
+        corners_mapping[key] = payload 
+    
+    return corners_mapping
 
 
 def find_centers_of_squares(
@@ -99,5 +94,6 @@ def find_centers_of_squares(
     xy: List[Tuple[int, int]] = extract_xy_from_corners_mapping(corners_mapping, frame)
     inv_transform: np.ndarray = get_inv_transform(xy)
     centers: List[List[Tuple[float, float]]] = transform_centers(inv_transform)
+    centers3d = np.expand_dims(centers, axis=0)
     
-    return centers
+    return centers, centers3d

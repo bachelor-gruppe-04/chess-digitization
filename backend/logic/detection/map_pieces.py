@@ -3,6 +3,9 @@ import numpy as np
 import tensorflow as tf
 import cv2
 
+from detection_methods import get_input, get_boxes_and_scores, process_boxes_and_scores
+from piece_detection import predict_pieces
+
 def find_pieces(modelPiecesRef, video, canvas, playing, set_text, dispatch, corners, board,
                  moves_pairs, last_move, move_text, mode):
     centers = None
@@ -20,15 +23,8 @@ def find_pieces(modelPiecesRef, video, canvas, playing, set_text, dispatch, corn
     async def loop():
         nonlocal centers, boundary, centers3D, boundary3D, state, keypoints, possible_moves, greedy_move_to_time
         
-        while playing[0]:
-            if not video.isOpened():
-                centers = None
-            else:
+        while True:
                 if centers is None:
-                    keypoints = get_keypoints(corners, canvas)
-                    inv_transform = get_inv_transform(keypoints)
-                    centers, centers3D = transform_centers(inv_transform)
-                    boundary, boundary3D = transform_boundary(inv_transform)
                     state = np.zeros((64, 12))
                     possible_moves = set()
                     greedy_move_to_time = {}
@@ -85,7 +81,7 @@ def find_pieces(modelPiecesRef, video, canvas, playing, set_text, dispatch, corn
                 if start_tensors < end_tensors:
                     print(f"Memory Leak! ({end_tensors} > {start_tensors})")
             
-            await asyncio.sleep(0)
+                await asyncio.sleep(0)
         
     asyncio.run(loop())
 
@@ -184,3 +180,20 @@ def san_to_lan(board, san):
     lan = history[-1].uci()
     board.pop()
     return lan
+  
+  
+async def detect(frame, pieces_model_ref, keypoints):
+
+    frame_height, frame_width, _ = frame.shape
+
+    image4d, width, height, padding, roi = get_input(frame, keypoints)
+
+    pieces_prediction = predict_pieces(frame, pieces_model_ref)
+    boxes, scores = get_boxes_and_scores(pieces_prediction, width, height, frame_width, frame_height, padding, roi)
+
+    del pieces_prediction
+    del image4d  
+    del boxes  
+
+    return boxes, scores
+
