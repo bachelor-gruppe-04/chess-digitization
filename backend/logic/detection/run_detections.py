@@ -7,10 +7,10 @@ from corners_detection import run_xcorners_model, find_corners_from_xcorners, as
 from piece_detection import run_pieces_model
 from detection_methods import extract_xy_from_corners_mapping, scale_labeled_board_corners
 from warp import get_inv_transform, transform_centers
-from render import visualize_centers
+from render import render_centers
 
 
-async def find_corners(
+async def find_centers(
     video_ref: np.ndarray, 
     pieces_model_ref: ort.InferenceSession, 
     xcorners_model_ref: ort.InferenceSession
@@ -71,10 +71,10 @@ async def find_corners(
     # Find the centers of the chessboard squares
     centers: List[List[Tuple[float, float]]] = find_centers_of_squares(corners_mapping, video_ref)
 
-    # Visualize the detected centers on the video frame
-    frame: np.ndarray = visualize_centers(video_ref, centers)
+    # # Visualize the detected centers on the video frame
+    # frame: np.ndarray = visualize_centers(video_ref, centers)
 
-    return frame 
+    return centers 
 
 
 

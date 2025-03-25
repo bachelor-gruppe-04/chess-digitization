@@ -3,11 +3,12 @@ import numpy as np
 import onnxruntime as ort
 import asyncio
 
-from run_detections import find_corners
-from typing import Optional
+from run_detections import find_centers
+from map_pieces import find_pieces
+from render import render_centers
+from typing import Optional, List, Tuple
 
 #**IMPORTANT:** Break the loop by pressing 'Q'!!
-
 async def process_video(
     video_path: str,
     piece_model_ref: ort.InferenceSession,
@@ -15,7 +16,8 @@ async def process_video(
     output_path: str
 ) -> None:
     """
-    Processes a video, detecting corners in every 10th frame, and saves the processed video.
+    Processes a video, detecting centers in the first frame, and saves the processed video.
+    Then renders the centers in every frame.
 
     Args:
         video_path (str): The path to the input video file.
@@ -36,6 +38,7 @@ async def process_video(
     out: cv2.VideoWriter = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
 
     frame_counter: int = 0
+    centers = None  # Will hold the detected centers
 
     while cap.isOpened():
         ret: bool
@@ -45,15 +48,23 @@ async def process_video(
         if not ret or video_frame is None:
             break
 
-        if frame_counter % 10 == 0:
-            frame_with_centers: Optional[np.ndarray] = await find_corners(video_frame, piece_model_ref, corner_model_ref)
+        # Run find_centers only on the first frame
+        if frame_counter == 0:
+            frame_with_centers: Optional[np.ndarray] = await find_centers(video_frame, piece_model_ref, corner_model_ref)
+            if frame_with_centers is not None:
+                centers = frame_with_centers
+            else:
+                print("Failed to detect centers.")
+                break
 
-            if isinstance(frame_with_centers, np.ndarray):
+        if centers is not None:
+            # Now, use `centers` to render them on subsequent frames
+            frame_with_centers: np.ndarray = render_centers(video_frame, centers)
+
+            if frame_counter % 10 == 0:
                 resized_frame: np.ndarray = cv2.resize(frame_with_centers, (1280, 720))
                 cv2.imshow('Video', resized_frame)
                 out.write(frame_with_centers)
-            else:
-                print(f"Error: Expected a NumPy array, but got {type(frame_with_centers)}")
 
         frame_counter += 1
 
@@ -63,6 +74,9 @@ async def process_video(
     cap.release()
     out.release()
     cv2.destroyAllWindows()
+
+
+
 
 
 

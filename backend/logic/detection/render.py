@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 from typing import List, Tuple
-from constants import MODEL_WIDTH, MODEL_HEIGHT
+from constants import MODEL_WIDTH, MODEL_HEIGHT, LABELS, PALETTE
+
 
 def draw_points(frame: np.ndarray, centers: List[Tuple[float, float]], sx: float, sy: float) -> np.ndarray:
     """
@@ -33,7 +34,7 @@ def draw_box(frame: np.ndarray, color: Tuple[int, int, int], x: float, y: float,
 
 
 
-def visualize_centers(canvas: np.ndarray, centers: List[Tuple[float, float]]) -> np.ndarray:
+def render_centers(canvas: np.ndarray, centers: List[Tuple[float, float]]) -> np.ndarray:
     """
     Draws the centers as circles on an OpenCV image (canvas) and returns the modified frame.
     
@@ -49,4 +50,73 @@ def visualize_centers(canvas: np.ndarray, centers: List[Tuple[float, float]]) ->
 
         cv2.circle(canvas, (x, y), radius=5, color=(0, 0, 255), thickness=-1)
 
-    return canvas
+    return draw_points(canvas, centers, 1, 1)
+
+
+
+
+def render_state(canvas_ref, centers, state):
+    # Set up canvas context (this can be modified according to your specific setup)
+    ctx, font_height, line_width, sx, sy = setup_ctx(canvas_ref)
+
+    draw_points(ctx, centers, "blue", sx, sy)
+    
+    for i in range(64):
+        best_score = 0.1
+        best_piece = -1
+
+        # Find the best piece for the current position
+        for j in range(12):
+            if state[i][j] > best_score:
+                best_score = state[i][j]
+                best_piece = j
+
+        if best_piece == -1:
+            continue
+
+        color = PALETTE[best_piece % len(PALETTE)]
+        text = f"{LABELS[best_piece]}:{round(100 * best_score)}"
+
+        draw_box(ctx, color, centers[i][0] * sx, centers[i][1] * sy, text, font_height, line_width)
+        
+        
+
+def setup_ctx(canvas_ref: np.ndarray) -> Tuple:
+    """
+    Set up the canvas context for drawing, including font size, line width, 
+    and scaling factors based on the canvas size.
+    
+    Parameters:
+    - canvas_ref: The canvas (or image) where drawing will occur (using OpenCV).
+    
+    Returns:
+    - ctx: The canvas reference for drawing.
+    - font_height: The height of the font to be used for text rendering.
+    - line_width: The line width for drawing shapes.
+    - sx: Scaling factor for width.
+    - sy: Scaling factor for height.
+    """
+    height, width = canvas_ref.shape[:2]
+    
+    # Set alpha for transparency
+    # alpha = 0.8
+
+    # Initialize the drawing context (in OpenCV, it's essentially the canvas itself)
+    ctx = canvas_ref
+    
+    # Clear the context (using OpenCV to fill the canvas with a white color)
+    ctx[:] = 255  # White background
+
+    # Set font size and style
+    font_size = max(int(max(width, height) / 40), 14)
+    font_height = font_size
+    # font = cv2.FONT_HERSHEY_SIMPLEX  # OpenCV's default font style
+
+    # Set line width
+    line_width = max(min(width, height) / 200, 2.5)
+
+    # Scaling factors for width and height
+    sx = width / MODEL_WIDTH
+    sy = height / MODEL_HEIGHT
+
+    return ctx, font_height, line_width, sx, sy
