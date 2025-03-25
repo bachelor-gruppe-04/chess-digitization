@@ -50,7 +50,7 @@ def render_centers(canvas: np.ndarray, centers: List[Tuple[float, float]]) -> np
 
         cv2.circle(canvas, (x, y), radius=5, color=(0, 0, 255), thickness=-1)
 
-    return draw_points(canvas, centers, 1, 1)
+    return canvas
 
 
 
