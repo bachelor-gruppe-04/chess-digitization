@@ -7,8 +7,6 @@ from corners_detection import run_xcorners_model, find_corners_from_xcorners, as
 from piece_detection import run_pieces_model
 from detection_methods import extract_xy_from_corners_mapping, scale_labeled_board_corners
 from warp import get_inv_transform, transform_centers
-from render import render_centers
-
 
 async def find_centers(
     video_ref: np.ndarray, 

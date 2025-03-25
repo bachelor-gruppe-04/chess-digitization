@@ -61,7 +61,7 @@ async def process_video(
             # Now, use `centers` to render them on subsequent frames
             frame_with_centers: np.ndarray = render_centers(video_frame, centers)
 
-            if frame_counter % 10 == 0:
+            if frame_counter % 1 == 0:
                 resized_frame: np.ndarray = cv2.resize(frame_with_centers, (1280, 720))
                 cv2.imshow('Video', resized_frame)
                 out.write(frame_with_centers)
