@@ -14,8 +14,8 @@ Then, when the directory points to the frontend folder, please run the following
 
 ## How to run
 
-To start the frontend, *assuming the current directory includes the frontend folder,* one has to run this following line:
+To start the frontend, run this following line:
 
     npm run dev
 
-When ran, a website will open on [``http://localhost:5173/``](http://localhost:5173/), displaying the application.
+When ran, a development server will open on [``http://localhost:5173/``](http://localhost:5173/), displaying the application.

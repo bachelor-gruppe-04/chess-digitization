@@ -1,6 +1,6 @@
 # Backend
 
-Contains multiple elements of the application in its whole. Elements such as Camera logic, machine learning algorithms, and WebSocket hosting.
+Contains multiple elements of the application in its whole. Elements such as camera logic, machine learning algorithms, and WebSocket hosting.
 
 ## Requirements
 
@@ -15,16 +15,20 @@ Then, when the directory points to the backend folder, please run the following 
 
 ## How to run
 
-To start the backend, *assuming the current directory includes the backend folder,* one has to run these following lines:
+To start the backend, run these following lines:
 
 ### WebSockets
 
-for starting the WebSocket and cameras:
+For starting the WebSocket and cameras, navigate to the correct directory:
+
+    cd logic/api
+
+Then, when the directory includes the correct path, run the following line to start the process:
 
     uvicorn api:app --reload
 
 ### Machine Learning Algorithm
 
-for starting the machine learning algorithm:
+For starting the algorithm, make sure the directory point to the ``backend`` folder, then run the following line:
 
     python logic/detection/run_video.py
