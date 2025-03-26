@@ -318,7 +318,7 @@ def get_bbox(points: List[Tuple[float, float]]) -> Dict[str, float]:
 
 
 
-def scale_labeled_board_corners(xy: Tuple[float, float], height: int, width: int) -> List[float]:
+def scale_xy_board_corners(xy: Tuple[float, float], height: int, width: int) -> List[float]:
     """
     Scales the (x, y) coordinates of a labeled board marker to fit within the canvas size.
 

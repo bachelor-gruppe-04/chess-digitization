@@ -3,11 +3,12 @@ import numpy as np
 import tensorflow as tf
 import cv2
 
-from detection_methods import get_input, get_boxes_and_scores, process_boxes_and_scores
+from detection_methods import get_input, get_boxes_and_scores
 from piece_detection import predict_pieces
 
-def find_pieces(modelPiecesRef, video, canvas, playing, set_text, dispatch, corners, board,
-                 moves_pairs, last_move, move_text, mode):
+
+def find_pieces(modelPiecesRef, video, board_corners, board,
+                 moves_pairs, last_move, mode):
     centers = None
     boundary = None
     centers3D = None
@@ -17,8 +18,6 @@ def find_pieces(modelPiecesRef, video, canvas, playing, set_text, dispatch, corn
     possible_moves = set()
     greedy_move_to_time = {}
     
-    print(modelPiecesRef)
-    print(corners)
     
     async def loop():
         nonlocal centers, boundary, centers3D, boundary3D, state, keypoints, possible_moves, greedy_move_to_time
@@ -72,7 +71,6 @@ def find_pieces(modelPiecesRef, video, canvas, playing, set_text, dispatch, corn
                     print("payload", payload)
                     dispatch(game_update(payload))
                 
-                set_text([f"FPS: {fps:.1f}", move_text[0]])
                 render_state(canvas, centers, boundary, state)
                 
                 del boxes, scores  # TensorFlow garbage collection
@@ -134,45 +132,101 @@ def process_state(state, moves_pairs, possible_moves):
     
     return best_score1, best_score2, best_joint_score, best_move, best_moves
 
+
 def get_box_centers(boxes):
-    l = boxes[:, 0:1]
-    r = boxes[:, 2:3]
-    b = boxes[:, 3:4]
-    cx = (l + r) / 2
-    cy = b - (r - l) / 3
-    return np.hstack([cx, cy])
+    # Using tf.GradientTape or tf.function isn't required here since we're just performing tensor operations.
+    with tf.GradientTape(persistent=True) as tape:
+        # Slice the boxes tensor to get l, r, and b.
+        l = boxes[:, 0:1]
+        r = boxes[:, 2:3]
+        b = boxes[:, 3:4]
+
+        # Calculate the center coordinates.
+        cx = (l + r) / 2
+        cy = b - (r - l) / 3
+
+        # Concatenate cx and cy to get the box centers.
+        box_centers = tf.concat([cx, cy], axis=1)
+
+    return box_centers
+
 
 def get_squares(boxes, centers3D, boundary3D):
-    box_centers3D = np.expand_dims(get_box_centers(boxes), 1)
-    dist = np.sum(np.square(box_centers3D - centers3D), axis=2)
-    squares = np.argmin(dist, axis=1)
-    
-    shifted_boundary3D = np.concatenate([boundary3D[:, 1:4, :], boundary3D[:, :1, :]], axis=1)
-    
-    a = np.squeeze(boundary3D[:, :4, 0] - shifted_boundary3D[:, :4, 0], axis=2)
-    b = np.squeeze(boundary3D[:, :4, 1] - shifted_boundary3D[:, :4, 1], axis=2)
-    c = np.squeeze(box_centers3D[:, :1, 0] - shifted_boundary3D[:, :4, 0], axis=2)
-    d = np.squeeze(box_centers3D[:, :1, 1] - shifted_boundary3D[:, :4, 1], axis=2)
-    
-    det = a * d - b * c
-    squares[np.any(det < 0, axis=1)] = -1
-    
+    with tf.GradientTape(persistent=True) as tape:
+        # Expand dims for box centers (equivalent to tf.expandDims)
+        box_centers_3d = tf.expand_dims(get_box_centers(boxes), axis=1)
+        print(box_centers_3d)
+        print(centers3D)
+
+        # Calculate squared distance (equivalent to tf.sub, tf.square, tf.sum)
+        dist = tf.reduce_sum(tf.square(box_centers_3d - centers3D), axis=2)
+        squares = tf.argmin(dist, axis=1)
+
+        # Adjust boundary (equivalent to tf.concat and tf.slice)
+        shifted_boundary_3d = tf.concat([
+            tf.slice(boundary3D, [0, 1, 0], [1, 3, 2]),
+            tf.slice(boundary3D, [0, 0, 0], [1, 1, 2])
+        ], axis=1)
+
+        print(boundary3D)
+        print(shifted_boundary_3d)
+
+        # Get the number of boxes (equivalent to tf.shape)
+        n_boxes = box_centers_3d.shape[0]
+
+        a = tf.squeeze(tf.subtract(
+            tf.cast(tf.slice(boundary3D, [0, 0, 0], [1, 4, 1]), tf.float32),
+            tf.cast(tf.slice(shifted_boundary_3d, [0, 0, 0], [1, 4, 1]), tf.float32)
+        ), axis=2)
+
+        b = tf.squeeze(tf.subtract(
+            tf.cast(tf.slice(boundary3D, [0, 0, 1], [1, 4, 1]), tf.float32),
+            tf.cast(tf.slice(shifted_boundary_3d, [0, 0, 1], [1, 4, 1]), tf.float32)
+        ), axis=2)
+
+        c = tf.squeeze(tf.subtract(
+            tf.cast(tf.slice(box_centers_3d, [0, 0, 0], [n_boxes, 1, 1]), tf.float32),
+            tf.cast(tf.slice(shifted_boundary_3d, [0, 0, 0], [1, 4, 1]), tf.float32)
+        ), axis=2)
+
+        d = tf.squeeze(tf.subtract(
+            tf.cast(tf.slice(box_centers_3d, [0, 0, 1], [n_boxes, 1, 1]), tf.float32),
+            tf.cast(tf.slice(shifted_boundary_3d, [0, 0, 1], [1, 4, 1]), tf.float32)
+        ), axis=2)
+
+        # Calculate determinant (equivalent to tf.mul and tf.sub)
+        det = tf.subtract(tf.multiply(a, d), tf.multiply(b, c))
+
+        # Apply condition (equivalent to tf.where, tf.any, tf.less)
+        new_squares = tf.where(
+        tf.reduce_any(tf.less(det, 0), axis=1),
+        tf.cast(tf.fill(tf.shape(squares), -1), tf.int32),  # Cast to int32
+        tf.cast(squares, tf.int32)  # Cast squares to int32
+    )
+
+        return new_squares.numpy()  # To convert the tensor back to a numpy array
+
     return squares
 
 def get_update(scores_tensor, squares):
     update = np.zeros((64, 12))
-    scores = scores_tensor.numpy()
-    
-    for i, square in enumerate(squares):
+    scores = scores_tensor
+
+    for i in range(len(squares)):
+        square = squares[i]
         if square == -1:
             continue
         for j in range(12):
             update[square][j] = max(update[square][j], scores[i][j])
-    
+
     return update
 
 def update_state(state, update, decay=0.5):
-    return decay * np.array(state) + (1 - decay) * np.array(update)
+    for i in range(64):
+        for j in range(12):
+            state[i][j] = decay * state[i][j] + (1 - decay) * update[i][j]
+    return state
+
 
 def san_to_lan(board, san):
     board.push_san(san)
@@ -183,7 +237,6 @@ def san_to_lan(board, san):
   
   
 async def detect(frame, pieces_model_ref, keypoints):
-
     frame_height, frame_width, _ = frame.shape
 
     image4d, width, height, padding, roi = get_input(frame, keypoints)
@@ -193,7 +246,6 @@ async def detect(frame, pieces_model_ref, keypoints):
 
     del pieces_prediction
     del image4d  
-    del boxes  
 
     return boxes, scores
 

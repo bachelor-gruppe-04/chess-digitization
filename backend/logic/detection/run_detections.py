@@ -5,15 +5,14 @@ from typing import List, Dict, Tuple, Optional
 from constants import CORNER_KEYS
 from corners_detection import run_xcorners_model, find_corners_from_xcorners, assign_labels_to_board_corners
 from piece_detection import run_pieces_model
-from detection_methods import extract_xy_from_corners_mapping, scale_labeled_board_corners
+from detection_methods import extract_xy_from_corners_mapping, scale_xy_board_corners
 from warp import get_inv_transform, transform_centers
 
 async def find_scaled_labeled_board_corners(
     video_ref: np.ndarray, 
     pieces_model_ref: ort.InferenceSession, 
     xcorners_model_ref: ort.InferenceSession
-) -> Optional[np.ndarray]:
-    
+) -> Optional[np.ndarray]: 
     """
     Detects corners on a chessboard using ONNX models.
 
@@ -25,6 +24,7 @@ async def find_scaled_labeled_board_corners(
     Returns:
         Optional[np.ndarray]: Processed frame with centers visualized, or None if detection fails.
     """
+    video_height, video_width, _ = video_ref.shape
 
     # We extract the top 16 predicted pieces for both black and white players
     # Pieces is on the format [x, y, pieceTypeIndex]
@@ -53,22 +53,17 @@ async def find_scaled_labeled_board_corners(
     # placement of the white and black pieces
     labeled_board_corners: Dict[str, Tuple[int, int]] = assign_labels_to_board_corners(black_pieces, white_pieces, board_corners)
 
-    video_height, video_width, _ = video_ref.shape
-    
-    print(labeled_board_corners)
-
-    # Stores extracted corner positions
-    corners_mapping: Dict[str, Dict[str, Tuple[int, int]]] = {}
+    scaled_labeled_board_corners: Dict[str, Dict[str, Tuple[int, int]]] = {}
 
     for key in CORNER_KEYS:
         xy: Tuple[int, int] = labeled_board_corners[key]
         payload: Dict[str, Tuple[int, int] | str] = {
-            "xy": scale_labeled_board_corners(xy, video_height, video_width),
+            "xy": scale_xy_board_corners(xy, video_height, video_width),
             "key": key
         }
-        corners_mapping[key] = payload 
+        scaled_labeled_board_corners[key] = payload 
     
-    return corners_mapping
+    return scaled_labeled_board_corners
 
 
 def find_centers_of_squares(

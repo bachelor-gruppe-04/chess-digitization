@@ -1,4 +1,5 @@
 import numpy as np
+import tensorflow as tf
 
 from typing import List, Tuple
 from constants import SQUARE_SIZE, BOARD_SIZE
@@ -161,6 +162,23 @@ def transform_centers(inv_transform: np.ndarray) -> List[List[float]]:
     y: List[float] = [7.5 - i for i in range(8)]
     centers_in_perfect_square: List[List[float]] = [[xx * SQUARE_SIZE, yy * SQUARE_SIZE, 1] for yy in y for xx in x]
     
-    centers: List[List[float]] = perspective_transform(centers_in_perfect_square, inv_transform)
+    centers: List[List[float]] = perspective_transform(centers_in_perfect_square, inv_transform)    
+    centers3D = np.expand_dims(np.array(centers), axis=0)
     
-    return centers
+    return centers, centers3D
+
+
+
+
+def transform_boundary(inv_transform: np.ndarray):    
+    warped_boundary = np.array([
+        [-0.5 * SQUARE_SIZE, -0.5 * SQUARE_SIZE, 1],
+        [-0.5 * SQUARE_SIZE, 8.5 * SQUARE_SIZE, 1],
+        [8.5 * SQUARE_SIZE, 8.5 * SQUARE_SIZE, 1],
+        [8.5 * SQUARE_SIZE, -0.5 * SQUARE_SIZE, 1]
+    ])
+    
+    boundary = perspective_transform(warped_boundary, inv_transform)
+    boundary3D = tf.expand_dims(tf.convert_to_tensor(boundary, dtype=tf.float32), axis=0)
+    
+    return boundary, boundary3D

@@ -4,7 +4,7 @@ import onnxruntime as ort
 import asyncio
 
 from run_detections import find_scaled_labeled_board_corners, find_centers_of_squares
-from map_pieces import find_pieces
+from find_FEN import find_fen
 from render import render_centers
 from typing import Optional, List, Tuple
 
@@ -58,14 +58,14 @@ async def process_video(
                 break
 
         if board_corners_initial is not None:
-            # Now, use `centers` to render them on subsequent frames
-            centers, centers3d = find_centers_of_squares(board_corners_initial,video_frame)
-            centers2 = render_centers(video_frame, centers)
+            
+            a = await find_fen(piece_model_ref,video_frame,board_corners)
 
             if frame_counter % 1 == 0:
-                resized_frame: np.ndarray = cv2.resize(centers2, (1280, 720))
-                cv2.imshow('Video', resized_frame)
-                out.write(centers2)
+                # resized_frame: np.ndarray = cv2.resize(centers2, (1280, 720))
+                # cv2.imshow('Video', resized_frame)
+                # out.write(centers2)
+                print("ddd")
 
         frame_counter += 1
 
