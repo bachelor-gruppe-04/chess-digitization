@@ -1,43 +1,14 @@
-import cv2
 import asyncio
+
 from fastapi import FastAPI, WebSocket, Path
 from fastapi.responses import StreamingResponse
-from typing import Generator, List, Dict
+from typing import List, Dict
+from camera import Camera
 
 app = FastAPI()
 
 clients = []
 move_history: List[str] = []
-
-class Camera:
-  """ Camera class to handle webcam. """
-  
-  def __init__(self, cam_id: int) -> None:
-    """ Initialize the camera object.
-
-    Args:
-      cam_id (int): Camera ID
-    """
-    self.cam_id = cam_id
-    self.camera = cv2.VideoCapture(self.cam_id)
-    
-  def get_cam_id(self) -> int:
-    """ Get the camera ID. """
-    return self.cam_id
-
-  def generate_frames(self) -> Generator[bytes, None, None]:
-    """ Generate frames from the laptop webcam.
-  
-    Yields:
-      Generator[bytes, None, None]: Image frames
-    """
-    while True:
-      success, frame = self.camera.read()
-      if not success:
-        break
-      _, buffer = cv2.imencode(".jpg", frame)
-      frame_bytes = buffer.tobytes()
-      yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n")
 
 camera_sources: Dict[int, Camera] = {i: Camera(i) for i in range(3)}
 
