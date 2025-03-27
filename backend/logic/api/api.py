@@ -3,26 +3,27 @@ import asyncio
 from fastapi import FastAPI, WebSocket, Path
 from fastapi.responses import StreamingResponse
 from typing import List, Dict
+from board import Board
 from camera import Camera
 
 app = FastAPI()
 
 clients = []
 move_history: List[str] = []
+# camera_sources: Dict[int, Camera] = {i: Camera(i) for i in range(3)}
+boards: Dict[int, Board] = {i: Board(i) for i in range(3)}
 
-camera_sources: Dict[int, Camera] = {i: Camera(i) for i in range(3)}
-
-@app.get("/video/{camera_id}")
-def video_feed(camera_id: int = Path(..., ge=0, le=(len(camera_sources) - 1))) -> StreamingResponse:
+@app.get("/video/{id}")
+def video_feed(id: int = Path(..., ge=0, le=(len(boards) - 1))) -> StreamingResponse:
   """Dynamic video stream from multiple webcams. """
-  if camera_id in camera_sources:
+  if id in boards:
     return StreamingResponse(
-      camera_sources[camera_id].generate_frames(), 
+      boards[id].get_camera().generate_frames(), 
       media_type="multipart/x-mixed-replace; boundary=frame"
     )
   return {"error": "Invalid camera ID"}
 
-@app.websocket("/moves")
+@app.websocket("/moves/0")
 async def websocket_endpoint(websocket: WebSocket) -> None:
   """ Sends chess moves and history.
   
