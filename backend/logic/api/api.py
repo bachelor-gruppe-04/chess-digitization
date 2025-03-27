@@ -11,7 +11,7 @@ app = FastAPI()
 clients = []
 move_history: List[str] = []
 # camera_sources: Dict[int, Camera] = {i: Camera(i) for i in range(3)}
-boards: Dict[int, Board] = {i: Board(i) for i in range(3)}
+boards: Dict[int, Board] = {i: Board(i) for i in range(1)}
 
 @app.get("/video/{id}")
 def video_feed(id: int = Path(..., ge=0, le=(len(boards) - 1))) -> StreamingResponse:
