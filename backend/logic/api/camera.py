@@ -13,6 +13,12 @@ class Camera:
     self.cam_id = cam_id
     self.camera = cv2.VideoCapture(self.cam_id)
     
+  def set_cam_id(self, cam_id) -> TypeError | None:
+    if not int.is_integer(cam_id):
+      raise TypeError
+    
+    self.cam_id = cam_id
+    
   def get_cam_id(self) -> int:
     """ Get the camera ID. """
     return self.cam_id
