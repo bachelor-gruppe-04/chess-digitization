@@ -12,7 +12,7 @@ class Board:
     self.chess_board: chess.Board = chess.Board()
   
   def set_id(self, id: int) -> TypeError | None:
-    if not int.is_integer(id):
+    if type(id) != type(int):
       raise TypeError
       
     self.id = id
@@ -30,6 +30,9 @@ class Board:
     return self.chess_board
   
   def move_piece(self, move: str) -> str:
+    if type(move) != type(str):
+      raise TypeError
+    
     is_valid: bool = self.validate_move(move)
     command: str = ""
     
@@ -43,6 +46,9 @@ class Board:
     return command
       
   def validate_move(self, move: str) -> bool:
+    if type(move) != type(str):
+      raise TypeError
+    
     is_valid: bool = None
     
     try:
