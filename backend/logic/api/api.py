@@ -10,7 +10,6 @@ app = FastAPI()
 
 clients = []
 move_history: List[str] = []
-# camera_sources: Dict[int, Camera] = {i: Camera(i) for i in range(3)}
 boards: Dict[int, Board] = {i: Board(i) for i in range(1)}
 
 @app.get("/video/{id}")
@@ -64,10 +63,12 @@ async def fake_ml_moves() -> None:
     await asyncio.sleep(3)
     print(f"Sending move: {move}")
     await send_move(move)
+    
   await asyncio.sleep(5)
   print("Resetting game...")
   await reset_game()
   moves = ["a3", "g6", "c4", "Bg7", "d4", "Nf6"]
+  
   for move in moves:
     await asyncio.sleep(3)
     print(f"Sending move: {move}")
