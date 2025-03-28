@@ -8,7 +8,7 @@ from camera import Camera
 app = FastAPI()
 
 clients = []
-boards: Dict[int, Board] = {i: Board(i) for i in range(3)}
+boards: Dict[int, Board] = {i: Board(i) for i in range(1)}
 
 @app.get("/video/{id}")
 def video_feed(id: int = Path(..., ge=0, le=(len(boards) - 1))) -> StreamingResponse:
@@ -19,6 +19,8 @@ def video_feed(id: int = Path(..., ge=0, le=(len(boards) - 1))) -> StreamingResp
       media_type="multipart/x-mixed-replace; boundary=frame"
     )
   return {"error": "Invalid camera ID"}
+
+
 
 @app.websocket("/moves/{board_id}")
 async def websocket_endpoint(websocket: WebSocket, board_id: int) -> None:
@@ -40,6 +42,8 @@ async def websocket_endpoint(websocket: WebSocket, board_id: int) -> None:
       await websocket.receive_text()
   except:
     boards[board_id].clients.remove(websocket)
+    
+    
 
 async def send_move(board_id: int, move: str) -> None:
   """ Send a chess move to all clients.
@@ -47,17 +51,25 @@ async def send_move(board_id: int, move: str) -> None:
   Args:
     move (str): Chess move
   """
+  move: str = move.strip()
   checked_move, move_status = boards[board_id].check_move(move)
   if move_status:
     for client in boards[board_id].clients:
       # print(f"Sending move: {move} to board {board_id}")
       await client.send_text(checked_move)
+      
+      
 
 async def reset_game(board_id: int) -> None:
   """ Reset the chess game of a board. """
-  boards[board_id].move_history = []
-  for client in boards[board_id].clients:
-    await client.send_text("RESET")
+  
+  board: Board = boards[board_id]
+  
+  board.move_history = []
+  for client in board.clients:
+    await client.send_text(board.reset_board())
+    
+    
     
     
 async def reset_all_games() -> None:
@@ -65,34 +77,41 @@ async def reset_all_games() -> None:
   for board_id in boards.keys():
     await reset_game(board_id)
     
+    
+    
 async def fake_ml_moves() -> None:
   """ Simulate a chess game using hardcoded moves. """
   
   
-  moves = ["e4", "d5", "exd5", "Nc6", "Bb5", "a6"]  
+  moves = ["e4", "  d5 ", "   exd5", "Nc6  ", "Bb5", "a6"]  
   for move in moves:
     # await asyncio.sleep(3)
     await send_move(0, move)
     
   # await asyncio.sleep(5)
     
-  moves = ["b4", "e6", "Nf3", "c5", "c3", "cxb4"]  
-  for move in moves:
-    # await asyncio.sleep(3)
-    await send_move(1, move)
+  # moves = ["b4", "e6", "Nf3", "c5", "c3", "cxb4"]  
+  # for move in moves:
+  #   # await asyncio.sleep(3)
+  #   await send_move(1, move)
     
-  # await asyncio.sleep(5)
+  # # await asyncio.sleep(5)
     
-  moves = ["a4", "a5", "b3", "b6", "Ra2", "Ra7"]  
-  for move in moves:
-    # await asyncio.sleep(3)
-    await send_move(2, move)
+  # moves = ["a4", "a5", "b3", "b6", "Ra2", "Ra7"]  
+  # for move in moves:
+  #   # await asyncio.sleep(3)
+  #   await send_move(2, move)
     
   await asyncio.sleep(10)
   
-  # await reset_all_games()
+  await reset_all_games()
   
+  await asyncio.sleep(10)
   
+  moves = ["a4", "a5", "b3", "b6", "Ra2", "Ra7"]  
+  for move in moves:
+    # await asyncio.sleep(3)
+    await send_move(0, move)
   
   # moves = ["e4", "e5", "Rs4", "Nc6", "Bb5", "a6"]
   # for board_id in boards:
@@ -110,6 +129,8 @@ async def fake_ml_moves() -> None:
   #     await asyncio.sleep(3)
   #     print(f"Sending move: {move} to board {board_id}")
   #     await send_move(board_id, move)
+  
+  
     
 @app.on_event("startup")
 async def start_fake_moves() -> None:

@@ -12,28 +12,42 @@ class Board:
     self.clients: List[WebSocket] = []
     self.chess_board: chess.Board = chess.Board()
     self.invalid_latched: bool = False
+    
+    
   
   def set_id(self, id: int) -> TypeError | None:
-    # if type(id) != type(int):
-    #   raise TypeError
+    if not isinstance(id, int):
+      raise TypeError(f"id must be an integar, got {type(id).__name__}")
+    if id < 0:
+      raise ValueError(f"id must be a positive number, got {id}")
       
     self.id = id
     
+    
+    
   def get_id(self) -> int:
     return self.id
+  
+  
     
   def get_camera(self) -> Camera:
     return self.camera
   
+  
+  
   def get_move_history(self) -> List[str]:
     return self.move_history
+  
+  
   
   def get_chess_board(self) -> chess.Board:
     return self.chess_board
   
+  
+  
   def check_move(self, move: str):
-    # if type(move) != type(str):
-    #   raise TypeError
+    if not isinstance(move, str):
+      raise TypeError(f"move must be a string, got {type(move).__name__}")
     
     if self.invalid_latched:
       return "INVALID", False
@@ -47,10 +61,12 @@ class Board:
     else: 
       self.invalid_latched = True
       return "INVALID", False
+    
+    
       
   def validate_move(self, move: str) -> bool:
-    # if type(move) != type(str):
-    #   raise TypeError
+    if not isinstance(move, str):
+      raise TypeError(f"move must be a string, got {type(move).__name__}")
     
     is_valid: bool = None
     
@@ -61,6 +77,8 @@ class Board:
       is_valid = False
     
     return is_valid
+  
+  
   
   def reset_board(self) -> str:
     self.chess_board.reset()

@@ -13,15 +13,23 @@ class Camera:
     self.set_cam_id(cam_id)
     self.camera = cv2.VideoCapture(self.cam_id)
     
+    
+    
   def set_cam_id(self, cam_id: int) -> TypeError | None:
-    # if type(cam_id) != type(int):
-    #   raise TypeError
+    if not isinstance(cam_id, int):
+      raise TypeError(f"cam_id must be an integar, got {type(cam_id).__name__}")
+    if cam_id < 0:
+      raise ValueError(f"cam_id must be a positive number, got {cam_id}")
     
     self.cam_id = cam_id
+    
+    
     
   def get_cam_id(self) -> int:
     """ Get the camera ID. """
     return self.cam_id
+  
+  
 
   def generate_frames(self) -> Generator[bytes, None, None]:
     """ Generate frames from the laptop webcam.
