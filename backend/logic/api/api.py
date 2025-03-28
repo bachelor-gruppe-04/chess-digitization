@@ -47,24 +47,58 @@ async def send_move(board_id: int, move: str) -> None:
   Args:
     move (str): Chess move
   """
-  boards[board_id].move_piece(move)
-  for client in boards[board_id].clients:
-    await client.send_text(move)
+  checked_move, move_status = boards[board_id].check_move(move)
+  if move_status:
+    for client in boards[board_id].clients:
+      # print(f"Sending move: {move} to board {board_id}")
+      await client.send_text(checked_move)
 
 async def reset_game(board_id: int) -> None:
-  """ Reset the chess game. """
+  """ Reset the chess game of a board. """
   boards[board_id].move_history = []
   for client in boards[board_id].clients:
     await client.send_text("RESET")
     
+    
+async def reset_all_games() -> None:
+  """ Reset the chess game to all boards. """
+  for board_id in boards.keys():
+    await reset_game(board_id)
+    
 async def fake_ml_moves() -> None:
   """ Simulate a chess game using hardcoded moves. """
-  moves = ["e4", "e5", "Rs4", "Nc6", "Bb5", "a6"]
-  for board_id in boards:
-    for move in moves:
-      await asyncio.sleep(3)
-      print(f"Sending move: {move} to board {board_id}")
-      await send_move(board_id, move)
+  
+  
+  moves = ["e4", "d5", "exd5", "Nc6", "Bb5", "a6"]  
+  for move in moves:
+    # await asyncio.sleep(3)
+    await send_move(0, move)
+    
+  # await asyncio.sleep(5)
+    
+  moves = ["b4", "e6", "Nf3", "c5", "c3", "cxb4"]  
+  for move in moves:
+    # await asyncio.sleep(3)
+    await send_move(1, move)
+    
+  # await asyncio.sleep(5)
+    
+  moves = ["a4", "a5", "b3", "b6", "Ra2", "Ra7"]  
+  for move in moves:
+    # await asyncio.sleep(3)
+    await send_move(2, move)
+    
+  await asyncio.sleep(10)
+  
+  # await reset_all_games()
+  
+  
+  
+  # moves = ["e4", "e5", "Rs4", "Nc6", "Bb5", "a6"]
+  # for board_id in boards:
+  #   for move in moves:
+  #     await asyncio.sleep(3)
+  #     await send_move(board_id, move)
     
   # await asyncio.sleep(5)
   # print("Resetting game...")
