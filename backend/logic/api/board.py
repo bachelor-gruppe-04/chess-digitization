@@ -1,5 +1,5 @@
 import chess
-
+from fastapi import WebSocket
 from camera import Camera
 from typing import List
 
@@ -9,11 +9,12 @@ class Board:
     self.set_id(id)
     self.camera: Camera = Camera(id)
     self.move_history: List[str] = []
+    self.clients: List[WebSocket] = []
     self.chess_board: chess.Board = chess.Board()
   
   def set_id(self, id: int) -> TypeError | None:
-    if type(id) != type(int):
-      raise TypeError
+    # if type(id) != type(int):
+    #   raise TypeError
       
     self.id = id
     
@@ -30,8 +31,8 @@ class Board:
     return self.chess_board
   
   def move_piece(self, move: str) -> str:
-    if type(move) != type(str):
-      raise TypeError
+    # if type(move) != type(str):
+    #   raise TypeError
     
     is_valid: bool = self.validate_move(move)
     command: str = ""
@@ -46,8 +47,8 @@ class Board:
     return command
       
   def validate_move(self, move: str) -> bool:
-    if type(move) != type(str):
-      raise TypeError
+    # if type(move) != type(str):
+    #   raise TypeError
     
     is_valid: bool = None
     

@@ -1,5 +1,4 @@
 import cv2
-
 from typing import Generator
 
 class Camera:
@@ -15,8 +14,8 @@ class Camera:
     self.camera = cv2.VideoCapture(self.cam_id)
     
   def set_cam_id(self, cam_id: int) -> TypeError | None:
-    if type(cam_id) != type(int):
-      raise TypeError
+    # if type(cam_id) != type(int):
+    #   raise TypeError
     
     self.cam_id = cam_id
     
