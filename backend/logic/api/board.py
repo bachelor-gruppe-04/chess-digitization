@@ -11,6 +11,7 @@ class Board:
     self.move_history: List[str] = []
     self.clients: List[WebSocket] = []
     self.chess_board: chess.Board = chess.Board()
+    self.invalid_latched: bool = False
   
   def set_id(self, id: int) -> TypeError | None:
     # if type(id) != type(int):
@@ -30,21 +31,22 @@ class Board:
   def get_chess_board(self) -> chess.Board:
     return self.chess_board
   
-  def move_piece(self, move: str) -> str:
+  def check_move(self, move: str):
     # if type(move) != type(str):
     #   raise TypeError
     
-    is_valid: bool = self.validate_move(move)
-    command: str = ""
+    if self.invalid_latched:
+      return "INVALID", False
     
+    is_valid: bool = self.validate_move(move)
+  
     if is_valid:
       self.move_history.append(move)
-      command = move, is_valid
-      
+      return move, True
+    
     else: 
-      command = "INVALID", is_valid
-      
-    return command
+      self.invalid_latched = True
+      return "INVALID", False
       
   def validate_move(self, move: str) -> bool:
     # if type(move) != type(str):
