@@ -1,60 +1,43 @@
 import chess
 from fastapi import WebSocket
 from camera import Camera
-from typing import List
+from typing import List, Literal
 
 class Board:
+  """ Chess board class to handle chess moves and history. """
   
-  def __init__(self, id: int):
-    self.set_id(id)
+  def __init__(self, id: int) -> None:
+    """ Initialize the chess board object.
+    
+    Args:
+      id (int): Board ID
+    """
+    self.id = id
     self.camera: Camera = Camera(id)
     self.move_history: List[str] = []
     self.clients: List[WebSocket] = []
     self.chess_board: chess.Board = chess.Board()
     self.invalid_latched: bool = False
+  
+  
+  
+  def process_move(self, move: str) -> (tuple[Literal['INVALID'], Literal[False]] | tuple[str, Literal[True]]):
+    """ Process a chess move.
     
-    
-  
-  def set_id(self, id: int) -> TypeError | None:
-    if not isinstance(id, int):
-      raise TypeError(f"id must be an integar, got {type(id).__name__}")
-    if id < 0:
-      raise ValueError(f"id must be a positive number, got {id}")
-      
-    self.id = id
-    
-    
-    
-  def get_id(self) -> int:
-    return self.id
-  
-  
-    
-  def get_camera(self) -> Camera:
-    return self.camera
-  
-  
-  
-  def get_move_history(self) -> List[str]:
-    return self.move_history
-  
-  
-  
-  def get_chess_board(self) -> chess.Board:
-    return self.chess_board
-  
-  
-  
-  def check_move(self, move: str):
+    Args:
+      move (str): Chess move in SAN format.
+    Returns:
+      tuple[str, bool]: Tuple containing the move and a boolean indicating if the move was valid.
+    """
     if not isinstance(move, str):
       raise TypeError(f"move must be a string, got {type(move).__name__}")
     
+    move = move.strip()
+    
     if self.invalid_latched:
       return "INVALID", False
-    
-    is_valid: bool = self.validate_move(move)
   
-    if is_valid:
+    if self.validate_move(move):
       self.move_history.append(move)
       return move, True
     
@@ -65,6 +48,15 @@ class Board:
     
       
   def validate_move(self, move: str) -> bool:
+    """ Validate a chess move.
+    
+    Args:
+      move (str): Chess move in SAN format.
+    Returns:
+      bool: True if the move is valid, False otherwise.
+    Raises:
+      TypeError: If move is not a string.
+    """
     if not isinstance(move, str):
       raise TypeError(f"move must be a string, got {type(move).__name__}")
     
@@ -81,5 +73,12 @@ class Board:
   
   
   def reset_board(self) -> str:
+    """ Reset the chess board and move history.
+    
+    Returns:
+      str: "RESET" if the board was reset successfully.
+    """
     self.chess_board.reset()
+    self.move_history = []
+    self.invalid_latched = False
     return "RESET"
