@@ -82,7 +82,7 @@ async def process_video(
 
 
 async def main() -> None:
-    video_path: str = 'resources/videoes/chessvideo.mp4'
+    video_path: str = 'resources/videoes/chessvideoKnights.mp4'
     output_path: str = 'resources/videoes/output_video_combined.avi'
 
     piece_model_path: str = "resources/models/480M_leyolo_pieces.onnx"

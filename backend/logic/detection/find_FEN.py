@@ -2,9 +2,8 @@ import tensorflow as tf
 import chess
 import numpy as np
 
-from chess import Board, Piece
 from typing import List, Tuple
-from constants import SQUARE_NAMES
+from constants import SQUARE_NAMES, PIECE_SYMBOLS
 
 
 from detection_methods import extract_xy_from_corners_mapping
@@ -31,11 +30,10 @@ async def find_fen(pieces_model_ref, frame, board_corners):
     
     tf.keras.backend.clear_session()
     
-    
-def set_fen_from_state(state: List[List[float]]):
+def set_fen_from_state(state):
     assignment = [-1] * 64
-
-    # First pass: Assign the black king
+    
+    # Assign black king
     best_black_king_score = -1
     best_black_king_idx = -1
     for i in range(64):
@@ -44,8 +42,8 @@ def set_fen_from_state(state: List[List[float]]):
             best_black_king_score = black_king_score
             best_black_king_idx = i
     assignment[best_black_king_idx] = 1
-
-    # Second pass: Assign the white king
+    
+    # Assign white king
     best_white_king_score = -1
     best_white_king_idx = -1
     for i in range(64):
@@ -56,21 +54,22 @@ def set_fen_from_state(state: List[List[float]]):
             best_white_king_score = white_king_score
             best_white_king_idx = i
     assignment[best_white_king_idx] = 7
-
-    # Third pass: Assign the remaining pieces
+    
+    # Assign remaining pieces
     remaining_piece_idxs = [0, 2, 3, 4, 5, 6, 8, 9, 10, 11]
-    piece_symbols = ["b", "k", "n", "p", "q", "r"]
+    square_names = [chess.square_name(i) for i in range(64)]
     
     for i in range(64):
         if assignment[i] != -1:
             continue
-
+        
         best_idx = None
         best_score = 0.3
+        
         for j in remaining_piece_idxs:
-            square = SQUARE_NAMES[i]
-            bad_rank = square[1] in "18"
-            is_pawn = piece_symbols[j % 6] == "p"
+            square = square_names[i]
+            bad_rank = square[1] in ('1', '8')
+            is_pawn = PIECE_SYMBOLS[j % 6] == 'p'
             
             if is_pawn and bad_rank:
                 continue
@@ -79,45 +78,50 @@ def set_fen_from_state(state: List[List[float]]):
             if score > best_score:
                 best_idx = j
                 best_score = score
-
+        
         if best_idx is not None:
             assignment[i] = best_idx
-
-    # Construct the board
-    board = Board()
+    
+    # Set up the board
+    board = chess.Board()
     board.clear()
+    
     for i in range(64):
         if assignment[i] == -1:
             continue
-
-        # Select the piece type from the symbols list
-        piece_type = piece_symbols[assignment[i] % 6]
-
-        # Determine the piece color ('w' for white, 'b' for black)
-        piece_color = 'w' if assignment[i] > 5 else 'b'
-
-        # Determine the square name using the square index (SQUARE_NAMES is assumed to be a list of square names)
-        square = SQUARE_NAMES[i]
-
-        # Create the piece symbol by combining the color and piece type
-        # For white pieces, the symbol will be uppercase (e.g., 'N', 'K')
-        # For black pieces, the symbol will be lowercase (e.g., 'n', 'k')
-        piece_symbol = piece_type.upper() if piece_color == 'w' else piece_type.lower()
         
+        piece = PIECE_SYMBOLS[assignment[i] % 6]
+        piece_color = chess.WHITE if assignment[i] > 5 else chess.BLACK
+        square = chess.square(i % 8, i // 8)
         
-        square_index = chess.parse_square(square)
-
-        board.set_piece_at(square_index, Piece.from_symbol(piece_symbol))
-
-    # After all pieces have been set, get the FEN string
+        board.set_piece_at(square, chess.Piece.from_symbol(piece.upper() if piece_color == chess.WHITE else piece))
+    
+    print(board.fen())
+    return board.fen()
+        
+def get_fen_and_error(board: chess.Board, color: str):
     fen = board.fen()
-    print(fen)
-    if board.is_valid():
-        print("THIS IS FEN")
-        print(fen)
-        print(["Set starting FEN"])
-    else:
-        print(["Invalid FEN"])
+    other_color = 'b' if color == 'w' else 'w'
+    fen = fen.replace(f" {other_color} ", f" {color} ")
 
-    return fen
+    error = None
+
+    # Side to move has opponent in check
+    for i in range(64):
+        square = chess.SQUARE_NAMES[i]
+        piece = board.piece_at(square)
+
+        if piece is None:
+            continue
+
+        is_king = piece.piece_type == chess.KING
+        is_other_color = piece.color == (chess.WHITE if other_color == 'w' else chess.BLACK)
+        is_attacked = board.is_attacked_by(chess.WHITE if color == 'w' else chess.BLACK, square)
+
+        if is_king and is_other_color and is_attacked:
+            error = "Side to move has opponent in check"
+            return fen, error
+
+    return fen, error
+
 

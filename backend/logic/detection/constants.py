@@ -7,6 +7,7 @@ CORNER_KEYS = ["h1", "a1", "a8", "h8"]
 SQUARE_SIZE = 128
 BOARD_SIZE = 8 * SQUARE_SIZE
 LABELS = ["b", "k", "n", "p", "q", "r", "B", "K", "N", "P", "Q", "R"]
+PIECE_SYMBOLS = ["b", "k", "n", "p", "q", "r"]
 PALETTE = [
     "#FF3838",  # Red
     "#FF9D97",  # Light red
