@@ -7,15 +7,14 @@ from camera import Camera
 
 app = FastAPI()
 
-clients = []
 boards: Dict[int, Board] = {i: Board(i) for i in range(1)}
 
-@app.get("/video/{id}")
-def video_feed(id: int = Path(..., ge=0, le=(len(boards) - 1))) -> StreamingResponse:
+@app.get("/video/{board_id}")
+def video_feed(board_id: int = Path(..., ge=0, le=(len(boards) - 1))) -> StreamingResponse:
   """Dynamic video stream from multiple webcams. """
-  if id in boards:
+  if board_id in boards:
     return StreamingResponse(
-      boards[id].camera.generate_frames(), 
+      boards[board_id].camera.generate_frames(), 
       media_type="multipart/x-mixed-replace; boundary=frame"
     )
   return {"error": "Invalid camera ID"}
