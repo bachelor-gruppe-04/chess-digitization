@@ -1,9 +1,8 @@
 import asyncio
 from fastapi import FastAPI, WebSocket, Path
 from fastapi.responses import StreamingResponse
-from typing import List, Dict
+from typing import Dict
 from board import Board
-from camera import Camera
 
 app = FastAPI()
 
