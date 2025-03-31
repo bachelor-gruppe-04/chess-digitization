@@ -150,67 +150,63 @@ def get_box_centers(boxes):
 
     return box_centers
 
-
-def get_squares(boxes, centers3D, boundary3D):
-    with tf.GradientTape(persistent=True) as tape:
-        # Expand dims for box centers (equivalent to tf.expandDims)
-        box_centers_3d = tf.expand_dims(get_box_centers(boxes), axis=1)
-        print(box_centers_3d)
-        print(centers3D)
-
-        # Calculate squared distance (equivalent to tf.sub, tf.square, tf.sum)
-        dist = tf.reduce_sum(tf.square(box_centers_3d - centers3D), axis=2)
+def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor):
+    with tf.device('/CPU:0'):
+        box_centers_3D = tf.expand_dims(get_box_centers(boxes), 1)
+        dist = tf.reduce_sum(tf.square(box_centers_3D - centers3D), axis=2)
         squares = tf.argmin(dist, axis=1)
-
-        # Adjust boundary (equivalent to tf.concat and tf.slice)
-        shifted_boundary_3d = tf.concat([
+        
+        shifted_boundary_3D = tf.concat([
             tf.slice(boundary3D, [0, 1, 0], [1, 3, 2]),
-            tf.slice(boundary3D, [0, 0, 0], [1, 1, 2])
+            tf.slice(boundary3D, [0, 0, 0], [1, 1, 2]),
         ], axis=1)
-
+        
+        n_boxes = tf.shape(box_centers_3D)[0]    
+        
+        print("n_boxes")
+        print(n_boxes)
+        print(box_centers_3D)
+        print("boundary")
         print(boundary3D)
-        print(shifted_boundary_3d)
+        print(shifted_boundary_3D)    
+        
+                
+        a = tf.squeeze(tf.slice(boundary3D, [0, 0, 0], [1, 4, 1]) -
+                       tf.slice(shifted_boundary_3D, [0, 0, 0], [1, 4, 1]), axis=[2])
+        b = tf.squeeze(tf.slice(boundary3D, [0, 0, 1], [1, 4, 1]) -
+                       tf.slice(shifted_boundary_3D, [0, 0, 1], [1, 4, 1]), axis=[2])
+        c = tf.squeeze(tf.slice(box_centers_3D, [0, 0, 0], [n_boxes, 1, 1]) -
+                       tf.slice(shifted_boundary_3D, [0, 0, 0], [1, 4, 1]), axis=[2])
+        d = tf.squeeze(tf.slice(box_centers_3D, [0, 0, 1], [n_boxes, 1, 1]) -
+                       tf.slice(shifted_boundary_3D, [0, 0, 1], [1, 4, 1]), axis=[2])
 
-        # Get the number of boxes (equivalent to tf.shape)
-        n_boxes = box_centers_3d.shape[0]
+    
+    
+        det = tf.subtract(tf.multiply(a, d), tf.multiply(b, c))  # Equivalent to tf.sub and tf.mul in JS
+        
+        print("det")
+        print(det)
+        
+        # np.set_printoptions(threshold=np.inf) 
+        print("det values:", det.numpy())  # Ensure `det` has both positive and negative values
+        print("det dtype:", det.dtype)
+        print("det shape:", det.shape)
+        # np.set_printoptions(threshold=np.inf) 
+        print("Condition check:", tf.reduce_any(det < 0, axis=1).numpy())  # See which rows trigger `True`
+        
 
-        a = tf.squeeze(tf.subtract(
-            tf.cast(tf.slice(boundary3D, [0, 0, 0], [1, 4, 1]), tf.float32),
-            tf.cast(tf.slice(shifted_boundary_3d, [0, 0, 0], [1, 4, 1]), tf.float32)
-        ), axis=2)
-
-        b = tf.squeeze(tf.subtract(
-            tf.cast(tf.slice(boundary3D, [0, 0, 1], [1, 4, 1]), tf.float32),
-            tf.cast(tf.slice(shifted_boundary_3d, [0, 0, 1], [1, 4, 1]), tf.float32)
-        ), axis=2)
-
-        c = tf.squeeze(tf.subtract(
-            tf.cast(tf.slice(box_centers_3d, [0, 0, 0], [n_boxes, 1, 1]), tf.float32),
-            tf.cast(tf.slice(shifted_boundary_3d, [0, 0, 0], [1, 4, 1]), tf.float32)
-        ), axis=2)
-
-        d = tf.squeeze(tf.subtract(
-            tf.cast(tf.slice(box_centers_3d, [0, 0, 1], [n_boxes, 1, 1]), tf.float32),
-            tf.cast(tf.slice(shifted_boundary_3d, [0, 0, 1], [1, 4, 1]), tf.float32)
-        ), axis=2)
-
-        # Calculate determinant (equivalent to tf.mul and tf.sub)
-        det = tf.subtract(tf.multiply(a, d), tf.multiply(b, c))
-
-        # Apply condition (equivalent to tf.where, tf.any, tf.less)
+        # Apply tf.where condition
         new_squares = tf.where(
-        tf.reduce_any(tf.less(det, 0), axis=1),
-        tf.cast(tf.fill(tf.shape(squares), -1), tf.int32),  # Cast to int32
-        tf.cast(squares, tf.int32)  # Cast squares to int32
-    )
-
-        return new_squares.numpy()  # To convert the tensor back to a numpy array
-
-    return squares
+            tf.reduce_any(tf.less(det, 0), axis=1),  # Check if any det < 0 along axis 1
+            tf.constant(-1, dtype=squares.dtype),    # Replace with -1
+            squares                                   # Otherwise, keep original squares
+        )
+        # return new_squares.numpy() 
+        return squares
 
 def get_update(scores_tensor, squares):
     update = np.zeros((64, 12))
-    scores = scores_tensor
+    scores = scores_tensor.numpy()
 
     for i in range(len(squares)):
         square = squares[i]

@@ -40,44 +40,111 @@ def process_boxes_and_scores(boxes: tf.Tensor, scores: tf.Tensor) -> np.ndarray:
 
 
 
-def get_boxes_and_scores(
-    preds: np.ndarray, 
-    width: int, 
-    height: int, 
-    video_width: int, 
-    video_height: int, 
-    padding: Tuple[int, int, int, int], 
-    roi: Tuple[int, int]
-) -> Tuple[np.ndarray, np.ndarray]:
+# def get_boxes_and_scores(
+#     preds: np.ndarray, 
+#     width: int, 
+#     height: int, 
+#     video_width: int, 
+#     video_height: int, 
+#     padding: Tuple[int, int, int, int], 
+#     roi: Tuple[int, int]
+# ) -> Tuple[np.ndarray, np.ndarray]:
+    
+#     """
+#     This function processes predictions to extract bounding boxes and their associated scores.
+
+#     Args:
+#         preds (np.ndarray): The predictions array with shape (batch_size, num_boxes, num_predictions).
+#         width (int): The width to scale the bounding box coordinates to.
+#         height (int): The height to scale the bounding box coordinates to.
+#         video_width (int): The width of the video for further scaling.
+#         video_height (int): The height of the video for further scaling.
+#         padding (Tuple[int, int, int, int]): The padding to adjust the bounding boxes.
+#         roi (Tuple[int, int]): The region of interest, which is added to the bounding box coordinates.
+
+#     Returns:
+#         Tuple[np.ndarray, np.ndarray]: A tuple containing the bounding boxes and scores.
+#     """
+    
+#     # Transpose preds to match the desired shape
+#     preds_t: np.ndarray = np.transpose(preds, (0, 2, 1))  # Shape: (batch_size, num_predictions, num_boxes)
+    
+#     # Extract width (w) and height (h) of the boxes
+#     w: np.ndarray = preds_t[:, :, 2:3]  
+#     h: np.ndarray = preds_t[:, :, 3:4]  
+    
+#     # Convert xc, yc, w, h to l, t, r, b (left, top, right, bottom)
+#     l: np.ndarray = preds_t[:, :, 0:1] - (w / 2)  # Left
+#     t: np.ndarray = preds_t[:, :, 1:2] - (h / 2)  # Top
+#     r: np.ndarray = l + w  # Right
+#     b: np.ndarray = t + h  # Bottom
+
+#     # Apply padding to the bounding box coordinates
+#     l -= padding[0]
+#     r -= padding[0]
+#     t -= padding[2]
+#     b -= padding[2]
+
+#     # Scale the bounding box coordinates to the target size
+#     l *= (width / (MODEL_WIDTH - padding[0] - padding[1]))
+#     r *= (width / (MODEL_WIDTH - padding[0] - padding[1]))
+#     t *= (height / (MODEL_HEIGHT - padding[2] - padding[3]))
+#     b *= (height / (MODEL_HEIGHT - padding[2] - padding[3]))
+
+#     # Add ROI (Region of Interest)
+#     l += roi[0]
+#     r += roi[0]
+#     t += roi[1]
+#     b += roi[1]
+
+#     # Scale based on video size
+#     l *= (MODEL_WIDTH / video_width)
+#     r *= (MODEL_WIDTH / video_width)
+#     t *= (MODEL_HEIGHT / video_height)
+#     b *= (MODEL_HEIGHT / video_height)
+
+#     # Concatenate the left, top, right, and bottom coordinates to form the bounding boxes
+#     boxes: np.ndarray = np.concatenate([l, t, r, b], axis=2) 
+
+#     # Extract the scores (assuming score is in the 5th element onward)
+#     scores: np.ndarray = preds_t[:, :, 4:] 
+
+#     # Squeeze to remove unnecessary dimensions (if any)
+#     boxes = np.squeeze(boxes, axis=0)
+#     scores = np.squeeze(scores, axis=0)
+
+#     return boxes, scores
+
+def get_boxes_and_scores(preds, width, height, video_width, video_height, padding, roi):
     
     """
     This function processes predictions to extract bounding boxes and their associated scores.
 
     Args:
-        preds (np.ndarray): The predictions array with shape (batch_size, num_boxes, num_predictions).
-        width (int): The width to scale the bounding box coordinates to.
-        height (int): The height to scale the bounding box coordinates to.
-        video_width (int): The width of the video for further scaling.
-        video_height (int): The height of the video for further scaling.
-        padding (Tuple[int, int, int, int]): The padding to adjust the bounding boxes.
-        roi (Tuple[int, int]): The region of interest, which is added to the bounding box coordinates.
+        preds: The predictions array with shape (batch_size, num_boxes, num_predictions).
+        width: The width to scale the bounding box coordinates to.
+        height: The height to scale the bounding box coordinates to.
+        video_width: The width of the video for further scaling.
+        video_height: The height of the video for further scaling.
+        padding: The padding to adjust the bounding boxes.
+        roi: The region of interest, which is added to the bounding box coordinates.
 
     Returns:
-        Tuple[np.ndarray, np.ndarray]: A tuple containing the bounding boxes and scores.
+        A tuple containing the bounding boxes and scores as Tensor2D tensors.
     """
     
     # Transpose preds to match the desired shape
-    preds_t: np.ndarray = np.transpose(preds, (0, 2, 1))  # Shape: (batch_size, num_predictions, num_boxes)
+    preds_t = np.transpose(preds, (0, 2, 1))  # Shape: (batch_size, num_predictions, num_boxes)
     
     # Extract width (w) and height (h) of the boxes
-    w: np.ndarray = preds_t[:, :, 2:3]  
-    h: np.ndarray = preds_t[:, :, 3:4]  
+    w = preds_t[:, :, 2:3]  
+    h = preds_t[:, :, 3:4]  
     
     # Convert xc, yc, w, h to l, t, r, b (left, top, right, bottom)
-    l: np.ndarray = preds_t[:, :, 0:1] - (w / 2)  # Left
-    t: np.ndarray = preds_t[:, :, 1:2] - (h / 2)  # Top
-    r: np.ndarray = l + w  # Right
-    b: np.ndarray = t + h  # Bottom
+    l = preds_t[:, :, 0:1] - (w / 2)  # Left
+    t = preds_t[:, :, 1:2] - (h / 2)  # Top
+    r = l + w  # Right
+    b = t + h  # Bottom
 
     # Apply padding to the bounding box coordinates
     l -= padding[0]
@@ -104,16 +171,20 @@ def get_boxes_and_scores(
     b *= (MODEL_HEIGHT / video_height)
 
     # Concatenate the left, top, right, and bottom coordinates to form the bounding boxes
-    boxes: np.ndarray = np.concatenate([l, t, r, b], axis=2) 
+    boxes = np.concatenate([l, t, r, b], axis=2) 
 
     # Extract the scores (assuming score is in the 5th element onward)
-    scores: np.ndarray = preds_t[:, :, 4:] 
+    scores = preds_t[:, :, 4:] 
 
     # Squeeze to remove unnecessary dimensions (if any)
     boxes = np.squeeze(boxes, axis=0)
     scores = np.squeeze(scores, axis=0)
 
-    return boxes, scores
+    # Convert to TensorFlow tensors
+    boxes_tf = tf.convert_to_tensor(boxes, dtype=tf.float32)
+    scores_tf = tf.convert_to_tensor(scores, dtype=tf.float32)
+
+    return boxes_tf, scores_tf
 
 
 

@@ -1,5 +1,6 @@
 import tensorflow as tf
 import chess
+import numpy as np
 
 from chess import Board, Piece
 from typing import List, Tuple
@@ -17,10 +18,14 @@ async def find_fen(pieces_model_ref, frame, board_corners):
     boundary, boundary3D = transform_boundary(inv_transform)
     
     boxes, scores = await detect(frame, pieces_model_ref, keypoints)
-    print("boundary3d")
-    print(boundary3D)
     squares = get_squares(boxes, centers3D, boundary3D)
-    state = get_update(scores, squares)    
+    state = get_update(scores, squares) 
+    # np.set_printoptions(threshold=np.inf)   
+    print("squares")
+    print(squares)
+    print("state")
+    print(state)
+    print(len(state))
     set_fen_from_state(state)
     # render_state(frame, centers, boundary, state)
     
@@ -28,8 +33,6 @@ async def find_fen(pieces_model_ref, frame, board_corners):
     
     
 def set_fen_from_state(state: List[List[float]]):
-    print("state")
-    print(state)
     assignment = [-1] * 64
 
     # First pass: Assign the black king
@@ -56,8 +59,8 @@ def set_fen_from_state(state: List[List[float]]):
 
     # Third pass: Assign the remaining pieces
     remaining_piece_idxs = [0, 2, 3, 4, 5, 6, 8, 9, 10, 11]
-    piece_symbols = ["p", "n", "b", "r", "q", "k"]
-
+    piece_symbols = ["b", "k", "n", "p", "q", "r"]
+    
     for i in range(64):
         if assignment[i] != -1:
             continue
