@@ -1,0 +1,11 @@
+.table-view {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 2rem;
+  }
+  
+  .pgn-wrapper {
+    min-width: 220px;
+  }
