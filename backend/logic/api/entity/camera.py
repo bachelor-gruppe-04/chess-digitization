@@ -1,20 +1,18 @@
-import cv2
 from typing import Generator
+import cv2
 
 class Camera:
   """ Camera class to handle webcam. """
   
-  def __init__(self, id: int) -> None:
+  def __init__(self, cam_id: int):
     """ Initialize the camera object.
 
     Args:
       cam_id (int): Camera ID
     """
-    self.cam_id = id
-    self.camera = cv2.VideoCapture(id)
-  
-
-
+    self.cam_id = cam_id
+    self.camera = cv2.VideoCapture(cam_id)
+      
   def generate_frames(self) -> Generator[bytes, None, None]:
     """ Generate frames from the laptop webcam.
   
@@ -26,5 +24,4 @@ class Camera:
       if not success:
         break
       _, buffer = cv2.imencode(".jpg", frame)
-      frame_bytes = buffer.tobytes()
-      yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n")
+      yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + buffer.tobytes() + b"\r\n")
