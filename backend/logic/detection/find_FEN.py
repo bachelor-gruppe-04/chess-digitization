@@ -31,6 +31,8 @@ async def find_fen(pieces_model_ref, frame, board_corners):
     tf.keras.backend.clear_session()
     
 def set_fen_from_state(state):
+    print("state)")
+    print(state)
     assignment = [-1] * 64
     
     # Assign black king
