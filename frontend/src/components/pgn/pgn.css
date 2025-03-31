@@ -1,0 +1,29 @@
+.pgn-list {
+    background-color: white;
+    color: black;
+    width: 180px;
+    font-family: system-ui, sans-serif;
+    font-size: 14px;
+  }
+  
+  .pgn-header,
+  .pgn-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr 2fr;
+    align-items: center;
+  }
+  
+  .pgn-header {
+    font-weight: 600;
+  }
+  
+  .pgn-row span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .highlight {
+    background-color: #4d8055;
+  }
+  
