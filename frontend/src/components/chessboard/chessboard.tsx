@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Chess } from "chess.ts";
 import Tile from "../tile/tile";
 import "./chessboard.css";
-import PGN from "../pgn/pgn";
+
 
 /**
  * Chessboard Component
@@ -106,9 +106,13 @@ function generatePositionFromFen(fen: string): Piece[] {
   return pieces;
 }
 
-function Chessboard() {
+interface ChessboardProps {
+  // Function to update the list of chess moves in the parent component
+  setMoves: React.Dispatch<React.SetStateAction<string[]>>;
+}
+
+function Chessboard({ setMoves }: ChessboardProps) {
   const [pieces, setPieces] = useState<Piece[]>([]);
-  const [moves, setMoves] = useState<string[]>([]);
   const chess = new Chess();
 
   /**
@@ -124,7 +128,7 @@ function Chessboard() {
       const move = chess.move(notation);
       if (move) {
         setPieces(generatePositionFromFen(chess.fen()));
-        setMoves(prev => [...prev, move.san]);
+        setMoves?.((prev) => [...prev, move.san]); // Add move in Standard Algebraic Notation
       } else {
         console.warn("Illegal move:", notation);
       }
@@ -165,7 +169,6 @@ function Chessboard() {
       id="chessboard"
     >
       {board}
-      <PGN moves={moves} />
     </div>
   );
 }
