@@ -1,9 +1,8 @@
 .pgn-list {
     background-color: white;
     color: black;
-    width: 180px;
     font-family: system-ui, sans-serif;
-    font-size: 14px;
+    font-size: 18px;
   }
   
   .pgn-header,
@@ -24,6 +23,6 @@
   }
   
   .highlight {
-    background-color: #4d8055;
+    background-color: rgba(77, 128, 85, 0.5);
   }
   

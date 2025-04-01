@@ -162,12 +162,14 @@ function Chessboard({ setMoves }: ChessboardProps) {
   }
 
   return (
+    
     <div
       onMouseMove={e => movePiece(e)}
       onMouseDown={e => grabPiece(e)}
       onMouseUp={e => dropPiece(e)}
-      id="chessboard"
+      id="chessboard" 
     >
+      
       {board}
     </div>
   );

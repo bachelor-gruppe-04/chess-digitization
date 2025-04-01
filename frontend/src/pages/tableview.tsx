@@ -19,12 +19,17 @@ interface TableViewProps {
 function TableView({ moves, setMoves }: TableViewProps) {
   return (
     <div className="table-view">
-      <div className="chessboard-wrapper">
-        <Chessboard setMoves={setMoves} />
-      </div>
-      <div className="pgn-wrapper">
-        <PGN moves={moves} />
-      </div>
+      <div className='left-wrapper'>
+          <div className='camera-wrapper'>
+            <p>Camera</p>
+          </div>
+          <div className="pgn-wrapper">
+            <PGN moves={moves} />
+          </div>
+        </div>
+        <div className="chessboard-wrapper">
+          <Chessboard setMoves={setMoves} />
+        </div>
     </div>
   );
 }
