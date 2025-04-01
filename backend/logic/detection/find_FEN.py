@@ -20,9 +20,7 @@ async def find_fen(pieces_model_ref, frame, board_corners):
     boxes, scores = await detect(frame, pieces_model_ref, keypoints)
     squares = get_squares(boxes, centers3D, boundary3D)
     state = get_update(scores, squares) 
-    # np.set_printoptions(threshold=np.inf)   
     fen = set_fen_from_state(state)
-    # display_board(fen)
     
     tf.keras.backend.clear_session()
     

@@ -11,17 +11,10 @@ from game_slice import make_update_payload
 
 from detection_methods import extract_xy_from_corners_mapping
 from warp import get_inv_transform, transform_centers, transform_boundary
-from map_pieces import detect, get_squares, get_update
-
-async def find_fen(pieces_model_ref, frame, board_corners):
-    keypoints = extract_xy_from_corners_mapping(board_corners, frame)
-    inv_transform = get_inv_transform(keypoints)
-    centers, centers3D = transform_centers(inv_transform)
-    boundary, boundary3D = transform_boundary(inv_transform)
 
 
-def find_pieces(model_ref, video_ref, canvas_ref, playing_ref, set_text, dispatch, corners_ref, board_ref, 
-                moves_pairs_ref, last_move_ref, move_text_ref, mode):
+def find_pieces(model_ref, video_ref, corners_ref, board_ref, 
+                moves_pairs_ref, last_move_ref):
     centers = None
     boundary = None
     centers_3d = None
@@ -33,11 +26,11 @@ def find_pieces(model_ref, video_ref, canvas_ref, playing_ref, set_text, dispatc
 
     def loop():
         nonlocal centers, boundary, centers_3d, boundary_3d, state, keypoints, possible_moves, greedy_move_to_time
-        if not playing_ref:
+        if False:
             centers = None
         else:
             if centers is None:
-                keypoints = extract_xy_from_corners_mapping(corners_ref, canvas_ref)
+                keypoints = extract_xy_from_corners_mapping(corners_ref, video_ref)
                 inv_transform = get_inv_transform(keypoints)
                 centers, centers_3d = transform_centers(inv_transform)
                 boundary, boundary_3d = transform_boundary(inv_transform)
@@ -46,7 +39,6 @@ def find_pieces(model_ref, video_ref, canvas_ref, playing_ref, set_text, dispatc
                 greedy_move_to_time = {}
 
             start_time = time.time()
-            start_tensors = len(tf.get_registered_nodes()) 
 
             boxes, scores = detect(model_ref, video_ref, keypoints)
             squares = get_squares(boxes, centers_3d, boundary_3d)
@@ -58,7 +50,7 @@ def find_pieces(model_ref, video_ref, canvas_ref, playing_ref, set_text, dispatc
             fps = round(1 / (end_time - start_time), 1)
 
             has_move = False
-            if best_moves is not None and mode != "play":
+            if best_moves is not None:
                 move = best_moves["sans"][0]
                 has_move = best_score2 > 0 and best_joint_score > 0 and move in possible_moves
                 if has_move:
@@ -80,21 +72,21 @@ def find_pieces(model_ref, video_ref, canvas_ref, playing_ref, set_text, dispatc
                     greedy_move_to_time = {move: greedy_move_to_time[move]}
 
             if has_move or has_greedy_move:
-                greedy = False if mode == "play" else has_greedy_move
+                greedy = False
                 payload = make_update_payload(board_ref, greedy)
                 print("payload", payload)
-                dispatch(game_update(payload))
+                # dispatch(game_update(payload))
 
-            set_text([f"FPS: {fps}", move_text_ref])
+            # set_text([f"FPS: {fps}", move_text_ref])
 
             # render_state(canvas_ref, centers, boundary, state)
 
             # Dispose of the tensors to free memory
             tf.keras.backend.clear_session()
 
-            end_tensors = len(tf.get_registered_nodes())  # Check memory usage
-            if start_tensors < end_tensors:
-                print(f"Memory Leak! ({end_tensors} > {start_tensors})")
+            # end_tensors = len(tf.get_registered_nodes())  # Check memory usage
+            # if start_tensors < end_tensors:
+            #     print(f"Memory Leak! ({end_tensors} > {start_tensors})")
 
         # Recursively call the loop (frame by frame)
         tf.function(lambda: loop())
@@ -108,83 +100,6 @@ def find_pieces(model_ref, video_ref, canvas_ref, playing_ref, set_text, dispatc
         # Implement cancellation if necessary (e.g., clearing loops or canceling animations)
     
     return cleanup
-
-
-def find_pieces(modelPiecesRef, video, board_corners, board,
-                 moves_pairs, last_move, mode):
-    centers = None
-    boundary = None
-    centers3D = None
-    boundary3D = None
-    state = None
-    keypoints = None
-    possible_moves = set()
-    greedy_move_to_time = {}
-    
-    
-    async def loop():
-        nonlocal centers, boundary, centers3D, boundary3D, state, keypoints, possible_moves, greedy_move_to_time
-        
-        while True:
-                if centers is None:
-                    state = np.zeros((64, 12))
-                    possible_moves = set()
-                    greedy_move_to_time = {}
-                
-                start_time = cv2.getTickCount()
-                start_tensors = len(tf.config.experimental.list_physical_devices('GPU'))
-                
-                boxes, scores = await detect(modelPiecesRef, video, keypoints)
-                squares = get_squares(boxes, centers3D, boundary3D)
-                update = get_update(scores, squares)
-                state = update_state(state, update)
-                
-                best_score1, best_score2, best_joint_score, best_move, best_moves = \
-                    process_state(state, moves_pairs[0], possible_moves)
-                
-                end_time = cv2.getTickCount()
-                fps = cv2.getTickFrequency() / (end_time - start_time)
-                
-                has_move = False
-                if best_moves and mode != "play":
-                    move = best_moves.sans[0]
-                    has_move = best_score2 > 0 and best_joint_score > 0 and move in possible_moves
-                    if has_move:
-                        board.move(move)
-                        possible_moves.clear()
-                        greedy_move_to_time = {}
-                
-                has_greedy_move = False
-                if best_move and not has_move and best_score1 > 0:
-                    move = best_move.sans[0]
-                    if move not in greedy_move_to_time:
-                        greedy_move_to_time[move] = end_time
-                    
-                    second_elapsed = (end_time - greedy_move_to_time[move]) / cv2.getTickFrequency() > 1
-                    new_move = san_to_lan(board, move) != last_move[0]
-                    has_greedy_move = second_elapsed and new_move
-                    
-                    if has_greedy_move:
-                        board.move(move)
-                        greedy_move_to_time = {move: greedy_move_to_time[move]}
-                
-                if has_move or has_greedy_move:
-                    greedy = False if mode == "play" else has_greedy_move
-                    payload = make_update_payload(board, greedy)
-                    print("payload", payload)
-                    dispatch(game_update(payload))
-                
-                render_state(canvas, centers, boundary, state)
-                
-                del boxes, scores  # TensorFlow garbage collection
-                
-                end_tensors = len(tf.config.experimental.list_physical_devices('GPU'))
-                if start_tensors < end_tensors:
-                    print(f"Memory Leak! ({end_tensors} > {start_tensors})")
-            
-                await asyncio.sleep(0)
-        
-    asyncio.run(loop())
 
 
 
@@ -281,7 +196,6 @@ def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor):
     
         det = tf.subtract(tf.multiply(a, d), tf.multiply(b, c))  # Equivalent to tf.sub and tf.mul in JS
                 
-
         # Apply tf.where condition
         new_squares = tf.where(
             tf.reduce_any(tf.less(det, 0), axis=1),  # Check if any det < 0 along axis 1
@@ -331,60 +245,3 @@ async def detect(frame, pieces_model_ref, keypoints):
     del image4d  
 
     return boxes, scores
-
-def calculate_score(state, move, from_thr=0.6, to_thr=0.6):
-    score = 0
-    
-    # Loop over 'from' squares
-    for square in move['from']:
-        score += 1 - max(state[square]) - from_thr
-    
-    # Loop over 'to' squares
-    for i in range(len(move['to'])):
-        score += state[move['to'][i]][move['targets'][i]] - to_thr
-    
-    return score
-
-
-
-def process_state(state, moves_pairs, possible_moves):
-    best_score1 = float('-inf')
-    best_score2 = float('-inf')
-    best_joint_score = float('-inf')
-    best_move = None
-    best_moves = None
-    seen = set()
-
-    for move_pair in moves_pairs:
-        if move_pair['move1']['sans'][0] not in seen:
-            seen.add(move_pair['move1']['sans'][0])
-            score = calculate_score(state, move_pair['move1'])
-            if score > 0:
-                possible_moves.add(move_pair['move1']['sans'][0])
-            if score > best_score1:
-                best_move = move_pair['move1']
-                best_score1 = score
-
-        if move_pair['move2'] is None or move_pair['moves'] is None or move_pair['move1']['sans'][0] not in possible_moves:
-            continue
-
-        score2 = calculate_score(state, move_pair['move2'])
-        if score2 < 0:
-            continue
-        elif score2 > best_score2:
-            best_score2 = score2
-
-        joint_score = calculate_score(state, move_pair['moves'])
-        if joint_score > best_joint_score:
-            best_joint_score = joint_score
-            best_moves = move_pair['moves']
-
-    return {
-        'bestScore1': best_score1,
-        'bestScore2': best_score2,
-        'bestJointScore': best_joint_score,
-        'bestMove': best_move,
-        'bestMoves': best_moves
-    }
-
-

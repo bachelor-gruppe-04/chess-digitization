@@ -91,24 +91,3 @@ class GameSlice:
         self.state.fen = payload.get("fen", self.state.fen)
         self.state.last_move = payload.get("lastMove", self.state.last_move)
         self.state.greedy = payload.get("greedy", self.state.greedy)
-
-
-# Usage Example:
-
-# Create a game slice to manage the state
-game_slice = GameSlice()
-
-# Set game state
-game_slice.game_set_moves("e2e4 e7e5")
-game_slice.game_set_fen("some_fen_string")
-
-# Get the game state
-print(game_slice.state.moves)
-print(game_slice.state.fen)
-
-# Create a chess board from the game state
-board = make_board(game_slice.state)
-
-# Get update payload
-payload = make_update_payload(board, greedy=True)
-print(json.dumps(payload, indent=2))
