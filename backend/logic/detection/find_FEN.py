@@ -1,6 +1,7 @@
 import tensorflow as tf
 import chess
 import numpy as np
+import asyncio
 
 from typing import List, Tuple
 from constants import SQUARE_NAMES, PIECE_SYMBOLS
@@ -20,19 +21,14 @@ async def find_fen(pieces_model_ref, frame, board_corners):
     squares = get_squares(boxes, centers3D, boundary3D)
     state = get_update(scores, squares) 
     # np.set_printoptions(threshold=np.inf)   
-    print("squares")
-    print(squares)
-    print("state")
-    print(state)
-    print(len(state))
-    set_fen_from_state(state)
-    # render_state(frame, centers, boundary, state)
+    fen = set_fen_from_state(state)
+    # display_board(fen)
     
     tf.keras.backend.clear_session()
     
+    return fen   
+    
 def set_fen_from_state(state):
-    print("state)")
-    print(state)
     assignment = [-1] * 64
     
     # Assign black king
@@ -99,8 +95,10 @@ def set_fen_from_state(state):
         board.set_piece_at(square, chess.Piece.from_symbol(piece.upper() if piece_color == chess.WHITE else piece))
     
     print(board.fen())
+    
     return board.fen()
-        
+
+
 def get_fen_and_error(board: chess.Board, color: str):
     fen = board.fen()
     other_color = 'b' if color == 'w' else 'w'

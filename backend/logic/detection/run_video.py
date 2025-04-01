@@ -59,7 +59,10 @@ async def process_video(
 
         if board_corners_initial is not None:
             
-            a = await find_fen(piece_model_ref,video_frame,board_corners)
+            fen = await find_fen(piece_model_ref,video_frame,board_corners)
+            
+            
+            
 
             if frame_counter % 1 == 0:
                 # resized_frame: np.ndarray = cv2.resize(centers2, (1280, 720))
@@ -82,7 +85,7 @@ async def process_video(
 
 
 async def main() -> None:
-    video_path: str = 'resources/videoes/chessvideoKnights2.mp4'
+    video_path: str = 'resources/videoes/chessvideoKnights4.mp4'
     output_path: str = 'resources/videoes/output_video_combined.avi'
 
     piece_model_path: str = "resources/models/480M_leyolo_pieces.onnx"
