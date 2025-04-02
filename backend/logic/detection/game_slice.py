@@ -12,49 +12,10 @@ class Game:
         self.greedy = False
 
 
-def get_moves_from_pgn(board: chess.Board) -> str:
-    # Get the PGN string of the game
-    pgn = board.pgn()
-    
-    # Get rid of the headers (strings beginning with "[" and ending with "]")
-    # Get rid of newline characters
-    moves = pgn.replace(r'\[.*?\]', '').replace(r'\r?\n|\r', '')
-    return moves
 
+# def make_pgn(game: Game) -> str:
+#     return f'[FEN "{game.start}"]\n\n{game.moves}'
 
-def make_pgn(game: Game) -> str:
-    return f'[FEN "{game.start}"]\n\n{game.moves}'
-
-
-def make_update_payload(board: chess.Board, greedy: bool = False) -> Dict[str, Optional[str]]:
-    # Get the history of moves in verbose format
-    history = board.move_stack  # This gives the history of moves played so far
-
-    # Get the moves as PGN
-    moves = get_moves_from_pgn(board)
-    
-    # Get the FEN string of the current position
-    fen = board.fen()
-
-    # Get the last move in LAN (algebraic notation)
-    last_move = "" if len(history) == 0 else board.san(history[-1])
-
-    # Construct the payload
-    payload = {
-        "moves": moves,
-        "fen": fen,
-        "lastMove": last_move,
-        "greedy": greedy
-    }
-
-    return payload
-
-
-def make_board(game: Game) -> chess.Board:
-    # Create a new board and load the PGN from the game
-    board = chess.Board(game.start)
-    board.set_pgn(make_pgn(game))
-    return board
 
 
 # State management simulation

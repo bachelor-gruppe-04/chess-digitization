@@ -6,14 +6,13 @@ import time
 
 from detection_methods import get_input, get_boxes_and_scores
 from piece_detection import predict_pieces
-from game_slice import make_update_payload
-
+from game import make_update_payload
 
 from detection_methods import extract_xy_from_corners_mapping
 from warp import get_inv_transform, transform_centers, transform_boundary
 
 
-def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref):
+async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_pairs_ref):
     centers = None
     boundary = None
     centers_3d = None
@@ -22,6 +21,7 @@ def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref):
     keypoints = None
     possible_moves = set()
     greedy_move_to_time = {}
+    print(game_ref.moves)
 
     async def loop():
         nonlocal centers, boundary, centers_3d, boundary_3d, state, keypoints, possible_moves, greedy_move_to_time
@@ -44,6 +44,8 @@ def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref):
             update = get_update(scores, squares)
             state = update_state(state, update)
             best_score1, best_score2, best_joint_score, best_move, best_moves = process_state(state, moves_pairs_ref, possible_moves)
+            print(best_move, best_moves, best_score1, best_score2, best_joint_score)
+            print("best")
 
             end_time = time.time()
             fps = round(1 / (end_time - start_time), 1)
@@ -53,7 +55,9 @@ def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref):
                 move = best_moves["sans"][0]
                 has_move = best_score2 > 0 and best_joint_score > 0 and move in possible_moves
                 if has_move:
-                    game_ref["board"].move(move)
+                    print("has_move")
+                    print(move)
+                    game_ref.board.push_san(move)
                     possible_moves.clear()
                     greedy_move_to_time = {}
 
@@ -64,7 +68,8 @@ def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref):
                     greedy_move_to_time[move] = end_time
 
                 second_elapsed = (end_time - greedy_move_to_time[move]) > 1  # 1000 ms = 1 second
-                new_move = san_to_lan(game_ref["board"], move) != game_ref["last_move"]
+                new_move = san_to_lan(game_ref.board, move) != game_ref["last_move"]
+                print("new_move", new_move)
                 has_greedy_move = second_elapsed and new_move
                 if has_greedy_move:
                     game_ref["board"].move(move)
@@ -72,15 +77,18 @@ def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref):
 
             if has_move or has_greedy_move:
                 greedy = False
-                payload = make_update_payload(game_ref["board"], greedy)
+                payload = make_update_payload(game_ref.board, greedy)
                 print("payload", payload)
                 # dispatch(game_update(payload))
+                
+                
 
             # set_text([f"FPS: {fps}", move_text_ref])
 
             # render_state(canvas_ref, centers, boundary, state)
 
             # Dispose of the tensors to free memory
+            print("hello")
             tf.keras.backend.clear_session()
 
             # end_tensors = len(tf.get_registered_nodes())  # Check memory usage
@@ -88,10 +96,10 @@ def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref):
             #     print(f"Memory Leak! ({end_tensors} > {start_tensors})")
 
         # Recursively call the loop (frame by frame)
-        tf.function(lambda: loop())
+        await loop()  # Correctly awaiting the recursive call
 
     # Initial call to start the loop
-    loop()
+    await loop()
 
     # Clean up when the function is called to terminate
     def cleanup():
@@ -102,9 +110,12 @@ def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref):
 
 
 
-
 def calculate_score(state, move, from_thr=0.6, to_thr=0.6):
     score = 0
+    # print(state)
+    print(move)
+    print(move['from'])
+    
     for square in move['from']:
         score += 1 - max(state[square]) - from_thr
     
@@ -124,6 +135,8 @@ def process_state(state, moves_pairs, possible_moves):
     for move_pair in moves_pairs:
         if move_pair['move1']['sans'][0] not in seen:
             seen.add(move_pair['move1']['sans'][0])
+            print(move_pair['move1'])
+            print("test")
             score = calculate_score(state, move_pair['move1'])
             
             if score > 0:
@@ -232,7 +245,7 @@ def san_to_lan(board, san):
     return lan
   
   
-async def detect(frame, pieces_model_ref, keypoints):
+async def detect(pieces_model_ref,frame, keypoints):
     frame_height, frame_width, _ = frame.shape
 
     image4d, width, height, padding, roi = get_input(frame, keypoints)

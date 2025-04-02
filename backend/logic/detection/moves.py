@@ -27,11 +27,11 @@ def get_piece_idx(board, move):
 
 
 def get_data(board, move):
-    from_square_name = SQUARE_NAMES[move.from_square]
-    to_square_name = SQUARE_NAMES[move.to_square]
+    from_square_idx = move.from_square
+    to_square_idx = move.to_square
 
-    from_squares = [from_square_name]
-    to_squares = [to_square_name]
+    from_squares = [from_square_idx]
+    to_squares = [to_square_idx]
     targets = [get_piece_idx(board, move)]
 
     if board.is_castling(move):
