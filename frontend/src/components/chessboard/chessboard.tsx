@@ -7,9 +7,10 @@ import { useWebSocket } from "../../hooks/useWebSocket";
 
 /**
  * Chessboard Component
- * 
- * This component renders a simple chessboard with pieces using the `chess.ts` library.
- * It supports piece initialization from FEN, move execution, and basic drag-and-drop.
+ *
+ * This component renders a chessboard UI and manages the game state using the `chess.ts` library.
+ * It listens to a WebSocket stream for move updates and reflects them visually on the board.
+ * The board is initialized using a FEN string and updated as new valid moves arrive.
  */
 
 interface Piece {
@@ -24,7 +25,7 @@ let activePiece: HTMLElement | null = null;
  * Handles grabbing a chess piece when the user clicks on it.
  * Sets the piece to absolute positioning and updates its location to follow the mouse.
  * 
- * Is not neccessary. To be removed.
+ * NOTE: This feature is unused and marked for removal.
  */
 
 function grabPiece(e: React.MouseEvent) {
@@ -45,7 +46,7 @@ function grabPiece(e: React.MouseEvent) {
  * Moves the currently active chess piece based on mouse movement.
  * Continually updates the piece's position as the mouse moves.
  * 
- * Is not neccessary. To be removed.
+ * NOTE: This feature is unused and marked for removal.
  */
 
 function movePiece(e: React.MouseEvent) {
@@ -62,7 +63,7 @@ function movePiece(e: React.MouseEvent) {
  * Drops the currently dragged piece.
  * Resets the active piece to null.
  * 
- * Is not neccessary. To be removed.
+ * NOTE: This feature is unused and marked for removal.
  */
 
 function dropPiece(_e: React.MouseEvent) {
@@ -119,8 +120,8 @@ function Chessboard({ setMoves }: ChessboardProps) {
 
 
   /**
-   * On component mount, set initial board state using FEN.
-   * Also expose a `makeMove` function on the `window` for manual move execution in console.
+   * Initializes the board on first render using the current FEN from `chess.ts`.
+   * Also exposes a helper `makeMove` function to the browser console for debugging.
    */
 
   useEffect(() => {
@@ -138,17 +139,25 @@ function Chessboard({ setMoves }: ChessboardProps) {
     };
   }, []);
 
+  /**
+   * Applies incoming moves from the WebSocket to the board.
+   * Skips illegal or repeated moves, and syncs the piece state accordingly.
+   */
+
   useEffect(() => {
+    // Guard clause: skip if no moves to process
     if (!moves || moves.length === 0) return;
   
+    // Clone move array to avoid mutation
     const newMoves = moves.slice();
     console.log(newMoves);
   
+    // Attempt to apply each move to the chess instance
     newMoves.forEach((notation) => {
       const move = chess.move(notation);
       if (move) {
         setMoves((prev) => {
-          // prevent duplicate SANs (like if same move is resent)
+          // Prevent duplicate SANs
           if (prev.includes(move.san)) return prev;
           return [...prev, move.san];
         });
@@ -157,6 +166,7 @@ function Chessboard({ setMoves }: ChessboardProps) {
       }
     });
   
+     // Update board pieces after moves have been applied
     if (newMoves.length > 0) {
       setPieces(generatePositionFromFen(chess.fen()));
     }
