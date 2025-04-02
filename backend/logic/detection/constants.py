@@ -36,8 +36,6 @@ SQUARE_NAMES = [
     'a8', 'b8', 'c8', 'd8', 'e8', 'f8', 'g8', 'h8'
 ]
 
-SQUARE_NAMES = [chess.square_name(i) for i in range(64)]  # Generates square names like 'a1', 'b1', ..., 'h8'
-
 def make_square_map():
     return {square: i for i, square in enumerate(SQUARE_NAMES)}
 

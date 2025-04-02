@@ -13,8 +13,7 @@ from detection_methods import extract_xy_from_corners_mapping
 from warp import get_inv_transform, transform_centers, transform_boundary
 
 
-def find_pieces(model_ref, video_ref, corners_ref, board_ref, 
-                moves_pairs_ref, last_move_ref):
+def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref):
     centers = None
     boundary = None
     centers_3d = None
@@ -24,7 +23,7 @@ def find_pieces(model_ref, video_ref, corners_ref, board_ref,
     possible_moves = set()
     greedy_move_to_time = {}
 
-    def loop():
+    async def loop():
         nonlocal centers, boundary, centers_3d, boundary_3d, state, keypoints, possible_moves, greedy_move_to_time
         if False:
             centers = None
@@ -40,7 +39,7 @@ def find_pieces(model_ref, video_ref, corners_ref, board_ref,
 
             start_time = time.time()
 
-            boxes, scores = detect(model_ref, video_ref, keypoints)
+            boxes, scores = await detect(piece_model_ref, video_ref, keypoints)
             squares = get_squares(boxes, centers_3d, boundary_3d)
             update = get_update(scores, squares)
             state = update_state(state, update)
@@ -54,7 +53,7 @@ def find_pieces(model_ref, video_ref, corners_ref, board_ref,
                 move = best_moves["sans"][0]
                 has_move = best_score2 > 0 and best_joint_score > 0 and move in possible_moves
                 if has_move:
-                    board_ref.move(move)
+                    game_ref["board"].move(move)
                     possible_moves.clear()
                     greedy_move_to_time = {}
 
@@ -65,15 +64,15 @@ def find_pieces(model_ref, video_ref, corners_ref, board_ref,
                     greedy_move_to_time[move] = end_time
 
                 second_elapsed = (end_time - greedy_move_to_time[move]) > 1  # 1000 ms = 1 second
-                new_move = san_to_lan(board_ref, move) != last_move_ref
+                new_move = san_to_lan(game_ref["board"], move) != game_ref["last_move"]
                 has_greedy_move = second_elapsed and new_move
                 if has_greedy_move:
-                    board_ref.move(move)
+                    game_ref["board"].move(move)
                     greedy_move_to_time = {move: greedy_move_to_time[move]}
 
             if has_move or has_greedy_move:
                 greedy = False
-                payload = make_update_payload(board_ref, greedy)
+                payload = make_update_payload(game_ref["board"], greedy)
                 print("payload", payload)
                 # dispatch(game_update(payload))
 
