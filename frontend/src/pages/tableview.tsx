@@ -1,5 +1,6 @@
 import Chessboard from '../components/chessboard/chessboard';
 import PGN from '../components/pgn/pgn';
+import Camera from './../components/camera/camera';
 import './TableView.css';
 
 /**
@@ -21,7 +22,7 @@ function TableView({ moves, setMoves }: TableViewProps) {
     <div className="table-view">
       <div className='left-wrapper'>
           <div className='camera-wrapper'>
-            <p>Camera</p>
+            <Camera id={0} />
           </div>
           <div className="pgn-wrapper">
             <PGN moves={moves} />

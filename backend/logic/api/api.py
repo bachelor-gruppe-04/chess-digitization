@@ -87,7 +87,7 @@ async def reset_game() -> None:
     
 async def fake_ml_moves() -> None:
   """ Simulate a chess game using hardcoded moves. """
-  moves = ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6"]
+  moves = ["c4", "e5", "Na3", "Bxa3", "bxa3", "Nf6", "Nf3", "b5"]
   for move in moves:
     await asyncio.sleep(3)
     print(f"Sending move: {move}")

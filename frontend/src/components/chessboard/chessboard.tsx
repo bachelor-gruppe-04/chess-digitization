@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Chess } from "chess.ts";
 import Tile from "../tile/tile";
 import "./chessboard.css";
+import { useWebSocket } from "../../hooks/useWebSocket";
 
 
 /**
@@ -114,6 +115,8 @@ interface ChessboardProps {
 function Chessboard({ setMoves }: ChessboardProps) {
   const [pieces, setPieces] = useState<Piece[]>([]);
   const chess = new Chess();
+  const moves = useWebSocket(`ws://localhost:8000/moves`);
+
 
   /**
    * On component mount, set initial board state using FEN.
@@ -134,6 +137,30 @@ function Chessboard({ setMoves }: ChessboardProps) {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!moves || moves.length === 0) return;
+  
+    const newMoves = moves.slice();
+    console.log(newMoves);
+  
+    newMoves.forEach((notation) => {
+      const move = chess.move(notation);
+      if (move) {
+        setMoves((prev) => {
+          // prevent duplicate SANs (like if same move is resent)
+          if (prev.includes(move.san)) return prev;
+          return [...prev, move.san];
+        });
+      } else {
+        console.warn("Illegal or duplicate move from WebSocket:", notation);
+      }
+    });
+  
+    if (newMoves.length > 0) {
+      setPieces(generatePositionFromFen(chess.fen()));
+    }
+  }, [moves]);
 
   const verticalAxis = ["1", "2", "3", "4", "5", "6", "7", "8"];
   const horizontalAxis = ["a", "b", "c", "d", "e", "f", "g", "h"];
