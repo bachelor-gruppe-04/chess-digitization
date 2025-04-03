@@ -1,6 +1,5 @@
 import './App.css';
-import { useState } from 'react';
-import TableView from './pages/boardview/boardview';
+import TournamentView from './pages/tournamentview/tournamentview';
 
 /**
  * App Component
@@ -11,12 +10,9 @@ import TableView from './pages/boardview/boardview';
  */
 
 function App() {
-  // State to hold the list of chess moves (in algebraic notation)
-  const [moves, setMoves] = useState<string[]>([]);
-
   return (
     <div id="app">
-      <TableView moves={moves} setMoves={setMoves} />
+      <TournamentView/>
     </div>
   );
 }
