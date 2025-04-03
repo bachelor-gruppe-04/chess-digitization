@@ -6,7 +6,7 @@ from constants import CORNER_KEYS
 from corners_detection import run_xcorners_model, find_corners_from_xcorners, assign_labels_to_board_corners
 from piece_detection import run_pieces_model
 from detection_methods import extract_xy_from_corners_mapping, scale_xy_board_corners
-from warp import get_inv_transform, transform_centers
+from warp import get_inv_transform, transform_centers, transform_boundary
 
 async def find_scaled_labeled_board_corners(
     video_ref: np.ndarray, 
@@ -66,7 +66,7 @@ async def find_scaled_labeled_board_corners(
     return scaled_labeled_board_corners
 
 
-def find_centers_of_squares(
+def find_centers_and_boundary(
     corners_mapping: Dict[str, Dict[str, Tuple[int, int]]], 
     frame: np.ndarray
 ) -> List[List[Tuple[float, float]]]:
@@ -88,7 +88,7 @@ def find_centers_of_squares(
 
     xy: List[Tuple[int, int]] = extract_xy_from_corners_mapping(corners_mapping, frame)
     inv_transform: np.ndarray = get_inv_transform(xy)
-    centers: List[List[Tuple[float, float]]] = transform_centers(inv_transform)
-    centers3d = np.expand_dims(centers, axis=0)
-    
-    return centers, centers3d
+    centers, centers3D = transform_centers(inv_transform)
+    boundary, boundary3D = transform_boundary(inv_transform)
+        
+    return centers, boundary

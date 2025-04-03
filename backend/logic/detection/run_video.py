@@ -5,10 +5,11 @@ import asyncio
 import chess
 from game import Game
 from game_store import GameStore
-from run_detections import find_scaled_labeled_board_corners
+from run_detections import find_scaled_labeled_board_corners, find_centers_and_boundary
 from map_pieces import find_pieces
 from moves import get_moves_pairs
 from typing import Optional, List, Tuple
+from render import draw_points
 
 async def process_video(video_path, piece_model_session, corner_ort_session, output_path, game_store, game_id, live_video=False):
     """Main processing loop for the video (equivalent to React's useEffect on load)."""
@@ -34,29 +35,28 @@ async def process_video(video_path, piece_model_session, corner_ort_session, out
 
         if frame_counter == 0:
             board_corners_ref = await find_scaled_labeled_board_corners(video_frame, piece_model_session, corner_ort_session)
+            print(board_corners_ref)
+            print("board corners")
             if board_corners_ref is None:
                 print("Failed to detect centers.")
                 break
+                        
+            
+            centers, boundary = find_centers_and_boundary(board_corners_ref, video_frame)  # Find centers of squares
+                        
+            frame = draw_points(video_frame, centers)  # Draw centers on the frame
+            frame2 = draw_points(frame, boundary)  # Draw boundary on the frame
+            
+            print(centers)
+            print(boundary)
+            
+            resized_frame = cv2.resize(frame2, (1280, 720))
 
-        if board_corners_ref is not None:
-            game = game_store.get_game(game_id)
-            if game:
-                # Update game state before processing
-                moves_pairs = get_moves_pairs(game.board)  # Update possible moves
-                last_move = game.last_move  # Get the last move
-                
-                # Store the updated game state
-                game_store.update_game(last_move, game_id)
-                
-                # # print(f"Updated game state: {game_store.get_game(game_id)}")
-                # # print(f"Move history: {game_store.get_move_history(game_id)}")
-                # print(f"Last move: {game_store.get_last_move(game_id)}")
-                # # print(f"Moves pairs: {moves_pairs}")
-                # print(f"Greedy: {game.greedy}")
-                # print(f"FEN: {game.fen}")
-                
-                await find_pieces(piece_model_session, video_frame, board_corners_ref, game_store.get_game(game_id), moves_pairs)
-                
+            
+            # Show the frame with detected centers
+            cv2.imshow("Chess Board Detection", resized_frame)
+            cv2.waitKey(1)  # Refresh the display
+            
         frame_counter += 1
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -64,6 +64,10 @@ async def process_video(video_path, piece_model_session, corner_ort_session, out
     cap.release()
     out.release()
     cv2.destroyAllWindows()
+                
+        #         await find_pieces(piece_model_session, video_frame, board_corners_ref, game_store.get_game(game_id), moves_pairs)
+                
+        
 
 
 async def main() -> None:

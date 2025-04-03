@@ -91,9 +91,7 @@ def set_fen_from_state(state):
         square = chess.square(i % 8, i // 8)
         
         board.set_piece_at(square, chess.Piece.from_symbol(piece.upper() if piece_color == chess.WHITE else piece))
-    
-    print(board.fen())
-    
+        
     return board.fen()
 
 

@@ -21,7 +21,6 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
     keypoints = None
     possible_moves = set()
     greedy_move_to_time = {}
-    print(game_ref.moves)
 
     async def loop():
         nonlocal centers, boundary, centers_3d, boundary_3d, state, keypoints, possible_moves, greedy_move_to_time
@@ -41,11 +40,12 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
 
             boxes, scores = await detect(piece_model_ref, video_ref, keypoints)
             squares = get_squares(boxes, centers_3d, boundary_3d)
+            # np.set_printoptions(threshold=np.inf)
             update = get_update(scores, squares)
             state = update_state(state, update)
+        
+        
             best_score1, best_score2, best_joint_score, best_move, best_moves = process_state(state, moves_pairs_ref, possible_moves)
-            print(best_move, best_moves, best_score1, best_score2, best_joint_score)
-            print("best")
 
             end_time = time.time()
             fps = round(1 / (end_time - start_time), 1)
@@ -55,8 +55,6 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
                 move = best_moves["sans"][0]
                 has_move = best_score2 > 0 and best_joint_score > 0 and move in possible_moves
                 if has_move:
-                    print("has_move")
-                    print(move)
                     game_ref.board.push_san(move)
                     possible_moves.clear()
                     greedy_move_to_time = {}
@@ -69,7 +67,6 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
 
                 second_elapsed = (end_time - greedy_move_to_time[move]) > 1  # 1000 ms = 1 second
                 new_move = san_to_lan(game_ref.board, move) != game_ref["last_move"]
-                print("new_move", new_move)
                 has_greedy_move = second_elapsed and new_move
                 if has_greedy_move:
                     game_ref["board"].move(move)
@@ -78,7 +75,6 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
             if has_move or has_greedy_move:
                 greedy = False
                 payload = make_update_payload(game_ref.board, greedy)
-                print("payload", payload)
                 # dispatch(game_update(payload))
                 
                 
@@ -112,10 +108,6 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
 
 def calculate_score(state, move, from_thr=0.6, to_thr=0.6):
     score = 0
-    # print(state)
-    print(move)
-    print(move['from'])
-    
     for square in move['from']:
         score += 1 - max(state[square]) - from_thr
     
@@ -135,13 +127,11 @@ def process_state(state, moves_pairs, possible_moves):
     for move_pair in moves_pairs:
         if move_pair['move1']['sans'][0] not in seen:
             seen.add(move_pair['move1']['sans'][0])
-            print(move_pair['move1'])
-            print("test")
             score = calculate_score(state, move_pair['move1'])
             
             if score > 0:
                 possible_moves.add(move_pair['move1']['sans'][0])
-            
+
             if score > best_score1:
                 best_move = move_pair['move1']
                 best_score1 = score
@@ -180,42 +170,61 @@ def get_box_centers(boxes):
 
     return box_centers
 
-def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor):
+
+def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -> tf.Tensor:
+    print(boxes)
+    print(centers3D)
+    print(boundary3D)
     with tf.device('/CPU:0'):
+        # Get the box centers
         box_centers_3D = tf.expand_dims(get_box_centers(boxes), 1)
+
+        # Calculate distances
         dist = tf.reduce_sum(tf.square(box_centers_3D - centers3D), axis=2)
+
+        # Get squares by finding the index of minimum distances
         squares = tf.argmin(dist, axis=1)
-        
+
+        # Shift the boundary3D tensor
         shifted_boundary_3D = tf.concat([
             tf.slice(boundary3D, [0, 1, 0], [1, 3, 2]),
             tf.slice(boundary3D, [0, 0, 0], [1, 1, 2]),
         ], axis=1)
-        
-        n_boxes = tf.shape(box_centers_3D)[0]    
-        
-        
-                
-        a = tf.squeeze(tf.slice(boundary3D, [0, 0, 0], [1, 4, 1]) -
-                       tf.slice(shifted_boundary_3D, [0, 0, 0], [1, 4, 1]), axis=[2])
-        b = tf.squeeze(tf.slice(boundary3D, [0, 0, 1], [1, 4, 1]) -
-                       tf.slice(shifted_boundary_3D, [0, 0, 1], [1, 4, 1]), axis=[2])
-        c = tf.squeeze(tf.slice(box_centers_3D, [0, 0, 0], [n_boxes, 1, 1]) -
-                       tf.slice(shifted_boundary_3D, [0, 0, 0], [1, 4, 1]), axis=[2])
-        d = tf.squeeze(tf.slice(box_centers_3D, [0, 0, 1], [n_boxes, 1, 1]) -
-                       tf.slice(shifted_boundary_3D, [0, 0, 1], [1, 4, 1]), axis=[2])
 
-    
-    
-        det = tf.subtract(tf.multiply(a, d), tf.multiply(b, c))  # Equivalent to tf.sub and tf.mul in JS
-                
-        # Apply tf.where condition
+        n_boxes = tf.shape(box_centers_3D)[0]
+
+        # Calculate a, b, c, and d tensors
+        a = tf.squeeze(tf.subtract(
+            tf.slice(boundary3D, [0, 0, 0], [1, 4, 1]),
+            tf.slice(shifted_boundary_3D, [0, 0, 0], [1, 4, 1])
+        ), axis=2)
+        
+        b = tf.squeeze(tf.subtract(
+            tf.slice(boundary3D, [0, 0, 1], [1, 4, 1]),
+            tf.slice(shifted_boundary_3D, [0, 0, 1], [1, 4, 1])
+        ), axis=2)
+        
+        c = tf.squeeze(tf.subtract(
+            tf.slice(box_centers_3D, [0, 0, 0], [n_boxes, 1, 1]),
+            tf.slice(shifted_boundary_3D, [0, 0, 0], [1, 4, 1])
+        ), axis=2)
+        
+        d = tf.squeeze(tf.subtract(
+            tf.slice(box_centers_3D, [0, 0, 1], [n_boxes, 1, 1]),
+            tf.slice(shifted_boundary_3D, [0, 0, 1], [1, 4, 1])
+        ), axis=2)
+
+        # Calculate determinant
+        det = tf.subtract(tf.multiply(a, d), tf.multiply(b, c))
+
+        # Apply tf.where condition for negative det values
         new_squares = tf.where(
             tf.reduce_any(tf.less(det, 0), axis=1),  # Check if any det < 0 along axis 1
             tf.constant(-1, dtype=squares.dtype),    # Replace with -1
             squares                                   # Otherwise, keep original squares
         )
-        # return new_squares.numpy() 
-        return squares
+        
+        return new_squares
 
 def get_update(scores_tensor, squares):
     update = np.zeros((64, 12))
