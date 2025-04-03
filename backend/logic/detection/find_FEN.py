@@ -17,6 +17,8 @@ async def find_fen(pieces_model_ref, frame, board_corners):
     centers, centers3D = transform_centers(inv_transform)
     boundary, boundary3D = transform_boundary(inv_transform)
     
+    print("insie fen")
+    
     boxes, scores = await detect(frame, pieces_model_ref, keypoints)
     squares = get_squares(boxes, centers3D, boundary3D)
     state = get_update(scores, squares) 

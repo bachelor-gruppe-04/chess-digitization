@@ -36,26 +36,34 @@ async def process_video(video_path, piece_model_session, corner_ort_session, out
         if frame_counter == 0:
             board_corners_ref = await find_scaled_labeled_board_corners(video_frame, piece_model_session, corner_ort_session)
             print(board_corners_ref)
-            print("board corners")
             if board_corners_ref is None:
                 print("Failed to detect centers.")
                 break
+            
+            game = game_store.get_game(game_id)
+            if game:
+                # Update game state before processing
+                moves_pairs = get_moves_pairs(game.board)  # Update possible moves
+                last_move = game.last_move  # Get the last move
+                
+                # Store the updated game state
+                game_store.update_game(last_move, game_id)
                         
             
             centers, boundary = find_centers_and_boundary(board_corners_ref, video_frame)  # Find centers of squares
                         
             frame = draw_points(video_frame, centers)  # Draw centers on the frame
             frame2 = draw_polygon(frame, boundary)  # Draw boundary on the frame
-            
-            print(centers)
-            print(boundary)
-            
+                        
             resized_frame = cv2.resize(frame2, (1280, 720))
 
             
             # Show the frame with detected centers
             cv2.imshow("Chess Board Detection", resized_frame)
             cv2.waitKey(1)  # Refresh the display
+            
+            await find_pieces(piece_model_session, video_frame, board_corners_ref, game_store.get_game(game_id), moves_pairs)
+
             
         frame_counter += 1
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -65,7 +73,6 @@ async def process_video(video_path, piece_model_session, corner_ort_session, out
     out.release()
     cv2.destroyAllWindows()
                 
-        #         await find_pieces(piece_model_session, video_frame, board_corners_ref, game_store.get_game(game_id), moves_pairs)
                 
         
 

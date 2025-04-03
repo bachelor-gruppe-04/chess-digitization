@@ -54,9 +54,6 @@ def make_update_payload(board: chess.Board, greedy: bool = False):
     history = board.move_stack  # This gives the history of moves played so far
 
     # Get the moves as PGN (you can keep this if you need to)
-    print("this is board")
-    print(board)
-    print(board.fen())
     moves = get_moves_from_pgn(board)
     
     # Get the FEN string of the current position

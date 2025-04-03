@@ -37,16 +37,43 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
                 greedy_move_to_time = {}
 
             start_time = time.time()
+            
+            print("inside loop")
+            print(piece_model_ref)
+            print(video_ref.shape)
+            print(keypoints)
 
             boxes, scores = await detect(piece_model_ref, video_ref, keypoints)
+            
+            print("keypoints")
+            print(keypoints)
+            
+            
+            for box in boxes:
+                            # Ensure that the coordinates are integers
+            x1, y1, x2, y2 = map(int, box)  # Ensure box coordinates are integers
+
+            # Scale and cast the results to integers
+            x1 = int(x1 * 4)  # Ensure x1 is an integer
+            y1 = int(y1 * 3.75)  # Ensure y1 is an integer
+            x2 = int(x2 * 4)  # Ensure x2 is an integer
+            y2 = int(y2 * 3.75)  # Ensure y2 is an integer
+
+            # Draw the rectangle
+            cv2.rectangle(video_ref, (x1, y1), (x2, y2), (0, 255, 0), 2)  # Green box
+
+            # Show the frame with detected pieces
+            cv2.imshow("Detected Pieces", video_ref)
+            cv2.waitKey(1)
+            
             squares = get_squares(boxes, centers_3d, boundary_3d)
-            # np.set_printoptions(threshold=np.inf)
             update = get_update(scores, squares)
             state = update_state(state, update)
         
         
             best_score1, best_score2, best_joint_score, best_move, best_moves = process_state(state, moves_pairs_ref, possible_moves)
-
+            print(best_move)
+            print(best_moves)
             end_time = time.time()
             fps = round(1 / (end_time - start_time), 1)
 
@@ -84,7 +111,6 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
             # render_state(canvas_ref, centers, boundary, state)
 
             # Dispose of the tensors to free memory
-            print("hello")
             tf.keras.backend.clear_session()
 
             # end_tensors = len(tf.get_registered_nodes())  # Check memory usage
@@ -172,9 +198,8 @@ def get_box_centers(boxes):
 
 
 def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -> tf.Tensor:
+    print("boxes)")
     print(boxes)
-    print(centers3D)
-    print(boundary3D)
     with tf.device('/CPU:0'):
         # Get the box centers
         box_centers_3D = tf.expand_dims(get_box_centers(boxes), 1)
@@ -216,6 +241,26 @@ def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -
 
         # Calculate determinant
         det = tf.subtract(tf.multiply(a, d), tf.multiply(b, c))
+        
+        print("det")
+        np.set_printoptions(threshold=np.inf)
+        print(det)
+        
+        np.set_printoptions(threshold=1)
+
+        print("types")
+        print("box_centers_3D")
+        print(box_centers_3D)
+        print(type(box_centers_3D))
+        print("centers3d")
+        print(centers3D)
+        print(type(centers3D))
+        print("boundary3D")
+        print(boundary3D)
+        print(type(boundary3D))
+        
+        print("squares")
+        print(type(squares))
 
         # Apply tf.where condition for negative det values
         new_squares = tf.where(
@@ -223,6 +268,10 @@ def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -
             tf.constant(-1, dtype=squares.dtype),    # Replace with -1
             squares                                   # Otherwise, keep original squares
         )
+        
+        print("newsquares")
+        print(new_squares)
+    
         
         return new_squares
 
@@ -261,6 +310,10 @@ async def detect(pieces_model_ref,frame, keypoints):
 
     pieces_prediction = predict_pieces(frame, pieces_model_ref)
     boxes, scores = get_boxes_and_scores(pieces_prediction, width, height, frame_width, frame_height, padding, roi)
+    
+    print("inside detect")
+    print(boxes)
+    print(scores)
 
     del pieces_prediction
     del image4d  
