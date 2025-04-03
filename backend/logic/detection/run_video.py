@@ -9,7 +9,7 @@ from run_detections import find_scaled_labeled_board_corners, find_centers_and_b
 from map_pieces import find_pieces
 from moves import get_moves_pairs
 from typing import Optional, List, Tuple
-from render import draw_points
+from render import draw_points, draw_polygon
 
 async def process_video(video_path, piece_model_session, corner_ort_session, output_path, game_store, game_id, live_video=False):
     """Main processing loop for the video (equivalent to React's useEffect on load)."""
@@ -45,7 +45,7 @@ async def process_video(video_path, piece_model_session, corner_ort_session, out
             centers, boundary = find_centers_and_boundary(board_corners_ref, video_frame)  # Find centers of squares
                         
             frame = draw_points(video_frame, centers)  # Draw centers on the frame
-            frame2 = draw_points(frame, boundary)  # Draw boundary on the frame
+            frame2 = draw_polygon(frame, boundary)  # Draw boundary on the frame
             
             print(centers)
             print(boundary)

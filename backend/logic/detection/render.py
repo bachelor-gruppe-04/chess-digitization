@@ -55,6 +55,27 @@ def draw_points(canvas: np.ndarray, points: List[Tuple[float, float]]) -> np.nda
 
 
 
+def draw_polygon(canvas, polygon):
+    # Get the height and width of the canvas (image)
+    frame_height, frame_width = canvas.shape[:2]
+    
+    # Define the scaling factors (assuming MODEL_WIDTH and MODEL_HEIGHT are defined elsewhere)
+    sx = frame_width / MODEL_WIDTH
+    sy = frame_height / MODEL_HEIGHT
+    
+    # Scale the polygon coordinates
+    scaled_polygon = np.array([
+        [(x * sx, y * sy) for x, y in polygon]
+    ], dtype=np.int32)
+
+    # Draw the polygon on the canvas (image)
+    cv2.polylines(canvas, scaled_polygon, isClosed=True, color=(0, 0, 255), thickness=2)
+
+    # Optionally, you can fill the polygon if you need:
+    # cv2.fillPoly(canvas, scaled_polygon, color=(0, 255, 0))  # Green fill
+    
+    return canvas
+
 
 # def render_state(canvas_ref, centers, state):
 #     # Set up canvas context (this can be modified according to your specific setup)
