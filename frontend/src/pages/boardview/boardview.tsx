@@ -15,21 +15,22 @@ import './boardview.css';
 interface BoardViewProps {
   moves: string[]; // Array of move strings (algebraic notation)
   setMoves: React.Dispatch<React.SetStateAction<string[]>>; // Function to update the list of moves
+  id: number;
 }
 
-function BoardView({ moves, setMoves }: BoardViewProps) {
+function BoardView({ moves, setMoves, id }: BoardViewProps) {
   return (
     <div className="table-view">
       <div className='left-wrapper'>
           <div className='camera-wrapper'>
-            <Camera id={1} />
+            <Camera id={id} />
           </div>
           <div className="pgn-wrapper">
             <PGN moves={moves} />
           </div>
         </div>
         <div className="chessboard-wrapper">
-          <Chessboard setMoves={setMoves} id={1} />
+          <Chessboard setMoves={setMoves} id={id} />
         </div>
     </div>
   );
