@@ -25,7 +25,7 @@ For starting the WebSocket and cameras, navigate to the correct directory:
 
 Then, when the directory includes the correct path, run the following line to start the process:
 
-    uvicorn api:app --reload
+    uvicorn main:app --reload
 
 ### Machine Learning Algorithm
 
