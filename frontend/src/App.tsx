@@ -1,6 +1,6 @@
 import './App.css';
 import { useState } from 'react';
-import TableView from './pages/tableview';
+import TableView from './pages/boardview/boardview';
 
 /**
  * App Component

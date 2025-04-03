@@ -57,12 +57,13 @@ function generatePositionFromFen(fen: string): Piece[] {
 
 interface ChessboardProps {
   setMoves: React.Dispatch<React.SetStateAction<string[]>>; // Function to update the list of chess moves in the parent component
+  id: number;
 }
 
-function Chessboard({ setMoves }: ChessboardProps) {
+function Chessboard({ setMoves, id }: ChessboardProps) {
   const [pieces, setPieces] = useState<Piece[]>([]);
   const chess = new Chess();
-  const moves = useWebSocket(`ws://localhost:8000/moves`);
+  const moves = useWebSocket(`ws://localhost:8000/moves/${id}`);
 
 
   /**
@@ -94,23 +95,26 @@ function Chessboard({ setMoves }: ChessboardProps) {
 
   useEffect(() => {
     if (!moves || moves.length === 0) return;
+
     const newMoves = moves.slice();
-    console.log(newMoves);
+    const validSanMoves: string[] = [];
+
+    // Reset the chess board before reapplying moves
+    chess.reset();
   
     // Attempt to apply each move to the chess instance
     newMoves.forEach((notation) => {
       const move = chess.move(notation);
       if (move) {
-        setMoves((prev) => {
-          return [...prev, move.san];
-        });
+        validSanMoves.push(move.san);
       } else {
-        console.warn("Illegal or duplicate move from WebSocket:", notation);
+        console.warn("Illegal move from WebSocket:", notation);
       }
     });
   
-     // Update board pieces after moves have been applied
-    if (newMoves.length > 0) {
+    setMoves(validSanMoves);
+
+    if (validSanMoves.length > 0) {
       setPieces(generatePositionFromFen(chess.fen()));
     }
   }, [moves]);

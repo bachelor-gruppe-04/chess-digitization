@@ -13,14 +13,6 @@
   background-size: 60px;
 }
 
-.tile .chess-piece:hover {
-  cursor: grab;
-}
-
-.tile .chess-piece:active {
-  cursor: grabbing;
-}
-
 .black-tile {
   background-color: #779556;
 }
