@@ -12,7 +12,7 @@ interface PGNProps {
   moves: string[]; // Array of algebraic move notation strings
 }
 
-export default function PGN({ moves }: PGNProps) {
+function PGN({ moves }: PGNProps) {
   const rows = [];
 
   /**
@@ -51,3 +51,5 @@ export default function PGN({ moves }: PGNProps) {
     </div>
   );
 }
+
+export default PGN;

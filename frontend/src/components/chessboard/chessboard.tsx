@@ -56,8 +56,7 @@ function generatePositionFromFen(fen: string): Piece[] {
 }
 
 interface ChessboardProps {
-  // Function to update the list of chess moves in the parent component
-  setMoves: React.Dispatch<React.SetStateAction<string[]>>;
+  setMoves: React.Dispatch<React.SetStateAction<string[]>>; // Function to update the list of chess moves in the parent component
 }
 
 function Chessboard({ setMoves }: ChessboardProps) {
@@ -69,6 +68,8 @@ function Chessboard({ setMoves }: ChessboardProps) {
   /**
    * Initializes the board on first render using the current FEN from `chess.ts`.
    * Also exposes a helper `makeMove` function to the browser console for debugging.
+   * 
+   * NOTE: Used for testing the board manually through console input.
    */
 
   useEffect(() => {
@@ -101,7 +102,6 @@ function Chessboard({ setMoves }: ChessboardProps) {
       const move = chess.move(notation);
       if (move) {
         setMoves((prev) => {
-          if (prev.includes(move.san)) return prev;
           return [...prev, move.san];
         });
       } else {
