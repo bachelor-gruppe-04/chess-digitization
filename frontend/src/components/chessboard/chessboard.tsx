@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { forwardRef, useImperativeHandle, useEffect, useState } from "react";
 import { Chess } from "chess.ts";
 import Tile from "../tile/tile";
 import "./chessboard.css";
@@ -8,9 +8,8 @@ import { useWebSocket } from "../../hooks/useWebSocket";
 /**
  * Chessboard Component
  *
- * This component renders a chessboard UI and manages the game state using the `chess.ts` library.
- * It listens to a WebSocket stream for move updates and reflects them visually on the board.
- * The board is initialized using a FEN string and updated as new valid moves arrive.
+ * This component renders an interactive chessboard and manages game state using the `chess.ts` library.
+ * It consumes a WebSocket stream to receive and apply moves, and exposes its internal move list to parent components.
  */
 
 interface Piece {
@@ -20,10 +19,10 @@ interface Piece {
 }
 
 /**
- * Converts a FEN string into a list of pieces with their image, x, and y coordinates.
- * Used to populate the board with the correct position from a game state.
+ * Converts a FEN string into an array of piece objects.
+ * Each object includes image path and board coordinates.
+ * Used to render pieces from the current game state.
  */
-
 function generatePositionFromFen(fen: string): Piece[] {
   const board = fen.split(" ")[0];
   const rows = board.split("/");
@@ -55,16 +54,31 @@ function generatePositionFromFen(fen: string): Piece[] {
   return pieces;
 }
 
+
+
 interface ChessboardProps {
-  setMoves: React.Dispatch<React.SetStateAction<string[]>>; // Function to update the list of chess moves in the parent component
   id: number;
 }
 
-function Chessboard({ setMoves, id }: ChessboardProps) {
-  const [pieces, setPieces] = useState<Piece[]>([]);
-  const chess = new Chess();
-  const moves = useWebSocket(`ws://localhost:8000/moves/${id}`);
+/**
+ * Unique ID to identify the board
+ */
+export interface ChessboardHandle {
+  getMoves: () => string[];
+}
 
+const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) => {
+  const [pieces, setPieces] = useState<Piece[]>([]); // Current piece layout
+  const chess = new Chess(); // Chess game instance
+  const [moveList, setMoveList] = useState<string[]>([]); // Local move history
+  const moves = useWebSocket(`ws://localhost:8000/moves/${id}`); // WebSocket listener for this board
+
+  /**
+   * Expose the list of SAN moves to parent components via ref.
+   */
+  useImperativeHandle(ref, () => ({
+    getMoves: () => moveList,
+  }));
 
   /**
    * Initializes the board on first render using the current FEN from `chess.ts`.
@@ -72,7 +86,6 @@ function Chessboard({ setMoves, id }: ChessboardProps) {
    * 
    * NOTE: Used for testing the board manually through console input.
    */
-
   useEffect(() => {
     setPieces(generatePositionFromFen(chess.fen()));
 
@@ -81,7 +94,7 @@ function Chessboard({ setMoves, id }: ChessboardProps) {
       const move = chess.move(notation);
       if (move) {
         setPieces(generatePositionFromFen(chess.fen()));
-        setMoves?.((prev) => [...prev, move.san]); // Add move in Standard Algebraic Notation
+        setMoveList((prev) => [...prev, move.san]);
       } else {
         console.warn("Illegal move:", notation);
       }
@@ -89,21 +102,17 @@ function Chessboard({ setMoves, id }: ChessboardProps) {
   }, []);
 
   /**
-   * Applies incoming moves from the WebSocket to the board.
-   * Skips illegal or repeated moves, and syncs the piece state accordingly.
+   * Listens for new moves from the WebSocket and applies them sequentially.
+   * Filters out illegal moves and syncs the internal state (move list and pieces).
    */
-
   useEffect(() => {
     if (!moves || moves.length === 0) return;
 
-    const newMoves = moves.slice();
-    const validSanMoves: string[] = [];
-
-    // Reset the chess board before reapplying moves
     chess.reset();
+    const validSanMoves: string[] = [];
   
     // Attempt to apply each move to the chess instance
-    newMoves.forEach((notation) => {
+    moves.forEach((notation) => {
       const move = chess.move(notation);
       if (move) {
         validSanMoves.push(move.san);
@@ -112,7 +121,7 @@ function Chessboard({ setMoves, id }: ChessboardProps) {
       }
     });
   
-    setMoves(validSanMoves);
+    setMoveList(validSanMoves);
 
     if (validSanMoves.length > 0) {
       setPieces(generatePositionFromFen(chess.fen()));
@@ -129,7 +138,6 @@ function Chessboard({ setMoves, id }: ChessboardProps) {
    * The outer loop iterates through each row from 8 to 1 (top to bottom).
    * The inner loop creates each tile and adds a piece if one exists at that coordinate.
    */
-
   for (let j = verticalAxis.length - 1; j >= 0; j--) {
     for (let i = 0; i < horizontalAxis.length; i++) {
       const number = j + i + 2;
@@ -151,6 +159,6 @@ function Chessboard({ setMoves, id }: ChessboardProps) {
       {board}
     </div>
   );
-}
+});
 
 export default Chessboard;
