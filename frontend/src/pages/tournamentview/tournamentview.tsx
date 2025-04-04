@@ -1,5 +1,4 @@
 import './tournamentview.css';
-import { useState } from 'react';
 import BoardView from '../boardview/boardview';
 
 /**
@@ -9,14 +8,11 @@ import BoardView from '../boardview/boardview';
  * and manages the move history state. 
  */
 
-
 function TournamentView() {
-  // State to hold the list of chess moves (in algebraic notation)
-  const [moves, setMoves] = useState<string[]>([]);
 
   return (
     <div>
-      <BoardView moves={moves} setMoves={setMoves} id={1}/>
+      <BoardView id={1}/>
     </div>
   );
 }
