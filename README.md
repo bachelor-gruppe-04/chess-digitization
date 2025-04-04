@@ -8,7 +8,7 @@ To view how to install required requirements and how to run the backend, please 
 
 ## Frontend
 
-To view how to install required dependancies and how to start the development server, please read the [**Frontend README.md file**](/frontend/README.md "Frontend README.md file").
+To view how to install required dependencies and how to start the development server, please read the [**Frontend README.md file**](/frontend/README.md "Frontend README.md file").
 
 ## Authors
 
