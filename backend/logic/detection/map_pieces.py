@@ -45,28 +45,31 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
 
             boxes, scores = await detect(piece_model_ref, video_ref, keypoints)
             
+
+            print(scores)
+            
             print("keypoints")
             print(keypoints)
             
             
-            updated_boxes = []
-            for box in boxes:
-                x1, y1, x2, y2 = box[0], box[1], box[2], box[3]  # Unwrap the tensor to individual values
+            # updated_boxes = []
+            # for box in boxes:
+            #     x1, y1, x2, y2 = box[0], box[1], box[2], box[3]  # Unwrap the tensor to individual values
 
-                # Scale and cast the results to integers
-                x1 = tf.cast(x1 * 4, tf.int32)  # Ensure x1 is an integer
-                y1 = tf.cast(y1 * 3.75, tf.int32)  # Ensure y1 is an integer
-                x2 = tf.cast(x2 * 4, tf.int32)  # Ensure x2 is an integer
-                y2 = tf.cast(y2 * 3.75, tf.int32)  # Ensure y2 is an integer
+            #     # Scale and cast the results to integers
+            #     x1 = tf.cast(x1 * 4, tf.int32)  # Ensure x1 is an integer
+            #     y1 = tf.cast(y1 * 3.75, tf.int32)  # Ensure y1 is an integer
+            #     x2 = tf.cast(x2 * 4, tf.int32)  # Ensure x2 is an integer
+            #     y2 = tf.cast(y2 * 3.75, tf.int32)  # Ensure y2 is an integer
 
-                # Create a new box with the updated values
-                updated_box = tf.stack([x1, y1, x2, y2])  # Stack them back into a tensor
+            #     # Create a new box with the updated values
+            #     updated_box = tf.stack([x1, y1, x2, y2])  # Stack them back into a tensor
 
-                # Add the updated box to the list
-                updated_boxes.append(updated_box)
+            #     # Add the updated box to the list
+            #     updated_boxes.append(updated_box)
 
-            # Convert updated boxes back to a Tensor
-            updated_boxes = tf.convert_to_tensor(updated_boxes)
+            # # Convert updated boxes back to a Tensor
+            # updated_boxes = tf.convert_to_tensor(updated_boxes)
             
             
         
@@ -81,9 +84,22 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
             #     cv2.waitKey(1)
 
             # Now updated_boxes is a TensorFlow tensor with the modified values
-            squares = get_squares(updated_boxes, centers_3d, boundary_3d)
+            squares = get_squares(boxes, centers_3d, boundary_3d)
             update = get_update(scores, squares)
+            print("update")
+            # np.set_printoptions(threshold=np.inf)
+
+            print(update)
+            
+            # np.set_printoptions(threshold=1)
             state = update_state(state, update)
+            print("state")
+            # np.set_printoptions(threshold=np.inf)
+
+            print(state)
+            
+            # np.set_printoptions(threshold=1)
+
         
         
             best_score1, best_score2, best_joint_score, best_move, best_moves = process_state(state, moves_pairs_ref, possible_moves)
@@ -98,6 +114,9 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
             print(possible_moves)
             end_time = time.time()
             fps = round(1 / (end_time - start_time), 1)
+            
+            print("FPS")
+            print(fps)
 
             has_move = False
             if best_moves is not None:
@@ -144,7 +163,7 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
         # Recursively call the loop (frame by frame)
         await loop()  # Correctly awaiting the recursive call
 
-    # Initial call to start the loop
+    # Initial call to start the loop 
     await loop()
 
     # Clean up when the function is called to terminate
@@ -156,7 +175,7 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
 
 
 
-def calculate_score(state, move, from_thr=0.0, to_thr=0.0):
+def calculate_score(state, move, from_thr=0.6, to_thr=0.6):
     score = 0
     for square in move['from']:
         score += 1 - max(state[square]) - from_thr
@@ -179,7 +198,7 @@ def process_state(state, moves_pairs, possible_moves):
             seen.add(move_pair['move1']['sans'][0])
             score = calculate_score(state, move_pair['move1'])
             
-            if score > 0 or score < 0:
+            if score > 0:
                 possible_moves.add(move_pair['move1']['sans'][0])
 
             if score > best_score1:
@@ -224,7 +243,6 @@ def get_box_centers(boxes):
 def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -> tf.Tensor:
     print("boxes)")
     print(boxes)
-    np.set_printoptions(threshold=1)
 
     with tf.device('/CPU:0'):
         # Get the box centers
@@ -307,6 +325,11 @@ def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -
 def get_update(scores_tensor, squares):
     update = np.zeros((64, 12))
     scores = scores_tensor.numpy()
+    
+    print(squares)
+    print("squares")
+    print(scores_tensor)
+    print("scores")
 
     for i in range(len(squares)):
         square = squares[i]
@@ -337,12 +360,22 @@ async def detect(pieces_model_ref,frame, keypoints):
 
     image4d, width, height, padding, roi = get_input(frame, keypoints)
 
-    pieces_prediction = predict_pieces(frame, pieces_model_ref)
+    pieces_prediction = predict_pieces(image4d, pieces_model_ref)
     boxes, scores = get_boxes_and_scores(pieces_prediction, width, height, frame_width, frame_height, padding, roi)
     
     print("inside detect")
-    print(boxes)
+    
+    
+    # print(boxes)
+    
+    np.set_printoptions(threshold=5, linewidth=100, edgeitems=10)
+
     print(scores)
+    
+    
+    np.set_printoptions()  # Resets everything to default
+
+    
 
     del pieces_prediction
     del image4d  
