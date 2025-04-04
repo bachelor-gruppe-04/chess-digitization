@@ -169,6 +169,8 @@ def get_boxes_and_scores(preds, width, height, video_width, video_height, paddin
     r *= (MODEL_WIDTH / video_width)
     t *= (MODEL_HEIGHT / video_height)
     b *= (MODEL_HEIGHT / video_height)
+    
+    
 
     # Concatenate the left, top, right, and bottom coordinates to form the bounding boxes
     boxes = np.concatenate([l, t, r, b], axis=2) 

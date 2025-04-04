@@ -3,6 +3,8 @@ from constants import START_FEN
 import chess
 import chess.pgn
 import io
+import chess.pgn
+from io import StringIO
 
 class Game:
     def __init__(self, game_id: str, fen: str = START_FEN, moves: str = "", start: str = START_FEN, last_move: str = "", greedy: bool = False):
@@ -43,30 +45,28 @@ class Game:
     
 
 def get_moves_from_pgn(board):
-    pgn = board.board_fen()
+    # Convert board history to PGN
+    game = chess.pgn.Game.from_board(board)
 
-    # Get rid of the headers (strings beginning with "[" and ending with "]")
-    # Get rid of newline characters
-    moves = ''.join([line for line in pgn.splitlines() if not line.startswith("[")])
-    return moves.replace("\r", "").replace("\n", "")
+    # Create a PGN exporter
+    exporter = chess.pgn.StringExporter(headers=False, variations=False, comments=False)
+    
+    # Get PGN string
+    pgn = game.accept(exporter)
+
+    # Remove newline characters
+    return pgn.replace("\n", " ").replace("\r", "")
+
 def make_update_payload(board: chess.Board, greedy: bool = False):
-    # Get the history of moves
-    history = board.move_stack  # This gives the history of moves played so far
-
-    # Get the moves as PGN (you can keep this if you need to)
-    moves = get_moves_from_pgn(board)
-    
-    # Get the FEN string of the current position
+    moves = get_moves_from_pgn(board)  # Assuming you have this function
     fen = board.fen()
-    
-    last_move = "" if len(history) == 0 else history[-1].uci()  # Using UCI for the last move (e.g., "e2e4")
+    last_move = board.peek().uci() if board.move_stack else ""
 
-    # Directly construct the payload
     payload = {
         "moves": moves,
         "fen": fen,
-        "greedy": greedy,
-        "lastMove": last_move
+        "lastMove": last_move,
+        "greedy": greedy
     }
 
     return payload

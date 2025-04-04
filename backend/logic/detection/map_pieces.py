@@ -49,31 +49,53 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
             print(keypoints)
             
             
+            updated_boxes = []
             for box in boxes:
-                            # Ensure that the coordinates are integers
-            x1, y1, x2, y2 = map(int, box)  # Ensure box coordinates are integers
+                x1, y1, x2, y2 = box[0], box[1], box[2], box[3]  # Unwrap the tensor to individual values
 
-            # Scale and cast the results to integers
-            x1 = int(x1 * 4)  # Ensure x1 is an integer
-            y1 = int(y1 * 3.75)  # Ensure y1 is an integer
-            x2 = int(x2 * 4)  # Ensure x2 is an integer
-            y2 = int(y2 * 3.75)  # Ensure y2 is an integer
+                # Scale and cast the results to integers
+                x1 = tf.cast(x1 * 4, tf.int32)  # Ensure x1 is an integer
+                y1 = tf.cast(y1 * 3.75, tf.int32)  # Ensure y1 is an integer
+                x2 = tf.cast(x2 * 4, tf.int32)  # Ensure x2 is an integer
+                y2 = tf.cast(y2 * 3.75, tf.int32)  # Ensure y2 is an integer
 
-            # Draw the rectangle
-            cv2.rectangle(video_ref, (x1, y1), (x2, y2), (0, 255, 0), 2)  # Green box
+                # Create a new box with the updated values
+                updated_box = tf.stack([x1, y1, x2, y2])  # Stack them back into a tensor
 
-            # Show the frame with detected pieces
-            cv2.imshow("Detected Pieces", video_ref)
-            cv2.waitKey(1)
+                # Add the updated box to the list
+                updated_boxes.append(updated_box)
+
+            # Convert updated boxes back to a Tensor
+            updated_boxes = tf.convert_to_tensor(updated_boxes)
             
-            squares = get_squares(boxes, centers_3d, boundary_3d)
+            
+        
+            # for box in updated_boxes:
+            #                 # Ensure that the coordinates are integers
+            #     x1, y1, x2, y2 = map(int, box)  # Ensure box coordinates are integers
+
+            #     cv2.rectangle(video_ref, (x1, y1), (x2, y2), (0, 255, 0), 2)  # Green box
+
+            #     # Show the frame with detected pieces
+            #     cv2.imshow("Detected Pieces", video_ref)
+            #     cv2.waitKey(1)
+
+            # Now updated_boxes is a TensorFlow tensor with the modified values
+            squares = get_squares(updated_boxes, centers_3d, boundary_3d)
             update = get_update(scores, squares)
             state = update_state(state, update)
         
         
             best_score1, best_score2, best_joint_score, best_move, best_moves = process_state(state, moves_pairs_ref, possible_moves)
+            print("best move and best moves")
             print(best_move)
             print(best_moves)
+            print("best score")
+            print(best_score1)
+            print(best_score2)
+            print(best_joint_score)
+            print("possible moves")
+            print(possible_moves)
             end_time = time.time()
             fps = round(1 / (end_time - start_time), 1)
 
@@ -102,6 +124,8 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
             if has_move or has_greedy_move:
                 greedy = False
                 payload = make_update_payload(game_ref.board, greedy)
+                print("payload")
+                print(payload)
                 # dispatch(game_update(payload))
                 
                 
@@ -132,7 +156,7 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
 
 
 
-def calculate_score(state, move, from_thr=0.6, to_thr=0.6):
+def calculate_score(state, move, from_thr=0.0, to_thr=0.0):
     score = 0
     for square in move['from']:
         score += 1 - max(state[square]) - from_thr
@@ -155,7 +179,7 @@ def process_state(state, moves_pairs, possible_moves):
             seen.add(move_pair['move1']['sans'][0])
             score = calculate_score(state, move_pair['move1'])
             
-            if score > 0:
+            if score > 0 or score < 0:
                 possible_moves.add(move_pair['move1']['sans'][0])
 
             if score > best_score1:
@@ -179,27 +203,29 @@ def process_state(state, moves_pairs, possible_moves):
     return best_score1, best_score2, best_joint_score, best_move, best_moves
 
 
+
 def get_box_centers(boxes):
-    # Using tf.GradientTape or tf.function isn't required here since we're just performing tensor operations.
-    with tf.GradientTape(persistent=True) as tape:
-        # Slice the boxes tensor to get l, r, and b.
-        l = boxes[:, 0:1]
-        r = boxes[:, 2:3]
-        b = boxes[:, 3:4]
+    # Slice the boxes tensor to get l, r, and b
+    l = tf.cast(boxes[:, 0:1], tf.float32)  # Ensure l is float32
+    r = tf.cast(boxes[:, 2:3], tf.float32)  # Ensure r is float32
+    b = tf.cast(boxes[:, 3:4], tf.float32)  # Ensure b is float32
 
-        # Calculate the center coordinates.
-        cx = (l + r) / 2
-        cy = b - (r - l) / 3
+    # Calculate the center coordinates
+    cx = (l + r) / 2
+    cy = b - (r - l) / 3
 
-        # Concatenate cx and cy to get the box centers.
-        box_centers = tf.concat([cx, cy], axis=1)
+    # Concatenate cx and cy to get the box centers
+    box_centers = tf.concat([cx, cy], axis=1)
 
     return box_centers
+
 
 
 def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -> tf.Tensor:
     print("boxes)")
     print(boxes)
+    np.set_printoptions(threshold=1)
+
     with tf.device('/CPU:0'):
         # Get the box centers
         box_centers_3D = tf.expand_dims(get_box_centers(boxes), 1)
@@ -243,8 +269,10 @@ def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -
         det = tf.subtract(tf.multiply(a, d), tf.multiply(b, c))
         
         print("det")
-        np.set_printoptions(threshold=np.inf)
+        # np.set_printoptions(threshold=np.inf)
         print(det)
+        # np.set_printoptions(threshold=1)
+
         
         np.set_printoptions(threshold=1)
 
@@ -260,6 +288,7 @@ def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -
         print(type(boundary3D))
         
         print("squares")
+        print(squares)
         print(type(squares))
 
         # Apply tf.where condition for negative det values
@@ -273,7 +302,7 @@ def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -
         print(new_squares)
     
         
-        return new_squares
+        return squares
 
 def get_update(scores_tensor, squares):
     update = np.zeros((64, 12))
