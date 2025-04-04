@@ -20,7 +20,6 @@ function PGN({ moves }: PGNProps) {
    * Each pair of moves corresponds to one complete turn.
    * If there's an odd number of moves, the last black move will be empty.
    */
-
   for (let i = 0; i < moves.length; i += 2) {
     rows.push({
       turn: Math.floor(i / 2) + 1,
