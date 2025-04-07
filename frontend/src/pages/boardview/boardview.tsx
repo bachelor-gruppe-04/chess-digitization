@@ -3,6 +3,7 @@ import PGN from '../../components/pgn/pgn';
 import Camera from '../../components/camera/camera';
 import './boardview.css';
 import { useRef, useEffect, useState } from "react";
+import { NavLink } from 'react-router-dom';
 
 /**
 /**
@@ -42,6 +43,10 @@ function BoardView({ id }: BoardViewProps) {
   return (
     <div className="table-view">
       <div className='left-wrapper'>
+        <NavLink
+            to="/">
+            Go back to tournament view
+          </NavLink>
           <div className='camera-wrapper'>
             <Camera id={id} />
           </div>
