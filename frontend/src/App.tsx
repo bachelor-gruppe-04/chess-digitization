@@ -1,4 +1,6 @@
 import './App.css';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import BoardView from './pages/boardview/boardview';
 import TournamentView from './pages/tournamentview/tournamentview';
 
 /**
@@ -9,9 +11,13 @@ import TournamentView from './pages/tournamentview/tournamentview';
 
 function App() {
   return (
-    <div id="app">
-      <TournamentView/>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<TournamentView />} />
+        <Route path="/board/1" element={<BoardView id={1}/>} />
+        <Route path="/board/2" element={<BoardView id={2}/>} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
