@@ -8,10 +8,12 @@ import { useWebSocket } from "../../hooks/useWebSocket";
 /**
  * Chessboard Component
  *
- * This component renders an interactive chessboard and manages game state using the `chess.ts` library.
- * It consumes a WebSocket stream to receive and apply moves, and exposes its internal move list to parent components.
+ * This component renders a visual chessboard, maintains game state using `chess.ts`,
+ * listens to real-time move updates over WebSocket, and exposes its current move list
+ * to parent components via a forwarded ref.
  */
 
+// Represents a single piece's position and image
 interface Piece {
   image: string;
   x: number;
@@ -19,9 +21,9 @@ interface Piece {
 }
 
 /**
- * Converts a FEN string into an array of piece objects.
- * Each object includes image path and board coordinates.
- * Used to render pieces from the current game state.
+ * Converts a FEN string into an array of Piece objects.
+ * Maps chess notation characters to piece image paths and coordinates.
+ * The y-coordinate is flipped to align with visual board orientation.
  */
 function generatePositionFromFen(fen: string): Piece[] {
   const board = fen.split(" ")[0];
@@ -37,7 +39,7 @@ function generatePositionFromFen(fen: string): Piece[] {
 
   const pieces: Piece[] = [];
 
-  // Parse each row from top (8) to bottom (1)
+  // Parse the FEN rows (from top to bottom)
   for (let y = 0; y < rows.length; y++) {
     let x = 0;
     for (const char of rows[y]) {
@@ -55,13 +57,17 @@ function generatePositionFromFen(fen: string): Piece[] {
 }
 
 
-
+/**
+ * Props for Chessboard
+ * - `id`: Unique ID for the board, used in WebSocket connection
+ */
 interface ChessboardProps {
   id: number;
 }
 
 /**
- * Unique ID to identify the board
+ * Ref interface exposed by the Chessboard component.
+ * Allows parent components to retrieve the current move list.
  */
 export interface ChessboardHandle {
   getMoves: () => string[];
@@ -133,10 +139,9 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
 
   let board = [];
 
-  /**
-   * Generate the chessboard tiles and place pieces on them.
-   * The outer loop iterates through each row from 8 to 1 (top to bottom).
-   * The inner loop creates each tile and adds a piece if one exists at that coordinate.
+   /**
+   * Generates the full 8x8 chessboard as a grid of tiles.
+   * Each tile receives a piece image if one exists at its (x, y) coordinate.
    */
   for (let j = verticalAxis.length - 1; j >= 0; j--) {
     for (let i = 0; i < horizontalAxis.length; i++) {
@@ -154,7 +159,6 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
   }
 
   return (
-    
     <div id="chessboard">
       {board}
     </div>

@@ -1,20 +1,26 @@
+import './boardview.css';
+
+import Camera from '../../components/camera/camera';
 import Chessboard, { ChessboardHandle } from '../../components/chessboard/chessboard';
 import PGN from '../../components/pgn/pgn';
-import Camera from '../../components/camera/camera';
-import './boardview.css';
 import { useRef, useEffect, useState } from "react";
 import { NavLink } from 'react-router-dom';
 
 /**
-/**
  * BoardView Component
  *
- * This layout component arranges a single chessboard along with a PGN move list and camera feed.
- * It integrates child components and synchronizes the move history from the chessboard.
+ * This layout component arranges a single chessboard alongside:
+ * - A PGN move list (reflecting the current state of the game),
+ * - A camera feed (useful for physical board views or livestreams),
+ * - A navigation link back to the tournament overview.
+ *
+ * The component uses a `ref` to access the move history from the Chessboard component
+ * and updates the local `moves` state at regular intervals to keep the PGN list in sync.
  */
 
 /**
- * Unique ID to identify the board
+ * Props for BoardView
+ * - `id`: Unique identifier for the board, used to connect to the correct data stream (e.g., WebSocket or camera).
  */
 interface BoardViewProps {
   id: number;
@@ -24,10 +30,9 @@ function BoardView({ id }: BoardViewProps) {
   const boardRef = useRef<ChessboardHandle>(null); // Ref to access Chessboard's imperative handle (exposes getMoves method)
   const [moves, setMoves] = useState<string[]>([]); // State to hold the current list of moves in algebraic notation (SAN)
 
-  /**
-   * useEffect sets up a polling interval to fetch the latest moves
-   * from the chessboard via the exposed `getMoves()` method.
-   * This ensures the PGN view stays in sync with the board.
+   /**
+   * Sets up a polling interval to sync moves from the Chessboard component.
+   * Fetches move history every 500ms and updates the PGN view accordingly.
    */
   useEffect(() => {
     const interval = setInterval(() => {
@@ -37,7 +42,7 @@ function BoardView({ id }: BoardViewProps) {
       }
     }, 500); // Fetch moves every 500ms
 
-    return () => clearInterval(interval); // Clear the interval when component unmounts
+    return () => clearInterval(interval);  // Clean up on component unmount
   }, []);
 
   return (
