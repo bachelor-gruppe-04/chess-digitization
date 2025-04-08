@@ -1,20 +1,27 @@
-import "./Tile.css";
+import "./tile.css";
 
 /**
  * Tile Component
  *
- * This component represents an individual square on a chessboard.
- * It dynamically determines the tile color (black or white) based on the provided `number`,
- * which encodes both the row and column indices. If an `image` prop is passed, it displays
- * a chess piece on the tile using a background image.
+ * Represents a single square on the chessboard.
+ * The tile's color is determined by the `number` prop — even numbers create black tiles,
+ * and odd numbers create white tiles. This logic ensures a checkered board pattern.
+ *
+ * If an `image` prop is provided (usually a chess piece), it is rendered on the tile
+ * using a background image style.
  */
 
-interface Props {
-  number: number; // Used to determine tile color
-  image?: string; // Optional image URL for a chess piece
+/**
+ * Props for the Tile component
+ * - `number`: Determines tile color based on parity (even = black, odd = white)
+ * - `image`: Optional image URL for rendering a chess piece
+ */
+interface TileProps {
+  number: number; 
+  image?: string;
 }
 
-function Tile({ number, image }: Props) {
+function Tile({ number, image }: TileProps) {
    // Determine the tile color: even = black, odd = white
   if (number % 2 === 0) {
     return (

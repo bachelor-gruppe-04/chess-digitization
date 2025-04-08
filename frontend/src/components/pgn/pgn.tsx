@@ -3,24 +3,27 @@ import "./pgn.css";
 /**
  * PGN Component
  *
- * This component displays a list of chess moves in standard PGN (Portable Game Notation) format.
- * It accepts an array of move strings and formats them into rows with turn numbers,
- * alternating white and black moves.
+ * Displays a list of chess moves in Portable Game Notation (PGN) format.
+ * It takes an array of move strings and formats them into rows,
+ * each representing a turn with a white and black move.
  */
 
+/**
+ * Props for the PGN component
+ * - `moves`: Array of algebraic notation moves (e.g., ["e4", "e5", "Nf3", "Nc6"])
+ */
 interface PGNProps {
-  moves: string[]; // Array of algebraic move notation strings
+  moves: string[];
 }
 
 function PGN({ moves }: PGNProps) {
   const rows = [];
 
   /**
-   * Group the moves into rows of white and black turns.
-   * Each pair of moves corresponds to one complete turn.
-   * If there's an odd number of moves, the last black move will be empty.
+   * Convert the flat array of moves into rows with turn numbers.
+   * Each row contains a `white` move and a `black` move.
+   * If the number of moves is odd, the last row's `black` cell will be empty.
    */
-
   for (let i = 0; i < moves.length; i += 2) {
     rows.push({
       turn: Math.floor(i / 2) + 1,
