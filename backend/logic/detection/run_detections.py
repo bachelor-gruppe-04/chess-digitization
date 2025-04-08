@@ -91,4 +91,4 @@ def find_centers_and_boundary(
     centers, centers3D = transform_centers(inv_transform)
     boundary, boundary3D = transform_boundary(inv_transform)
         
-    return centers, boundary
+    return centers, boundary, centers3D, boundary3D

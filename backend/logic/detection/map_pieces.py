@@ -3,13 +3,15 @@ import numpy as np
 import tensorflow as tf
 import cv2
 import time
+import chess
 
 from detection_methods import get_input, get_boxes_and_scores
 from piece_detection import predict_pieces
 from game import make_update_payload
+from render import draw_points, draw_polygon
+from run_detections import find_centers_and_boundary
 
 from detection_methods import extract_xy_from_corners_mapping
-from warp import get_inv_transform, transform_centers, transform_boundary
 
 
 async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_pairs_ref):
@@ -21,153 +23,74 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
     keypoints = None
     possible_moves = set()
     greedy_move_to_time = {}
+
+
+    if centers is None:
+        keypoints = extract_xy_from_corners_mapping(corners_ref, video_ref)
+        centers, boundary, centers_3d, boundary_3d = find_centers_and_boundary(corners_ref, video_ref)
+        state = np.zeros((64, 12))
+        possible_moves = set()
+        greedy_move_to_time = {}
+
+    start_time = time.time()
+
+    boxes, scores = await detect(piece_model_ref, video_ref, keypoints)
+    squares = get_squares(boxes, centers_3d, boundary_3d)
+    update = get_update(scores, squares)
+
+    # Draw centers, boundary, polygon...
+    draw_points(video_ref, centers)
+    draw_polygon(video_ref, boundary)
+
+    state = update_state(state, update)
+    best_score1, best_score2, best_joint_score, best_move, best_moves = process_state(
+        state, moves_pairs_ref, possible_moves
+    )
+
+    # Debug prints
+    print("best move:", best_move)
+    print("best moves:", best_moves)
+    print("scores:", best_score1, best_score2, best_joint_score)
+    print("possible moves:", possible_moves)
+
+    end_time = time.time()
+    print("FPS:", round(1 / (end_time - start_time), 1))
+
+    has_move = False
+    if best_moves is not None:
+        move_str = best_moves["sans"][0]
+        print("move:", move_str)
+        has_move = best_score2 > 0 and best_joint_score > 0 and move_str in possible_moves
+        if has_move:
+            print("inside has_move")
+            print(move_str)
+            game_ref.board.push_san(move_str)
+            possible_moves.clear()
+            greedy_move_to_time = {}
+
+    has_greedy_move = False
+    if best_move is not None and not has_move and best_score1 > 0:
+        move_str = best_move["sans"][0]
+        if move_str not in greedy_move_to_time:
+            greedy_move_to_time[move_str] = end_time
+
+        elapsed = (end_time - greedy_move_to_time[move_str]) > 1
+        print("santoLan)")
+        is_new = san_to_lan(game_ref.board, move_str) != game_ref.last_move
+        has_greedy_move = elapsed and is_new
+        if has_greedy_move:
+            print("inside has_greedy_move")
+            game_ref["board"].move(move_str)
+            greedy_move_to_time = {move_str: greedy_move_to_time[move_str]}
+
+    if has_move or has_greedy_move:
+        payload = make_update_payload(game_ref.board, greedy=False)
+        print("payload", payload)
+        # dispatch(game_update(payload))
+
+    tf.keras.backend.clear_session()
     
-    print("piece_model_ref")    
-    print(piece_model_ref)
-
-
-    async def loop():
-        nonlocal centers, boundary, centers_3d, boundary_3d, state, keypoints, possible_moves, greedy_move_to_time
-        if False:
-            centers = None
-        else:
-            if centers is None:
-                keypoints = extract_xy_from_corners_mapping(corners_ref, video_ref)
-                inv_transform = get_inv_transform(keypoints)
-                centers, centers_3d = transform_centers(inv_transform)
-                boundary, boundary_3d = transform_boundary(inv_transform)
-                state = np.zeros((64, 12))
-                possible_moves = set()
-                greedy_move_to_time = {}
-
-            start_time = time.time()
-            
-
-            boxes, scores = await detect(piece_model_ref, video_ref, keypoints)
-            
-
-            # Now updated_boxes is a TensorFlow tensor with the modified values
-            squares = get_squares(boxes, centers_3d, boundary_3d)
-            
-            update = get_update(scores, squares)
-            # np.set_printoptions(threshold=np.inf)
-            colors = [
-        (255, 0, 0),        # Blue
-        (0, 255, 0),        # Green
-        (0, 0, 255),        # Red
-        (0, 255, 255),      # Yellow
-        (255, 0, 255),      # Magenta
-        (255, 255, 0),      # Cyan
-        (0, 0, 0),          # Black
-        (255, 255, 255)     # White
-    ]   
-            
-            
-            # box_centers_np = tf.squeeze(box_centers_3D).numpy()  # shape [n, 2]
-
-            # for (x, y) in box_centers_np:
-            #     x_int, y_int = int(x), int(y)
-                # cv2.circle(video_ref, (x_int, y_int), radius=5, color=(0, 0, 255), thickness=-1)  # red dot
-                        
-                    # visualize box rectangles
-                # Assuming 'boxes' contains the bounding boxes and 'colors' is the list of colors you want to use
-
-            for i, box in enumerate(boxes.numpy()):
-                # Only display every 20th box
-                if i % 33 == 0:
-                    x1, y1, x2, y2 = map(int, box)
-                    
-                    # Assign a color from the list based on the index
-                    color = colors[i % len(colors)]  # This ensures that if there are more boxes than colors, it will cycle through the colors
-                    
-                    # Draw the rectangle with the selected color
-                    cv2.rectangle(video_ref, (x1, y1), (x2, y2), color, 2)
-                    
-                    # Annotate the box with its index
-                    cv2.putText(video_ref, f"Box{i}", (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
-
-
-            # Visualize centers
-            for i, (x, y) in enumerate(centers):
-                cv2.circle(video_ref, (int(x), int(y)), 5, (0, 255, 0), -1)
-                cv2.putText(video_ref, f"C{i}", (int(x) + 5, int(y) - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
-
-            # Visualize boundary
-            boundary_np = np.array(boundary, dtype=np.int32)
-            cv2.polylines(video_ref, [boundary_np], isClosed=True, color=(255, 0, 0), thickness=2)
-            for i, (x, y) in enumerate(boundary):
-                cv2.circle(video_ref, (int(x), int(y)), 4, (255, 0, 0), -1)
-                cv2.putText(video_ref, f"B{i}", (int(x) + 5, int(y) - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0), 1)
-
-            cv2.imshow("Detected Pieces", video_ref)
-            cv2.waitKey(1)
-
-
-            
-            state = update_state(state, update)
-        
-        
-            best_score1, best_score2, best_joint_score, best_move, best_moves = process_state(state, moves_pairs_ref, possible_moves)
-            print("best move and best moves")
-            print(best_move)
-            print(best_moves)
-            print("best score")
-            print(best_score1)
-            print(best_score2)
-            print(best_joint_score)
-            print("possible moves")
-            print(possible_moves)
-            end_time = time.time()
-            fps = round(1 / (end_time - start_time), 1)
-            
-            print("FPS")
-            print(fps)
-
-            has_move = False
-            if best_moves is not None:
-                move = best_moves["sans"][0]
-                has_move = best_score2 > 0 and best_joint_score > 0 and move in possible_moves
-                if has_move:
-                    game_ref.board.push_san(move)
-                    possible_moves.clear()
-                    greedy_move_to_time = {}
-
-            has_greedy_move = False
-            if best_move is not None and not has_move and best_score1 > 0:
-                move = best_move["sans"][0]
-                if move not in greedy_move_to_time:
-                    greedy_move_to_time[move] = end_time
-
-                second_elapsed = (end_time - greedy_move_to_time[move]) > 1  # 1000 ms = 1 second
-                new_move = san_to_lan(game_ref.board, move) != game_ref["last_move"]
-                has_greedy_move = second_elapsed and new_move
-                if has_greedy_move:
-                    game_ref["board"].move(move)
-                    greedy_move_to_time = {move: greedy_move_to_time[move]}
-
-            if has_move or has_greedy_move:
-                greedy = False
-                payload = make_update_payload(game_ref.board, greedy)
-                print("payload")
-                print(payload)
-                # dispatch(game_update(payload))
-                
-                
-
-            # Dispose of the tensors to free memory
-            tf.keras.backend.clear_session()
-
-        await loop()  # Correctly awaiting the recursive call
-
-    # Initial call to start the loop 
-    await loop()
-
-    # Clean up when the function is called to terminate
-    def cleanup():
-        tf.keras.backend.clear_session()
-        # Implement cancellation if necessary (e.g., clearing loops or canceling animations)
-    
-    return cleanup
+    return video_ref
 
 
 
@@ -255,7 +178,6 @@ def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -
         ], axis=1)
 
         n_boxes = tf.shape(box_centers_3D)[0]
-
         # Calculate a, b, c, and d tensors
         a = tf.squeeze(tf.subtract(
             tf.slice(boundary3D, [0, 0, 0], [1, 4, 1]),
@@ -279,29 +201,7 @@ def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -
 
         # Calculate determinant
         det = tf.subtract(tf.multiply(a, d), tf.multiply(b, c))
-        
-        print("det")
-        np.set_printoptions(threshold=np.inf)
-        print(det)
-        np.set_printoptions(threshold=1)
 
-        
-        np.set_printoptions(threshold=1)
-
-        print("types")
-        print("box_centers_3D")
-        print(box_centers_3D)
-        print(type(box_centers_3D))
-        print("centers3d")
-        print(centers3D)
-        print(type(centers3D))
-        print("boundary3D")
-        print(boundary3D)
-        print(type(boundary3D))
-        
-        print("squares")
-        print(squares)
-        print(type(squares))
 
         # Apply tf.where condition for negative det values
         new_squares = tf.where(
@@ -310,22 +210,11 @@ def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -
             squares                                   # Otherwise, keep original squares
         )
         
-        print("newsquares")
-        np.set_printoptions(threshold=np.inf)
-        print(new_squares)
-        np.set_printoptions(threshold=1)
-        
-        
         return squares
 
 def get_update(scores_tensor, squares):
     update = np.zeros((64, 12))
     scores = scores_tensor.numpy()
-    
-    print(squares)
-    print("squares")
-    print(scores_tensor)
-    print("scores")
 
     for i in range(len(squares)):
         square = squares[i]
@@ -358,19 +247,6 @@ async def detect(pieces_model_ref, video_ref, keypoints):
 
     pieces_prediction = predict_pieces(image4d, pieces_model_ref)
     boxes, scores = get_boxes_and_scores(pieces_prediction, width, height, frame_width, frame_height, padding, roi)
-    
-    print("inside detect")
-    
-    
-    # print(boxes)
-    
-    np.set_printoptions(threshold=5, linewidth=100, edgeitems=10)
-
-    print(scores)
-    
-    
-    np.set_printoptions()  # Resets everything to default
-
     
 
     del pieces_prediction
