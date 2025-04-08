@@ -21,6 +21,10 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
     keypoints = None
     possible_moves = set()
     greedy_move_to_time = {}
+    
+    print("piece_model_ref")    
+    print(piece_model_ref)
+
 
     async def loop():
         nonlocal centers, boundary, centers_3d, boundary_3d, state, keypoints, possible_moves, greedy_move_to_time
@@ -38,68 +42,69 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
 
             start_time = time.time()
             
-            print("inside loop")
-            print(piece_model_ref)
-            print(video_ref.shape)
-            print(keypoints)
 
             boxes, scores = await detect(piece_model_ref, video_ref, keypoints)
             
 
-            print(scores)
-            
-            print("keypoints")
-            print(keypoints)
-            
-            
-            # updated_boxes = []
-            # for box in boxes:
-            #     x1, y1, x2, y2 = box[0], box[1], box[2], box[3]  # Unwrap the tensor to individual values
-
-            #     # Scale and cast the results to integers
-            #     x1 = tf.cast(x1 * 4, tf.int32)  # Ensure x1 is an integer
-            #     y1 = tf.cast(y1 * 3.75, tf.int32)  # Ensure y1 is an integer
-            #     x2 = tf.cast(x2 * 4, tf.int32)  # Ensure x2 is an integer
-            #     y2 = tf.cast(y2 * 3.75, tf.int32)  # Ensure y2 is an integer
-
-            #     # Create a new box with the updated values
-            #     updated_box = tf.stack([x1, y1, x2, y2])  # Stack them back into a tensor
-
-            #     # Add the updated box to the list
-            #     updated_boxes.append(updated_box)
-
-            # # Convert updated boxes back to a Tensor
-            # updated_boxes = tf.convert_to_tensor(updated_boxes)
-            
-            
-        
-            # for box in updated_boxes:
-            #                 # Ensure that the coordinates are integers
-            #     x1, y1, x2, y2 = map(int, box)  # Ensure box coordinates are integers
-
-            #     cv2.rectangle(video_ref, (x1, y1), (x2, y2), (0, 255, 0), 2)  # Green box
-
-            #     # Show the frame with detected pieces
-            #     cv2.imshow("Detected Pieces", video_ref)
-            #     cv2.waitKey(1)
-
             # Now updated_boxes is a TensorFlow tensor with the modified values
             squares = get_squares(boxes, centers_3d, boundary_3d)
+            
             update = get_update(scores, squares)
-            print("update")
             # np.set_printoptions(threshold=np.inf)
-
-            print(update)
+            colors = [
+        (255, 0, 0),        # Blue
+        (0, 255, 0),        # Green
+        (0, 0, 255),        # Red
+        (0, 255, 255),      # Yellow
+        (255, 0, 255),      # Magenta
+        (255, 255, 0),      # Cyan
+        (0, 0, 0),          # Black
+        (255, 255, 255)     # White
+    ]   
             
-            # np.set_printoptions(threshold=1)
+            
+            # box_centers_np = tf.squeeze(box_centers_3D).numpy()  # shape [n, 2]
+
+            # for (x, y) in box_centers_np:
+            #     x_int, y_int = int(x), int(y)
+                # cv2.circle(video_ref, (x_int, y_int), radius=5, color=(0, 0, 255), thickness=-1)  # red dot
+                        
+                    # visualize box rectangles
+                # Assuming 'boxes' contains the bounding boxes and 'colors' is the list of colors you want to use
+
+            for i, box in enumerate(boxes.numpy()):
+                # Only display every 20th box
+                if i % 33 == 0:
+                    x1, y1, x2, y2 = map(int, box)
+                    
+                    # Assign a color from the list based on the index
+                    color = colors[i % len(colors)]  # This ensures that if there are more boxes than colors, it will cycle through the colors
+                    
+                    # Draw the rectangle with the selected color
+                    cv2.rectangle(video_ref, (x1, y1), (x2, y2), color, 2)
+                    
+                    # Annotate the box with its index
+                    cv2.putText(video_ref, f"Box{i}", (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
+
+
+            # Visualize centers
+            for i, (x, y) in enumerate(centers):
+                cv2.circle(video_ref, (int(x), int(y)), 5, (0, 255, 0), -1)
+                cv2.putText(video_ref, f"C{i}", (int(x) + 5, int(y) - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
+
+            # Visualize boundary
+            boundary_np = np.array(boundary, dtype=np.int32)
+            cv2.polylines(video_ref, [boundary_np], isClosed=True, color=(255, 0, 0), thickness=2)
+            for i, (x, y) in enumerate(boundary):
+                cv2.circle(video_ref, (int(x), int(y)), 4, (255, 0, 0), -1)
+                cv2.putText(video_ref, f"B{i}", (int(x) + 5, int(y) - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 0), 1)
+
+            cv2.imshow("Detected Pieces", video_ref)
+            cv2.waitKey(1)
+
+
+            
             state = update_state(state, update)
-            print("state")
-            # np.set_printoptions(threshold=np.inf)
-
-            print(state)
-            
-            # np.set_printoptions(threshold=1)
-
         
         
             best_score1, best_score2, best_joint_score, best_move, best_moves = process_state(state, moves_pairs_ref, possible_moves)
@@ -149,18 +154,9 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
                 
                 
 
-            # set_text([f"FPS: {fps}", move_text_ref])
-
-            # render_state(canvas_ref, centers, boundary, state)
-
             # Dispose of the tensors to free memory
             tf.keras.backend.clear_session()
 
-            # end_tensors = len(tf.get_registered_nodes())  # Check memory usage
-            # if start_tensors < end_tensors:
-            #     print(f"Memory Leak! ({end_tensors} > {start_tensors})")
-
-        # Recursively call the loop (frame by frame)
         await loop()  # Correctly awaiting the recursive call
 
     # Initial call to start the loop 
@@ -241,8 +237,6 @@ def get_box_centers(boxes):
 
 
 def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -> tf.Tensor:
-    print("boxes)")
-    print(boxes)
 
     with tf.device('/CPU:0'):
         # Get the box centers
@@ -287,9 +281,9 @@ def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -
         det = tf.subtract(tf.multiply(a, d), tf.multiply(b, c))
         
         print("det")
-        # np.set_printoptions(threshold=np.inf)
+        np.set_printoptions(threshold=np.inf)
         print(det)
-        # np.set_printoptions(threshold=1)
+        np.set_printoptions(threshold=1)
 
         
         np.set_printoptions(threshold=1)
@@ -317,8 +311,10 @@ def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -
         )
         
         print("newsquares")
+        np.set_printoptions(threshold=np.inf)
         print(new_squares)
-    
+        np.set_printoptions(threshold=1)
+        
         
         return squares
 
@@ -355,10 +351,10 @@ def san_to_lan(board, san):
     return lan
   
   
-async def detect(pieces_model_ref,frame, keypoints):
-    frame_height, frame_width, _ = frame.shape
+async def detect(pieces_model_ref, video_ref, keypoints):
+    frame_height, frame_width, _ = video_ref.shape
 
-    image4d, width, height, padding, roi = get_input(frame, keypoints)
+    image4d, width, height, padding, roi = get_input(video_ref, keypoints)
 
     pieces_prediction = predict_pieces(image4d, pieces_model_ref)
     boxes, scores = get_boxes_and_scores(pieces_prediction, width, height, frame_width, frame_height, padding, roi)

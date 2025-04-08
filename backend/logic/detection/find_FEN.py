@@ -19,10 +19,13 @@ async def find_fen(pieces_model_ref, frame, board_corners):
     
     print("insie fen")
     
-    boxes, scores = await detect(frame, pieces_model_ref, keypoints)
+    boxes, scores = await detect(pieces_model_ref, frame, keypoints)
     squares = get_squares(boxes, centers3D, boundary3D)
     state = get_update(scores, squares) 
     fen = set_fen_from_state(state)
+    
+    print("THIS IS FEN")
+    print(fen)
     
     tf.keras.backend.clear_session()
     

@@ -10,6 +10,7 @@ from map_pieces import find_pieces
 from moves import get_moves_pairs
 from typing import Optional, List, Tuple
 from render import draw_points, draw_polygon
+from find_FEN import find_fen
 
 async def process_video(video_path, piece_model_session, corner_ort_session, output_path, game_store, game_id, live_video=False):
     """Main processing loop for the video (equivalent to React's useEffect on load)."""
@@ -50,18 +51,18 @@ async def process_video(video_path, piece_model_session, corner_ort_session, out
                 game_store.update_game(last_move, game_id)
                         
             
-            # centers, boundary = find_centers_and_boundary(board_corners_ref, video_frame)  # Find centers of squares
+            centers, boundary = find_centers_and_boundary(board_corners_ref, video_frame)  # Find centers of squares
                         
-            # frame = draw_points(video_frame, centers)  # Draw centers on the frame
-            # frame2 = draw_polygon(frame, boundary)  # Draw boundary on the frame
+            frame = draw_points(video_frame, centers)  # Draw centers on the frame
+            frame2 = draw_polygon(frame, boundary)  # Draw boundary on the frame
                         
-            # resized_frame = cv2.resize(frame2, (1280, 720))
+            resized_frame = cv2.resize(frame2, (1280, 720))
 
             
-            # # Show the frame with detected centers
-            # cv2.imshow("Chess Board Detection", resized_frame)
-            # cv2.waitKey(1)  # Refresh the display
-            
+            # Show the frame with detected centers
+            cv2.imshow("Chess Board Detection", resized_frame)
+            cv2.waitKey(1)  # Refresh the display
+                        
             await find_pieces(piece_model_session, video_frame, board_corners_ref, game_store.get_game(game_id), moves_pairs)
 
             
@@ -78,7 +79,7 @@ async def process_video(video_path, piece_model_session, corner_ort_session, out
 
 
 async def main() -> None:
-    video_path: str = 'resources/videoes/chessvideo.mp4'  # Path to your prerecorded video
+    video_path: str = 'resources/videoes/new/DiagonalViewItalien.mp4'  # Path to your prerecorded video
     output_path: str = 'resources/videoes/output_video_combined.avi'
 
     piece_model_path: str = "resources/models/480M_leyolo_pieces.onnx"
