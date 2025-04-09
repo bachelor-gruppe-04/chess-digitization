@@ -2,15 +2,35 @@ import numpy as np
 import tensorflow as tf
 import time
 
-from detection_methods import get_input, get_boxes_and_scores, extract_xy_from_corners_mapping
-from piece_detection import predict_pieces
+from detection.detection_methods import extract_xy_from_corners_mapping
+from detection.piece_detection import detect
 from game import make_update_payload
 from render import draw_points, draw_polygon, draw_boxes_with_scores
-from run_detections import find_centers_and_boundary
+from detection.run_detections import find_centers_and_boundary
 
 last_update_time = 0  # Global or external to function if needed
 
-async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_pairs_ref):
+async def get_payload(
+    piece_model_ref: tf.keras.Model,
+    video_ref: np.ndarray,
+    corners_ref: np.ndarray,
+    game_ref: any,
+    moves_pairs_ref: list
+) -> tuple:
+    """
+    Main function to generate the payload for the game. It computes the state of the game based on the current video frame,
+    updates the state of the board, processes possible moves, and prepares the payload for dispatch.
+
+    Args:
+        piece_model_ref (tf.keras.Model): The model used for piece detection.
+        video_ref (np.ndarray): The video frame from the game.
+        corners_ref (np.ndarray): Coordinates of the corners in the video frame.
+        game_ref (any): The game object, representing the current state of the game.
+        moves_pairs_ref (list): List of possible move pairs in the game.
+
+    Returns:
+        tuple: A tuple containing the updated video frame and the game payload.
+    """
     global last_update_time
 
     centers = None
@@ -18,6 +38,7 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
     centers_3d = None
     boundary_3d = None
     state = None
+    payload = None
     keypoints = None
     possible_moves = set()
     greedy_move_to_time = {}
@@ -35,7 +56,6 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
 
     squares = get_squares(boxes, centers_3d, boundary_3d)
 
-    # Only call get_update if 1 second has passed
     current_time = time.time()
     if current_time - last_update_time >= 4.0:
         update = get_update(scores, squares)
@@ -75,21 +95,30 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
 
     if has_move or has_greedy_move:
         payload = make_update_payload(game_ref.board, greedy=False)
-        print("payload", payload)
         # dispatch(game_update(payload))
         
     draw_points(video_ref, centers)
     draw_polygon(video_ref, boundary)
     # draw_boxes_with_scores(video_ref, boxes, scores, threshold=0.5)
 
-
     tf.keras.backend.clear_session()
     
-    return video_ref
+    return video_ref, payload
 
 
+def calculate_move_score(state: np.ndarray, move: dict, from_thr: float = 0.6, to_thr: float = 0.6) -> float:
+    """
+    Calculates the score for a given move based on the state of the game.
 
-def calculate_score(state, move, from_thr=0.6, to_thr=0.6):
+    Args:
+        state (np.ndarray): The current game state (64x12 array).
+        move (dict): A dictionary containing information about the move ('from', 'to', and 'targets').
+        from_thr (float): Threshold for scoring the 'from' squares. Default is 0.6.
+        to_thr (float): Threshold for scoring the 'to' squares. Default is 0.6.
+
+    Returns:
+        float: The calculated score for the move.
+    """
     score = 0
     for square in move['from']:
         score += 1 - max(state[square]) - from_thr
@@ -99,7 +128,19 @@ def calculate_score(state, move, from_thr=0.6, to_thr=0.6):
     
     return score
 
-def process_state(state, moves_pairs, possible_moves):
+
+def process_state(state: np.ndarray, moves_pairs: list, possible_moves: set) -> tuple:
+    """
+    Processes the game state and determines the best possible moves.
+
+    Args:
+        state (np.ndarray): The current game state (64x12 array).
+        moves_pairs (list): List of possible move pairs.
+        possible_moves (set): A set of possible moves.
+
+    Returns:
+        tuple: A tuple containing the best scores and moves.
+    """
     best_score1 = float('-inf')
     best_score2 = float('-inf')
     best_joint_score = float('-inf')
@@ -110,7 +151,7 @@ def process_state(state, moves_pairs, possible_moves):
     for move_pair in moves_pairs:
         if move_pair['move1']['sans'][0] not in seen:
             seen.add(move_pair['move1']['sans'][0])
-            score = calculate_score(state, move_pair['move1'])
+            score = calculate_move_score(state, move_pair['move1'])
             
             if score > 0:
                 possible_moves.add(move_pair['move1']['sans'][0])
@@ -122,13 +163,13 @@ def process_state(state, moves_pairs, possible_moves):
         if move_pair['move2'] is None or move_pair['moves'] is None or move_pair['move1']['sans'][0] not in possible_moves:
             continue
         
-        score2 = calculate_score(state, move_pair['move2'])
+        score2 = calculate_move_score(state, move_pair['move2'])
         if score2 < 0:
             continue
         if score2 > best_score2:
             best_score2 = score2
         
-        joint_score = calculate_score(state, move_pair['moves'])
+        joint_score = calculate_move_score(state, move_pair['moves'])
         if joint_score > best_joint_score:
             best_joint_score = joint_score
             best_moves = move_pair['moves']
@@ -136,8 +177,18 @@ def process_state(state, moves_pairs, possible_moves):
     return best_score1, best_score2, best_joint_score, best_move, best_moves
 
 
+def get_box_centers(boxes: tf.Tensor) -> tf.Tensor:
+    """
+    Calculates the center coordinates (cx, cy) of bounding boxes.
 
-def get_box_centers(boxes):
+    Args:
+        boxes (tf.Tensor): A tensor of shape (N, 4), where each row represents 
+                           a bounding box in the format [left, top, right, bottom].
+
+    Returns:
+        tf.Tensor: A tensor of shape (N, 2), where each row contains the center 
+                   coordinates [cx, cy] of the corresponding bounding box.
+    """
     # Slice the boxes tensor to get l, r, and b
     l = tf.cast(boxes[:, 0:1], tf.float32)  # Ensure l is float32
     r = tf.cast(boxes[:, 2:3], tf.float32)  # Ensure r is float32
@@ -152,10 +203,24 @@ def get_box_centers(boxes):
 
     return box_centers
 
-
+import tensorflow as tf
+import numpy as np
+from typing import List, Tuple
 
 def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -> tf.Tensor:
+    """
+    Given the boxes, centers, and boundary, computes the square for each box by 
+    determining the index of the minimum distance between box centers and the provided centers.
 
+    Args:
+        boxes (tf.Tensor): A tensor of shape (N, 6) representing N 3D boxes. Each box is 
+                            represented by its (xmin, ymin, zmin, xmax, ymax, zmax).
+        centers3D (tf.Tensor): A tensor of shape (M, 3) representing M 3D centers.
+        boundary3D (tf.Tensor): A tensor of shape (1, 4, 2) representing boundary coordinates for the boxes.
+
+    Returns:
+        tf.Tensor: A tensor of shape (N,) representing the square (index) for each box based on the distance to centers3D.
+    """
     with tf.device('/CPU:0'):
         # Get the box centers
         box_centers_3D = tf.expand_dims(get_box_centers(boxes), 1)
@@ -173,22 +238,23 @@ def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -
         ], axis=1)
 
         n_boxes = tf.shape(box_centers_3D)[0]
+
         # Calculate a, b, c, and d tensors
         a = tf.squeeze(tf.subtract(
             tf.slice(boundary3D, [0, 0, 0], [1, 4, 1]),
             tf.slice(shifted_boundary_3D, [0, 0, 0], [1, 4, 1])
         ), axis=2)
-        
+
         b = tf.squeeze(tf.subtract(
             tf.slice(boundary3D, [0, 0, 1], [1, 4, 1]),
             tf.slice(shifted_boundary_3D, [0, 0, 1], [1, 4, 1])
         ), axis=2)
-        
+
         c = tf.squeeze(tf.subtract(
             tf.slice(box_centers_3D, [0, 0, 0], [n_boxes, 1, 1]),
             tf.slice(shifted_boundary_3D, [0, 0, 0], [1, 4, 1])
         ), axis=2)
-        
+
         d = tf.squeeze(tf.subtract(
             tf.slice(box_centers_3D, [0, 0, 1], [n_boxes, 1, 1]),
             tf.slice(shifted_boundary_3D, [0, 0, 1], [1, 4, 1])
@@ -197,17 +263,28 @@ def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -
         # Calculate determinant
         det = tf.subtract(tf.multiply(a, d), tf.multiply(b, c))
 
-
         # Apply tf.where condition for negative det values
+        # Determinant is negative for all values so new_squares isn't used
         new_squares = tf.where(
             tf.reduce_any(tf.less(det, 0), axis=1),  # Check if any det < 0 along axis 1
             tf.constant(-1, dtype=squares.dtype),    # Replace with -1
             squares                                   # Otherwise, keep original squares
         )
-        
+
         return squares
 
-def get_update(scores_tensor, squares):
+def get_update(scores_tensor: tf.Tensor, squares: tf.Tensor) -> np.ndarray:
+    """
+    Given a tensor of scores and squares, this function groups the scores based on the square indices,
+    and computes the maximum value for each group to update the state.
+
+    Args:
+        scores_tensor (tf.Tensor): A tensor of shape (N, 12) containing scores for each box.
+        squares (tf.Tensor): A tensor of shape (N,) containing square indices for each box.
+
+    Returns:
+        np.ndarray: An array of shape (64, 12) where each row corresponds to the maximum score for that square.
+    """
     scores = scores_tensor.numpy()
     update = np.zeros((64, 12))
 
@@ -224,34 +301,36 @@ def get_update(scores_tensor, squares):
 
     return update
 
+def update_state(state: np.ndarray, update: np.ndarray, decay: float = 0.5) -> np.ndarray:
+    """
+    Update the state by applying a weighted decay with the given update values.
 
+    Args:
+        state (np.ndarray): A 2D array of shape (64, 12) representing the current state.
+        update (np.ndarray): A 2D array of shape (64, 12) representing the updates to apply.
+        decay (float): The decay factor to apply to the old state (default is 0.5).
 
-
-def update_state(state, update, decay=0.5):
+    Returns:
+        np.ndarray: The updated state.
+    """
     for i in range(64):
         for j in range(12):
             state[i][j] = decay * state[i][j] + (1 - decay) * update[i][j]
     return state
 
+def san_to_lan(board, san: str) -> str:
+    """
+    Converts a SAN move string to a LAN format by pushing the move to the board and then converting it.
 
-def san_to_lan(board, san):
+    Args:
+        board: A chess board object (e.g., from python-chess).
+        san (str): A move in SAN (Standard Algebraic Notation) format.
+
+    Returns:
+        str: The corresponding move in LAN (Long Algebraic Notation) format.
+    """
     board.push_san(san)
     history = board.move_stack
     lan = history[-1].uci()
     board.pop()
     return lan
-  
-  
-async def detect(pieces_model_ref, video_ref, keypoints):
-    frame_height, frame_width, _ = video_ref.shape
-
-    image4d, width, height, padding, roi = get_input(video_ref, keypoints)
-
-    pieces_prediction = predict_pieces(image4d, pieces_model_ref)
-    boxes, scores = get_boxes_and_scores(pieces_prediction, width, height, frame_width, frame_height, padding, roi)
-    
-
-    del pieces_prediction
-    del image4d  
-
-    return boxes, scores

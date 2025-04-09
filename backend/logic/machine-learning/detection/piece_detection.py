@@ -1,6 +1,9 @@
-import cv2
+import onnx
+import numpy as np
+import onnxruntime as ort
+from typing import Tuple
 
-from detection_methods import get_input, get_boxes_and_scores, process_boxes_and_scores
+from detection.detection_methods import get_input, get_boxes_and_scores, process_boxes_and_scores
 
 def predict_pieces(image4d, ort_session):
     """
@@ -75,3 +78,35 @@ async def run_pieces_model(frame, pieces_model_ref):
     del boxes  
 
     return pieces
+
+
+
+async def detect(pieces_model_ref: ort.InferenceSession, video_ref: np.ndarray, keypoints: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Detects the pieces in a video frame and returns the bounding boxes and their associated scores using an ONNX model.
+
+    This function preprocesses the input video frame, predicts the pieces using the given ONNX model, 
+    and extracts bounding boxes and scores for the detected pieces.
+
+    Args:
+        pieces_model_ref (onnxruntime.InferenceSession): The ONNX model session used for detecting chess pieces.
+        video_ref (np.ndarray): The input video frame as a NumPy array with shape (height, width, channels).
+        keypoints (np.ndarray): The keypoints for the video frame, typically used for identifying regions of interest.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: A tuple containing two elements:
+            - boxes (np.ndarray): An array of bounding boxes for detected pieces, with shape (N, 4) where N is the number of pieces.
+            - scores (np.ndarray): An array of confidence scores for each bounding box, with shape (N,).
+    """
+    frame_height, frame_width, _ = video_ref.shape
+
+    image4d, width, height, padding, roi = get_input(video_ref, keypoints)
+    inputs = {pieces_model_ref.get_inputs()[0].name: image4d}  # Assuming the first input is the image tensor
+
+    pieces_prediction = pieces_model_ref.run(None, inputs)
+    boxes, scores = get_boxes_and_scores(pieces_prediction[0], width, height, frame_width, frame_height, padding, roi)
+    
+    del pieces_prediction
+    del image4d  
+
+    return boxes, scores

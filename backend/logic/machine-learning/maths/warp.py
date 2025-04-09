@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 
 from typing import List, Tuple
-from constants import SQUARE_SIZE, BOARD_SIZE
+from utilities.constants import SQUARE_SIZE, BOARD_SIZE
 
 def perspective_transform(src: List[List[float]], transform: np.ndarray) -> List[List[float]]:
     """
@@ -170,15 +170,39 @@ def transform_centers(inv_transform: np.ndarray) -> List[List[float]]:
 
 
 
-def transform_boundary(inv_transform: np.ndarray):    
+def transform_boundary(inv_transform: np.ndarray):
+    """
+    Transforms the boundary of an 8x8 chessboard grid from its ideal square representation 
+    to its corresponding distorted representation in the input image using the inverse 
+    perspective transformation matrix.
+
+    The function defines a square boundary around the chessboard in the perfect grid space 
+    (with slight padding around the board edges), then applies the inverse transform to map 
+    this boundary into the distorted input image coordinates.
+
+    Args:
+    - inv_transform (numpy.ndarray): The inverse perspective transformation matrix 
+      that maps points from the ideal (square) grid space back to the distorted input space.
+
+    Returns:
+    - boundary (List[List[float]]): A list of 4 points (in [x, y]) representing the transformed boundary 
+      corners of the chessboard in the distorted space.
+    - boundary3D (tf.Tensor): A 3D tensor (shape: [1, 4, 2]) containing the same boundary points 
+      as a TensorFlow tensor, which can be directly used for further processing (e.g., masks or overlays).
+    """
+
+    # Define a slightly expanded square around the 8x8 grid in perfect square space
     warped_boundary = np.array([
-        [-0.5 * SQUARE_SIZE, -0.5 * SQUARE_SIZE, 1],
-        [-0.5 * SQUARE_SIZE, 8.5 * SQUARE_SIZE, 1],
-        [8.5 * SQUARE_SIZE, 8.5 * SQUARE_SIZE, 1],
-        [8.5 * SQUARE_SIZE, -0.5 * SQUARE_SIZE, 1]
+        [-0.5 * SQUARE_SIZE, -0.5 * SQUARE_SIZE, 1],   # Top-left (outside the board)
+        [-0.5 * SQUARE_SIZE, 8.5 * SQUARE_SIZE, 1],    # Bottom-left
+        [8.5 * SQUARE_SIZE, 8.5 * SQUARE_SIZE, 1],     # Bottom-right
+        [8.5 * SQUARE_SIZE, -0.5 * SQUARE_SIZE, 1]     # Top-right
     ])
-    
+
+    # Apply inverse perspective transformation to map to distorted input space
     boundary = perspective_transform(warped_boundary, inv_transform)
+
+    # Convert to a TensorFlow 3D tensor for further operations (e.g., masking in TF)
     boundary3D = tf.expand_dims(tf.convert_to_tensor(boundary, dtype=tf.float32), axis=0)
-    
+
     return boundary, boundary3D

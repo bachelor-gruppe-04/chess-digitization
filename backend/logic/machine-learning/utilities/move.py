@@ -1,6 +1,6 @@
 import chess
 
-from constants import SQUARE_MAP, LABEL_MAP
+from utilities.constants import SQUARE_MAP, LABEL_MAP
 
 
 # Castling map to handle rook movement during castling
@@ -26,7 +26,7 @@ def get_piece_idx(board, move):
     """
     piece = board.piece_at(move.from_square)
     if not piece:
-        return None  # No piece found (shouldn't happen)
+        return None
 
     piece_symbol = piece.symbol()
 

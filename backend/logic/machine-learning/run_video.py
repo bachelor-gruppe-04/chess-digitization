@@ -1,11 +1,10 @@
 import cv2
-import numpy as np
 import onnxruntime as ort
 import asyncio
 from game_store import GameStore
-from run_detections import find_scaled_labeled_board_corners
-from map_pieces import find_pieces
-from moves import get_moves_pairs
+from detection.run_detections import find_scaled_labeled_board_corners
+from map_pieces import get_payload
+from move import get_moves_pairs
 
 async def process_video(video_path, piece_model_session, corner_ort_session, output_path, game_store, game_id):
     """Main processing loop for the video (equivalent to React's useEffect on load)."""
@@ -43,13 +42,14 @@ async def process_video(video_path, piece_model_session, corner_ort_session, out
             if game:
                 moves_pairs = get_moves_pairs(game.board)
                 # Now we send both game and moves_pairs to find_pieces and get the updated frame
-                video_frame = await find_pieces(piece_model_session, video_frame, board_corners_ref, game, moves_pairs)
+                video_frame, payload = await get_payload(piece_model_session, video_frame, board_corners_ref, game, moves_pairs)
+                if payload is not None:
+                    print("Payload:", payload)  # Debugging line to check the payload
                 
             resized_frame = cv2.resize(video_frame, (1280, 720))
             cv2.imshow("Chess Board Detection", resized_frame)
             cv2.waitKey(1)
 
-        # Increment the frame counter
         frame_counter += 1
 
     cap.release()
@@ -69,13 +69,9 @@ async def main() -> None:
     piece_ort_session: ort.InferenceSession = ort.InferenceSession(piece_model_path)
     corner_ort_session: ort.InferenceSession = ort.InferenceSession(corner_model_path)
 
-    # Assuming game_store and game_id are defined somewhere
-    # For example:
     game_store = GameStore()
     game_id = "game_1"  # Each video gets a unique game ID
     game_store.add_game(game_id)
-
-    # Specify whether you want to use prerecorded video or live video
 
     await process_video(video_path, piece_ort_session, corner_ort_session, output_path, game_store, game_id)
 

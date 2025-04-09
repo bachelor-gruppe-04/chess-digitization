@@ -1,14 +1,10 @@
 import tensorflow as tf
 import chess
-import numpy as np
-import asyncio
 
 from typing import List, Tuple
-from constants import SQUARE_NAMES, PIECE_SYMBOLS
-
-
-from detection_methods import extract_xy_from_corners_mapping
-from warp import get_inv_transform, transform_centers, transform_boundary
+from utilities.constants import SQUARE_NAMES, PIECE_SYMBOLS
+from detection.detection_methods import extract_xy_from_corners_mapping
+from maths.warp import get_inv_transform, transform_centers, transform_boundary
 from map_pieces import detect, get_squares, get_update
 
 async def find_fen(pieces_model_ref, frame, board_corners):
@@ -94,31 +90,4 @@ def set_fen_from_state(state):
         board.set_piece_at(square, chess.Piece.from_symbol(piece.upper() if piece_color == chess.WHITE else piece))
         
     return board.fen()
-
-
-def get_fen_and_error(board: chess.Board, color: str):
-    fen = board.fen()
-    other_color = 'b' if color == 'w' else 'w'
-    fen = fen.replace(f" {other_color} ", f" {color} ")
-
-    error = None
-
-    # Side to move has opponent in check
-    for i in range(64):
-        square = chess.SQUARE_NAMES[i]
-        piece = board.piece_at(square)
-
-        if piece is None:
-            continue
-
-        is_king = piece.piece_type == chess.KING
-        is_other_color = piece.color == (chess.WHITE if other_color == 'w' else chess.BLACK)
-        is_attacked = board.is_attacked_by(chess.WHITE if color == 'w' else chess.BLACK, square)
-
-        if is_king and is_other_color and is_attacked:
-            error = "Side to move has opponent in check"
-            return fen, error
-
-    return fen, error
-
 

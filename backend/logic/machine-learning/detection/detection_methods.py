@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 
 from typing import Tuple, List, Dict, Optional
-from constants import MODEL_WIDTH, MODEL_HEIGHT, MARKER_DIAMETER, CORNER_KEYS
+from utilities.constants import MODEL_WIDTH, MODEL_HEIGHT, MARKER_DIAMETER, CORNER_KEYS
 from preprocess import preprocess_image
 
 def process_boxes_and_scores(boxes: tf.Tensor, scores: tf.Tensor) -> np.ndarray:
@@ -113,7 +113,96 @@ def get_boxes_and_scores(preds, width, height, video_width, video_height, paddin
 
 
 
-def get_center(points: List[Tuple[float, float]]) -> List[float]:
+def get_bbox(points: List[Tuple[float, float]]) -> Dict[str, float]:
+    """
+    Computes the bounding box for a list of 2D points.
+
+    The bounding box is the smallest rectangle that can contain all the points, 
+    with sides aligned to the axes. It is defined by the minimum and maximum 
+    x and y coordinates of the points.
+
+    Args:
+        points (List[Tuple[float, float]]): A list of 2D points, where each point 
+                                             is represented as a tuple (x, y).
+
+    Returns:
+        Dict[str, float]: A dictionary containing the bounding box parameters:
+                          "xmin", "xmax", "ymin", "ymax", "width", and "height".
+    """
+    xs: List[float] = [p[0] for p in points]
+    ys: List[float] = [p[1] for p in points]
+    
+    xmin: float = min(xs)
+    xmax: float = max(xs)
+    ymin: float = min(ys)
+    ymax: float = max(ys)
+
+    width: float = xmax - xmin
+    height: float = ymax - ymin
+
+    bbox: Dict[str, float] = {
+        "xmin": xmin,
+        "xmax": xmax,
+        "ymin": ymin,
+        "ymax": ymax,
+        "width": width,
+        "height": height
+    }
+
+    return bbox
+
+
+def get_centers_of_bbox(boxes: tf.Tensor) -> tf.Tensor:
+    """
+    Calculates the center coordinates of bounding boxes.
+
+    This function computes the center (cx, cy) of each bounding box from 
+    the left, top, right, and bottom coordinates. It assumes that the input 
+    boxes are in the format [left, top, right, bottom] and casts them to `float16`
+    for consistency with the model's data type.
+
+    Args:
+        boxes (tf.Tensor): A tensor of shape (N, 4), where each row represents 
+                            a bounding box with the format [left, top, right, bottom].
+
+    Returns:
+        tf.Tensor: A tensor of shape (N, 2), where each row contains the center 
+                   coordinates [cx, cy] of the corresponding bounding box.
+    """
+    # Ensure boxes are of type float16 (as your model is using float16)
+    boxes = tf.cast(boxes, dtype=tf.float16)
+
+    # Extract left, top, right, and bottom coordinates
+    l = boxes[:, 0:1]
+    t = boxes[:, 1:2]
+    r = boxes[:, 2:3]
+    b = boxes[:, 3:4]
+
+    # Calculate center coordinates (cx, cy)
+    cx = (l + r) / 2
+    cy = (t + b) / 2
+
+    centers = tf.concat([cx, cy], axis=1)
+    
+    return centers
+
+def get_box_centers(boxes):
+    # Slice the boxes tensor to get l, r, and b
+    l = tf.cast(boxes[:, 0:1], tf.float32)  # Ensure l is float32
+    r = tf.cast(boxes[:, 2:3], tf.float32)  # Ensure r is float32
+    b = tf.cast(boxes[:, 3:4], tf.float32)  # Ensure b is float32
+
+    # Calculate the center coordinates
+    cx = (l + r) / 2
+    cy = b - (r - l) / 3
+
+    # Concatenate cx and cy to get the box centers
+    box_centers = tf.concat([cx, cy], axis=1)
+
+    return box_centers
+
+
+def get_center_of_set_of_points(points: List[Tuple[float, float]]) -> List[float]:
     """
     Calculates the center of a set of 2D points by averaging their x and y coordinates.
 
@@ -131,7 +220,7 @@ def get_center(points: List[Tuple[float, float]]) -> List[float]:
 
 
 
-def euclidean(a: Tuple[float, float], b: Tuple[float, float]) -> float:
+def euclidean_distance(a: Tuple[float, float], b: Tuple[float, float]) -> float:
     """
     Calculates the Euclidean distance between two points in 2D space.
 
@@ -257,7 +346,7 @@ def extract_xy_from_corners_mapping(corners_mapping: Dict[str, Dict[str, Tuple[i
 
 def get_xy(marker_xy: Tuple[int, int], height: int, width: int) -> Tuple[float, float]:
     """
-    Converts marker coordinates to a normalized system based on canvas dimensions.
+    Converts marker coordinates to a normalized system based on frame dimensions.
 
     Args:
         marker_xy (Tuple[int, int]): The (x, y) coordinates of the marker.
@@ -271,47 +360,6 @@ def get_xy(marker_xy: Tuple[int, int], height: int, width: int) -> Tuple[float, 
     sy: float = MODEL_HEIGHT / height
     xy: Tuple[float, float] = (sx * marker_xy[0], sy * (marker_xy[1] + height + MARKER_DIAMETER))
     return xy
-
-
-
-def get_bbox(points: List[Tuple[float, float]]) -> Dict[str, float]:
-    """
-    Computes the bounding box for a list of 2D points.
-
-    The bounding box is the smallest rectangle that can contain all the points, 
-    with sides aligned to the axes. It is defined by the minimum and maximum 
-    x and y coordinates of the points.
-
-    Args:
-        points (List[Tuple[float, float]]): A list of 2D points, where each point 
-                                             is represented as a tuple (x, y).
-
-    Returns:
-        Dict[str, float]: A dictionary containing the bounding box parameters:
-                          "xmin", "xmax", "ymin", "ymax", "width", and "height".
-    """
-    xs: List[float] = [p[0] for p in points]
-    ys: List[float] = [p[1] for p in points]
-    
-    xmin: float = min(xs)
-    xmax: float = max(xs)
-    ymin: float = min(ys)
-    ymax: float = max(ys)
-
-    width: float = xmax - xmin
-    height: float = ymax - ymin
-
-    bbox: Dict[str, float] = {
-        "xmin": xmin,
-        "xmax": xmax,
-        "ymin": ymin,
-        "ymax": ymax,
-        "width": width,
-        "height": height
-    }
-
-    return bbox
-
 
 
 def scale_xy_board_corners(xy: Tuple[float, float], height: int, width: int) -> List[float]:
@@ -334,41 +382,3 @@ def scale_xy_board_corners(xy: Tuple[float, float], height: int, width: int) -> 
     marker_xy: List[float] = [sx * xy[0], sy * xy[1] - height - MARKER_DIAMETER]
     
     return marker_xy
-
-
-
-def get_centers_of_bbox(boxes: tf.Tensor) -> tf.Tensor:
-    """
-    Calculates the center coordinates of bounding boxes.
-
-    This function computes the center (cx, cy) of each bounding box from 
-    the left, top, right, and bottom coordinates. It assumes that the input 
-    boxes are in the format [left, top, right, bottom] and casts them to `float16`
-    for consistency with the model's data type.
-
-    Args:
-        boxes (tf.Tensor): A tensor of shape (N, 4), where each row represents 
-                            a bounding box with the format [left, top, right, bottom].
-
-    Returns:
-        tf.Tensor: A tensor of shape (N, 2), where each row contains the center 
-                   coordinates [cx, cy] of the corresponding bounding box.
-    """
-    # Ensure boxes are of type float16 (as your model is using float16)
-    boxes = tf.cast(boxes, dtype=tf.float16)
-
-    # Extract left, top, right, and bottom coordinates
-    l = boxes[:, 0:1]
-    t = boxes[:, 1:2]
-    r = boxes[:, 2:3]
-    b = boxes[:, 3:4]
-
-    # Calculate center coordinates (cx, cy)
-    cx = (l + r) / 2
-    cy = (t + b) / 2
-
-    centers = tf.concat([cx, cy], axis=1)
-    
-    return centers
-
-

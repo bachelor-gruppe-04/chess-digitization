@@ -8,20 +8,6 @@ SQUARE_SIZE = 128
 BOARD_SIZE = 8 * SQUARE_SIZE
 LABELS = ["b", "k", "n", "p", "q", "r", "B", "K", "N", "P", "Q", "R"]
 PIECE_SYMBOLS = ["b", "k", "n", "p", "q", "r"]
-PALETTE = [
-    "#FF3838",  # Red
-    "#FF9D97",  # Light red
-    "#FF701F",  # Orange
-    "#FFB21D",  # Light orange
-    "#CFD231",  # Yellow
-    "#48F90A",  # Green
-    "#92CC17",  # Light green
-    "#3DDB86",  # Light green
-    "#1A9334",  # Dark green
-    "#00D4BB",  # Cyan
-    "#2C99A8",  # Blue
-    "#00C2FF",  # Sky blue
-]
 
 SQUARE_NAMES = [
     'a1', 'b1', 'c1', 'd1', 'e1', 'f1', 'g1', 'h1',

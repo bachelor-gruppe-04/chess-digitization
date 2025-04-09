@@ -2,11 +2,11 @@ import numpy as np
 import onnxruntime as ort
 
 from typing import List, Dict, Tuple, Optional
-from constants import CORNER_KEYS
-from corners_detection import run_xcorners_model, find_corners_from_xcorners, assign_labels_to_board_corners
-from piece_detection import run_pieces_model
-from detection_methods import extract_xy_from_corners_mapping, scale_xy_board_corners
-from warp import get_inv_transform, transform_centers, transform_boundary
+from utilities.constants import CORNER_KEYS
+from detection.corners_detection import run_xcorners_model, find_board_corners_from_xcorners, assign_labels_to_board_corners
+from detection.piece_detection import run_pieces_model
+from detection.detection_methods import extract_xy_from_corners_mapping, scale_xy_board_corners
+from maths.warp import get_inv_transform, transform_centers, transform_boundary
 
 async def find_scaled_labeled_board_corners(
     video_ref: np.ndarray, 
@@ -48,7 +48,7 @@ async def find_scaled_labeled_board_corners(
 
     # Extracts the 4 outer corners of the chess board
     # Important to note that these board_corners ARE NOT labeled (a1,a8,h1,h8)
-    board_corners: List[Tuple[int, int]] = find_corners_from_xcorners(x_corners)
+    board_corners: List[Tuple[int, int]] = find_board_corners_from_xcorners(x_corners)
 
     # Assigns the labels (a1,a8,h1,h8) to the board_corners based on the 
     # placement of the white and black pieces

@@ -3,12 +3,11 @@ import tensorflow as tf
 import onnxruntime as ort
 
 from typing import List, Optional, Dict
-from constants import MODEL_WIDTH, MODEL_HEIGHT
-from maths import clamp
-from quad_transformation import get_quads, score_quad, perspective_transform
-from detection_methods import get_input, get_boxes_and_scores, euclidean, get_center, process_boxes_and_scores
+from utilities.constants import MODEL_WIDTH, MODEL_HEIGHT
+from maths.quad_transformation import get_quads, score_quad, perspective_transform, clamp
+from detection.detection_methods import get_input, get_boxes_and_scores, euclidean_distance, get_center_of_set_of_points, process_boxes_and_scores
 
-def get_results_corner_model(image: np.ndarray, corner_ort_session: ort.InferenceSession,):
+def get_xcorners(image: np.ndarray, corner_ort_session: ort.InferenceSession,):
     """
     Perform corner detection on the input image.
 
@@ -34,13 +33,13 @@ def get_results_corner_model(image: np.ndarray, corner_ort_session: ort.Inferenc
     #the corners (4) and (1) for confidence score. Lastly the 2835 is the number of n_anchors or anchor boxes. Anchor
     #boxes are pre-defined boxes that the model uses to predict the corners. The image is a grid of 2835 tiny boxes 
     #where the model uses these to predict the corners
-    corner_predictions = predictions[0]  
+    xcorner_predictions = predictions[0]  
 
-    return corner_predictions
+    return xcorner_predictions
 
 
 
-async def run_xcorners_model(frame: np.ndarray, corners_model_ref: tf.keras.Model, pieces: List[dict]) -> List[List[float]]:
+async def run_xcorners_model(frame: np.ndarray, corners_model_ref: ort.InferenceSession, pieces: List[dict]) -> List[List[float]]:
     """
     Processes a video reference using a corners detection model to predict x_corners pieces in the video.
 
@@ -67,7 +66,7 @@ async def run_xcorners_model(frame: np.ndarray, corners_model_ref: tf.keras.Mode
     image4d, width, height, padding, roi = get_input(frame, keypoints)
 
     # Run the x_corner detection model on the preprocessed image to get predictions.
-    x_corner_predictions: tf.Tensor = get_results_corner_model(image4d, corners_model_ref)
+    x_corner_predictions: tf.Tensor = get_xcorners(image4d, corners_model_ref)
 
     # Extract the bounding boxes and scores from the x_corner predictions
     boxes: tf.Tensor
@@ -90,7 +89,7 @@ async def run_xcorners_model(frame: np.ndarray, corners_model_ref: tf.keras.Mode
 
 
 
-def find_corners_from_xcorners(x_corners: np.ndarray) -> Optional[List[List[float]]]:
+def find_board_corners_from_xcorners(x_corners: np.ndarray) -> Optional[List[List[float]]]:
     """
     Given the detected x_corners, find the corners of a quadrilateral using perspective transformation.
     
@@ -155,8 +154,8 @@ def assign_labels_to_board_corners(black_pieces: List[np.ndarray], white_pieces:
     Returns:
     - A dictionary mapping board labels (e.g., "a1", "h1", "h8", "a8") to the corresponding corner coordinates.
     """
-    black_center: List[float] = get_center(black_pieces)
-    white_center: List[float] = get_center(white_pieces)
+    black_center: List[float] = get_center_of_set_of_points(black_pieces)
+    white_center: List[float] = get_center_of_set_of_points(white_pieces)
     
     best_shift: int = 0
     best_score: float = 0
@@ -165,7 +164,7 @@ def assign_labels_to_board_corners(black_pieces: List[np.ndarray], white_pieces:
                            (corners[shift % 4][1] + corners[(shift + 1) % 4][1]) / 2]
         cb: List[float] = [(corners[(shift + 2) % 4][0] + corners[(shift + 3) % 4][0]) / 2,
                            (corners[(shift + 2) % 4][1] + corners[(shift + 3) % 4][1]) / 2]
-        score: float = 1 / (1 + euclidean(white_center, cw) + euclidean(black_center, cb))
+        score: float = 1 / (1 + euclidean_distance(white_center, cw) + euclidean_distance(black_center, cb))
         if score > best_score:
             best_score = score
             best_shift = shift

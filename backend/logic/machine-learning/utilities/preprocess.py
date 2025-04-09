@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from constants import MODEL_WIDTH, MODEL_HEIGHT
+from utilities.constants import MODEL_WIDTH, MODEL_HEIGHT
 
 def preprocess_image(image: np.ndarray) -> np.ndarray:
     """

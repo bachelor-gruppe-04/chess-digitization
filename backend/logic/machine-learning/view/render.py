@@ -3,20 +3,8 @@ import numpy as np
 import tensorflow as tf
 
 from typing import List, Tuple
-from constants import MODEL_WIDTH, MODEL_HEIGHT
+from utilities.constants import MODEL_WIDTH, MODEL_HEIGHT
 
-
-
-# def draw_box(frame: np.ndarray, color: Tuple[int, int, int], x: float, y: float, text: str, font_height: int) -> np.ndarray:
-#     """
-#     Draw a labeled box on an image.
-#     """
-#     x, y = int(x), int(y)
-#     font = cv2.FONT_HERSHEY_SIMPLEX
-#     cv2.rectangle(frame, (x - font_height // 2, y - font_height // 2), (x + font_height // 2, y + font_height // 2), color, -1)  # Filled box
-#     cv2.putText(frame, text, (x + 5, y - 5), font, 0.5, (255, 255, 255), 1, cv2.LINE_AA)  # White text
-
-#     return frame
 
 def draw_boxes_with_scores(
     frame: np.ndarray, 
@@ -41,7 +29,6 @@ def draw_boxes_with_scores(
 
     for box, score_arr in zip(boxes_np, scores_np):
         max_score = np.max(score_arr)
-        class_idx = np.argmax(score_arr)
 
         if max_score >= threshold:
             # Scale box coordinates
@@ -70,20 +57,15 @@ def draw_box(frame: np.ndarray, color: Tuple[int, int, int], box: Tuple[float, f
     font = cv2.FONT_HERSHEY_SIMPLEX
     l, t, r, b = map(int, box)
 
-    # Draw filled rectangle for the box
     cv2.rectangle(frame, (l, t), (r, b), color, 2)
 
-    # Prepare the score text
     text = f"{score:.2f}"
 
-    # Measure text size
     text_size = cv2.getTextSize(text, font, 0.5, 1)[0]
     text_w, text_h = text_size
 
-    # Draw filled rectangle for text background
     cv2.rectangle(frame, (l, t - text_h - 4), (l + text_w + 4, t), color, -1)
 
-    # Draw text on top of the box
     cv2.putText(frame, text, (l + 2, t - 2), font, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
 
     return frame
@@ -102,7 +84,7 @@ def draw_points(frame: np.ndarray, points: List[Tuple[float, float]]) -> np.ndar
     
     frame_height, frame_width = frame.shape[:2]
     
-    for i, (x, y) in enumerate(points):  # Assuming shape (64, 2)
+    for i, (x, y) in enumerate(points):
         x = round(x * frame_width / MODEL_WIDTH) 
         y = round(y * frame_height / MODEL_HEIGHT) 
 
@@ -113,11 +95,25 @@ def draw_points(frame: np.ndarray, points: List[Tuple[float, float]]) -> np.ndar
 
 
 def draw_polygon(frame, polygon):
+    """
+    Draws a scaled polygon on the given frame.
+
+    The polygon coordinates are assumed to be normalized to the input model resolution
+    (MODEL_WIDTH x MODEL_HEIGHT), and will be scaled to match the actual frame dimensions.
+
+    Args:
+        frame (np.ndarray): The image/frame on which to draw the polygon.
+        polygon (List[Tuple[float, float]]): A list of (x, y) coordinates representing the polygon vertices.
+                                             Coordinates should be normalized to the model input resolution.
+
+    Returns:
+        np.ndarray: The frame with the polygon drawn on it.
+    """
     frame_height, frame_width = frame.shape[:2]
     
     sx = frame_width / MODEL_WIDTH
     sy = frame_height / MODEL_HEIGHT
-    
+
     # Scale the polygon coordinates
     scaled_polygon = np.array([
         [(x * sx, y * sy) for x, y in polygon]
@@ -126,39 +122,3 @@ def draw_polygon(frame, polygon):
     cv2.polylines(frame, scaled_polygon, isClosed=True, color=(0, 0, 255), thickness=2)
 
     return frame
-
-
-def visualize_boxes_and_labels(image, xc, yc, w, h, class_indices, scores, class_names):
-    """
-    Visualize bounding boxes and labels on the image.
-
-    Args:
-        image (numpy array): Image to draw the bounding boxes on.
-        xc, yc, width, height (numpy array): Coordinates and size of the bounding boxes.
-        class_indices (numpy array): Indices of the predicted classes.
-        scores (numpy array): Confidence scores for each bounding box.
-        class_names (dict): Dictionary mapping class indices to class names.
-
-    Returns:
-        numpy array: Image with bounding boxes drawn.
-    """
-    for i in range(xc.shape[0]):
-        # Calculate the coordinates of the bounding box
-        x_min = xc[i] - w[i] / 2
-        y_min = yc[i] - h[i] / 2
-        x_max = xc[i] + w[i] / 2
-        y_max = yc[i] + h[i] / 2
-
-        # Draw bounding box
-        cv2.rectangle(image, (int(x_min), int(y_min)), (int(x_max), int(y_max)), (255, 0, 0), 2)
-
-        # Get class label and score
-        class_name = class_names[class_indices[i]]
-        score = scores[i]
-
-        # Add label to the bounding box
-        label = f"{class_name}: {score:.2f}"
-        cv2.putText(image, label, (int(x_min), int(y_min) - 5),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (128, 50, 50), 2)
-
-    return image
