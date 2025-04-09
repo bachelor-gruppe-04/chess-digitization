@@ -14,11 +14,11 @@
 }
 
 .black-tile {
-  background-color: #779556;
+  background-color: var(--dark-tile);
 }
 
 .white-tile {
-  background-color: #ebecd0;
+  background-color: var(--light-tile);
 }
 
 .tile img {

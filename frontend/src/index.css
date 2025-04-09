@@ -12,18 +12,19 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --logo-green: #15803d;
-  --tile-green: #779556;
-  --tile-beige: #f0f0d8;
+  --main-color:#5A8193;
+  --dark-tile: #93ABB7;
+  --light-tile: #D1D7DA;
+  --last-move: #7CBCCD;
 }
 
 a {
   font-weight: 500;
-  color: #1a1a1a;
+  color: #ffffff;
   text-decoration: inherit;
 }
 a:hover {
-  color: var(--logo-green);
+  color: var(--main-color);
 }
 
 body {
@@ -51,7 +52,7 @@ button {
   transition: border-color 0.25s;
 }
 button:hover {
-  border-color: var(--logo-green);
+  border-color: var(--main-color);
 }
 button:focus,
 button:focus-visible {
@@ -63,8 +64,8 @@ button:focus-visible {
     color: #1a1a1a;
     background-color: #ffffff;
   }
-  a:hover {
-    color: var(--logo-green);
+  a {
+    color: #1a1a1a;
   }
   button {
     background-color: #f9f9f9;

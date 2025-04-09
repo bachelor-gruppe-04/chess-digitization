@@ -1,7 +1,11 @@
+.tournament-view {
+  padding-top: calc(20px + 2rem)
+}
+
 .heading {
   font-size: 4rem;
   font-weight: 700;
-  color: var(--logo-green);
+  color: var(--main-color);
 }
   
 .heading span {
@@ -24,11 +28,17 @@
 }
 
 .tournament-table th {
-  background-color: var(--logo-green);
+  background-color: var(--main-color);
   color: white;
   font-weight: 600;
 }
 
 .tournament-table tbody tr:nth-child(even) {
-  background-color: rgba(21, 128, 61, 0.08); /* logo green with low opacity */
+  background-color: rgba(81, 154, 206, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  .heading span {
+    color: white;
+  }
 }

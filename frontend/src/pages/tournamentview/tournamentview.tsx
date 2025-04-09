@@ -14,7 +14,7 @@ import TableRow from '../../components/tableRow/tableRow';
 
 function TournamentView() {
   return (
-    <div>
+    <div className='tournament-view'>
       <div className="heading">
         Tournament<span> View</span>
       </div>
@@ -31,6 +31,12 @@ function TournamentView() {
         <tbody>
           <TableRow boardNumber={1} whitePlayer="Player A" blackPlayer="Player B" />
           <TableRow boardNumber={2} whitePlayer="Player C" blackPlayer="Player D" />
+          <TableRow boardNumber={3} whitePlayer="Player E" blackPlayer="Player F" />
+          <TableRow boardNumber={4} whitePlayer="Player G" blackPlayer="Player H" />
+          <TableRow boardNumber={5} whitePlayer="Player I" blackPlayer="Player J" />
+          <TableRow boardNumber={6} whitePlayer="Player K" blackPlayer="Player L" />
+          <TableRow boardNumber={7} whitePlayer="Player M" blackPlayer="Player N" />
+          <TableRow boardNumber={8} whitePlayer="Player O" blackPlayer="Player P" />
         </tbody>
       </table>
     </div>

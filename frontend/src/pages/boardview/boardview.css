@@ -1,7 +1,7 @@
 .table-view {
+  padding-top: calc(20px + 2rem);
   display: flex;
   gap: 1rem;
-  padding: 1rem;
   height: 100%;
   width: 100%;
 }
@@ -15,7 +15,7 @@
 
 .camera-wrapper {
   flex: 1;
-  background-color: #ccc;
+  background-color: var(--light-tile);
   display: flex;
   justify-content: center;
   align-items: center;

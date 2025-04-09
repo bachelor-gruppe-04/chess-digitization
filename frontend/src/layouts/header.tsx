@@ -12,7 +12,7 @@ const Header = () => {
   return (
     <header className="header">
       <div className="header-logo">
-        Chess<span>Cam</span>
+        Chess<span>Camera</span>
       </div>
       <nav className="header-links">
         <Link to="/">Tournament View</Link>

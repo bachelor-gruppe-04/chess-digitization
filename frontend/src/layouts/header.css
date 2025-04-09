@@ -14,7 +14,7 @@
   .header-logo {
     font-size: 2rem;
     font-weight: 700;
-    color: var(--logo-green);
+    color: var(--main-color);
   }
   
   .header-logo span {
@@ -36,5 +36,11 @@
   }
   
   .header-links a:hover {
-    color: var(--logo-green);
+    color: var(--main-color);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .header span {
+      color: white;
+    }
   }
