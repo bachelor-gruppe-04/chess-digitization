@@ -15,7 +15,8 @@
   --main-color:#5A8193;
   --dark-tile: #93ABB7;
   --light-tile: #D1D7DA;
-  --last-move: #7CBCCD;
+  --dark-last-move: #7CBCCD;
+  --light-last-move: #A3D3DE;
 }
 
 a {
