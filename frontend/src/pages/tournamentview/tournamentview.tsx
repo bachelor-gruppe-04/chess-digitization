@@ -1,6 +1,6 @@
 import './tournamentview.css';
 
-import { NavLink } from 'react-router-dom';
+import TableRow from '../../components/tableRow/tableRow';
 
 /**
  * TournamentView Component
@@ -17,16 +17,20 @@ function TournamentView() {
     <div>
       <h1>Tournament View</h1>
 
-      {/* Navigation links to individual boards */}
-      <div className="board-links">
-        <NavLink to="/board/1">
-          Go to Board 1
-        </NavLink>
-        <br />
-        <NavLink to="/board/2">
-          Go to Board 2
-        </NavLink>
-      </div>
+      <table className="tournament-table">
+        <thead>
+          <tr>
+            <th>Board</th>
+            <th>White</th>
+            <th>Black</th>
+            <th>Game</th>
+          </tr>
+        </thead>
+        <tbody>
+          <TableRow boardNumber={1} whitePlayer="Player A" blackPlayer="Player B" />
+          <TableRow boardNumber={2} whitePlayer="Player C" blackPlayer="Player D" />
+        </tbody>
+      </table>
     </div>
   );
 }
