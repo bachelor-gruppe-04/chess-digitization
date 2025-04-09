@@ -1,6 +1,8 @@
 #root {
   width: 100%;
   margin: 0 auto;
-  padding: 2rem;
+  padding-top: calc(64px + 1rem); /* reserve space for fixed header */
+  padding-left: 2rem;
+  padding-right: 2rem;
   text-align: center;
 }

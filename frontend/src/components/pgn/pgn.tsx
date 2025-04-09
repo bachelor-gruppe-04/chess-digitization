@@ -33,25 +33,28 @@ function PGN({ moves }: PGNProps) {
   }
 
   return (
-    <div className="pgn-list">
-      <div className="pgn-header">
-        <span>#</span>
-        <span>White</span>
-        <span>Black</span>
-      </div>
-      {/* Render each turn row with appropriate highlighting for the latest move */}
-      {rows.map((row, index) => (
-        <div className="pgn-row" key={index}>
-          <span>{row.turn}.</span>
-          <span className={index * 2 === moves.length - 1 ? "highlight" : ""}>
-            {row.white}
-          </span>
-          <span className={index * 2 + 1 === moves.length - 1 ? "highlight" : ""}>
-            {row.black}
-          </span>
-        </div>
-      ))}
-    </div>
+    <table className="pgn-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>White</th>
+          <th>Black</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row, index) => (
+          <tr key={index}>
+            <td>{row.turn}.</td>
+            <td className={index * 2 === moves.length - 1 ? "highlight" : ""}>
+              {row.white}
+            </td>
+            <td className={index * 2 + 1 === moves.length - 1 ? "highlight" : ""}>
+              {row.black}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 

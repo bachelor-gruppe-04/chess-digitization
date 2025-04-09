@@ -9,6 +9,7 @@
     align-items: center;
     padding: 0 1.5rem;
     border-bottom: 1px solid #e5e7eb;
+    background-color: #ffffff;
   }
   
   .header-logo {
@@ -42,5 +43,8 @@
   @media (prefers-color-scheme: dark) {
     .header span {
       color: white;
+    }
+    .header {
+      background-color: #1a1a1a;
     }
   }

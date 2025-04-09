@@ -59,6 +59,32 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+/* Reusable table styling */
+table {
+  width: 100%;
+  max-width: 1200px;
+  margin: 2rem auto;
+  border-collapse: collapse;
+  font-size: 1rem;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.05);
+}
+
+table th,
+table td {
+  padding: 1rem 1.5rem;
+  text-align: left;
+}
+
+table th {
+  background-color: var(--main-color);
+  color: white;
+  font-weight: 600;
+}
+
+table tbody tr:nth-child(even) {
+  background-color: rgba(81, 154, 206, 0.08); /* Subtle light blue */
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #1a1a1a;
