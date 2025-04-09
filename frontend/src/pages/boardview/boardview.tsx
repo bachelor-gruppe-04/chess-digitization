@@ -27,7 +27,7 @@ interface BoardViewProps {
 }
 
 function BoardView({ id }: BoardViewProps) {
-  const pgnRef = useRef<HTMLDivElement>(null);
+  const pgnRef = useRef<HTMLDivElement>(null); // Ref to scroll the PGN list container
   const boardRef = useRef<ChessboardHandle>(null); // Ref to access Chessboard's imperative handle (exposes getMoves method)
   const [moves, setMoves] = useState<string[]>([]); // State to hold the current list of moves in algebraic notation (SAN)
 
@@ -46,6 +46,10 @@ function BoardView({ id }: BoardViewProps) {
     return () => clearInterval(interval);  // Clean up on component unmount
   }, []);
 
+  /**
+   * Automatically scroll the PGN list to the bottom whenever new moves are added.
+   * This ensures that the most recent moves are always visible.
+   */
   useEffect(() => {
     if (pgnRef.current) {
       pgnRef.current.scrollTop = pgnRef.current.scrollHeight;
