@@ -15,7 +15,9 @@ import TableRow from '../../components/tableRow/tableRow';
 function TournamentView() {
   return (
     <div>
-      <h1>Tournament View</h1>
+      <div className="heading">
+        Tournament<span> View</span>
+      </div>
 
       <table className="tournament-table">
         <thead>

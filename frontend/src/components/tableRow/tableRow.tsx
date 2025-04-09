@@ -27,11 +27,15 @@ interface TableRowProps {
 
 function TableRow({ boardNumber, whitePlayer, blackPlayer }: TableRowProps) {
   return (
-    <tr>
+    <tr className="table-row">
       <td>{boardNumber}</td>
       <td>{whitePlayer}</td>
       <td>{blackPlayer}</td>
-      <td><NavLink to={`/board/${boardNumber}`} className="live-button">LIVE</NavLink></td>
+      <td>
+        <NavLink to={`/board/${boardNumber}`} className="live-button">
+          LIVE
+        </NavLink>
+      </td>
     </tr>
   );
 }
