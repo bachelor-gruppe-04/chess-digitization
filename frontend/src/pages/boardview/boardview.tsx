@@ -48,10 +48,12 @@ function BoardView({ id }: BoardViewProps) {
   return (
     <div className="table-view">
       <div className='left-wrapper'>
-        <NavLink
-            to="/">
-            Go back to tournament view
-          </NavLink>
+          <div className='back-button'>
+            <NavLink
+              to="/">
+              ← Back to tournament overview
+            </NavLink>
+          </div>
           <div className='camera-wrapper'>
             <Camera id={id} />
           </div>

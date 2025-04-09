@@ -12,6 +12,10 @@
   gap: 1rem;
 }
 
+.back-button {
+  text-align: left;
+}
+
 .camera-wrapper {
   flex: 1;
   background-color: var(--light-tile);
