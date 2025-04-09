@@ -26,12 +26,20 @@
   align-items: center;
 }
 
+.camera-wrapper video,
+.camera-wrapper img {
+  width: 60%;
+  height: 50%;
+  object-fit: cover;
+}
+
 .pgn-wrapper {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
   padding: 1rem;
   border: 1px solid #ddd;
   border-radius: 6px;
+  scroll-behavior: smooth;
 }
 
 .chessboard-wrapper {

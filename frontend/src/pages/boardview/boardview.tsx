@@ -27,6 +27,7 @@ interface BoardViewProps {
 }
 
 function BoardView({ id }: BoardViewProps) {
+  const pgnRef = useRef<HTMLDivElement>(null);
   const boardRef = useRef<ChessboardHandle>(null); // Ref to access Chessboard's imperative handle (exposes getMoves method)
   const [moves, setMoves] = useState<string[]>([]); // State to hold the current list of moves in algebraic notation (SAN)
 
@@ -45,6 +46,12 @@ function BoardView({ id }: BoardViewProps) {
     return () => clearInterval(interval);  // Clean up on component unmount
   }, []);
 
+  useEffect(() => {
+    if (pgnRef.current) {
+      pgnRef.current.scrollTop = pgnRef.current.scrollHeight;
+    }
+  }, [moves]);
+
   return (
     <div className="table-view">
       <div className='left-wrapper'>
@@ -57,7 +64,7 @@ function BoardView({ id }: BoardViewProps) {
           <div className='camera-wrapper'>
             <Camera id={id} />
           </div>
-          <div className="pgn-wrapper">
+          <div className="pgn-wrapper" ref={pgnRef}>
             <PGN moves={moves} />
           </div>
         </div>
