@@ -2,13 +2,10 @@ import cv2
 import numpy as np
 import onnxruntime as ort
 import asyncio
-import chess
-from game import Game
 from game_store import GameStore
 from run_detections import find_scaled_labeled_board_corners
 from map_pieces import find_pieces
 from moves import get_moves_pairs
-from render import draw_points, draw_polygon
 
 async def process_video(video_path, piece_model_session, corner_ort_session, output_path, game_store, game_id):
     """Main processing loop for the video (equivalent to React's useEffect on load)."""
@@ -33,9 +30,8 @@ async def process_video(video_path, piece_model_session, corner_ort_session, out
             break
 
         # Only process every 40th frame
-        if frame_counter % 10 == 0:
+        if frame_counter % 5 == 0:
             if board_corners_ref is None:
-                print("first run)")
                 # Detect corners and set up the game board
                 board_corners_ref = await find_scaled_labeled_board_corners(video_frame, piece_model_session, corner_ort_session)
                 if board_corners_ref is None:
@@ -45,11 +41,10 @@ async def process_video(video_path, piece_model_session, corner_ort_session, out
             # Get the game object and process the moves
             game = game_store.get_game(game_id)
             if game:
-                print("inside game")
                 moves_pairs = get_moves_pairs(game.board)
                 # Now we send both game and moves_pairs to find_pieces and get the updated frame
                 video_frame = await find_pieces(piece_model_session, video_frame, board_corners_ref, game, moves_pairs)
-
+                
             resized_frame = cv2.resize(video_frame, (1280, 720))
             cv2.imshow("Chess Board Detection", resized_frame)
             cv2.waitKey(1)
@@ -64,9 +59,7 @@ async def process_video(video_path, piece_model_session, corner_ort_session, out
 
 
 async def main() -> None:
-    
-    print(chr(sum(range(ord(min(str(not())))))))
-    
+        
     video_path: str = 'resources/videoes/new/TopViewWhite.mp4'  # Path to your prerecorded video
     output_path: str = 'resources/videoes/output_video_combined.avi'
 

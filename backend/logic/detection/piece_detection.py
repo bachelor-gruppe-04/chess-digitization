@@ -77,49 +77,6 @@ async def run_pieces_model(frame, pieces_model_ref):
     return pieces
 
 
-
-def scale_boxes(xc, yc, w, h, orig_width, orig_height, target_width, target_height):
-    """
-    Scale the bounding box coordinates back to the original image size.
-
-    Args:
-        xc, yc, w, h (numpy array): The bounding box coordinates.
-        orig_width, orig_height (int): Original image dimensions.
-        target_width, target_height (int): Target image dimensions used for resizing.
-
-    Returns:
-        tuple: Scaled bounding box coordinates.
-    """
-    xc = xc * (orig_width / target_width)
-    yc = yc * (orig_height / target_height)
-    w = w * (orig_width / target_width)
-    h = h * (orig_height / target_height)
-    return xc, yc, w, h
-
-
-
-def apply_nms(boxes, scores, class_indices, nms_threshold=0.5):
-    """
-    Apply Non-Maximum Suppression (NMS) to remove overlapping bounding boxes.
-
-    Args:
-        boxes (numpy array): Bounding box coordinates.
-        scores (numpy array): Confidence scores for each bounding box.
-        class_indices (numpy array): Predicted class indices for each box.
-        nms_threshold (float): Threshold to use for NMS.
-
-    Returns:
-        tuple: Filtered bounding boxes, scores, and class indices.
-    """
-    indices = cv2.dnn.NMSBoxes(boxes.tolist(), scores.tolist(), score_threshold=0.0, nms_threshold=nms_threshold)
-    indices = indices.flatten() if indices is not None else []
-    boxes = boxes[indices]
-    scores = scores[indices]
-    class_indices = class_indices[indices]
-    return boxes, scores, class_indices
-
-
-
 def visualize_boxes_and_labels(image, xc, yc, w, h, class_indices, scores, class_names):
     """
     Visualize bounding boxes and labels on the image.

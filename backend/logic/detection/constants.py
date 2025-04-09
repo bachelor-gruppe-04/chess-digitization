@@ -1,5 +1,3 @@
-import chess
-
 START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 MODEL_WIDTH = 480
 MODEL_HEIGHT = 288

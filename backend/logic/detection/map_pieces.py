@@ -1,20 +1,18 @@
-import asyncio
 import numpy as np
 import tensorflow as tf
-import cv2
 import time
-import chess
 
-from detection_methods import get_input, get_boxes_and_scores
+from detection_methods import get_input, get_boxes_and_scores, extract_xy_from_corners_mapping
 from piece_detection import predict_pieces
 from game import make_update_payload
 from render import draw_points, draw_polygon
 from run_detections import find_centers_and_boundary
 
-from detection_methods import extract_xy_from_corners_mapping
-
+last_update_time = 0  # Global or external to function if needed
 
 async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_pairs_ref):
+    global last_update_time
+
     centers = None
     boundary = None
     centers_3d = None
@@ -24,7 +22,6 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
     possible_moves = set()
     greedy_move_to_time = {}
 
-
     if centers is None:
         keypoints = extract_xy_from_corners_mapping(corners_ref, video_ref)
         centers, boundary, centers_3d, boundary_3d = find_centers_and_boundary(corners_ref, video_ref)
@@ -33,29 +30,23 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
         greedy_move_to_time = {}
 
     start_time = time.time()
-    print("this is start time)")
-
-    boxes, scores = await detect(piece_model_ref, video_ref, keypoints)
-    print("this is after doing boxes")
-    squares = get_squares(boxes, centers_3d, boundary_3d)
     
-    update = get_update(scores, squares)
-    print("this is after update")
+    boxes, scores = await detect(piece_model_ref, video_ref, keypoints)
 
-    # Draw centers, boundary, polygon...
-    # draw_points(video_ref, centers)
-    # draw_polygon(video_ref, boundary)
+    squares = get_squares(boxes, centers_3d, boundary_3d)
+
+    # Only call get_update if 1 second has passed
+    current_time = time.time()
+    if current_time - last_update_time >= 4.0:
+        update = get_update(scores, squares)
+        last_update_time = current_time
+    else:
+        update = np.zeros((64, 12))  # No update this frame
 
     state = update_state(state, update)
     best_score1, best_score2, best_joint_score, best_move, best_moves = process_state(
         state, moves_pairs_ref, possible_moves
     )
-
-    # Debug prints
-    print("best move:", best_move)
-    print("best moves:", best_moves)
-    print("scores:", best_score1, best_score2, best_joint_score)
-    print("possible moves:", possible_moves)
 
     end_time = time.time()
     print("FPS:", round(1 / (end_time - start_time), 1))
@@ -63,10 +54,8 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
     has_move = False
     if best_moves is not None:
         move_str = best_moves["sans"][0]
-        print("move:", move_str)
         has_move = best_score2 > 0 and best_joint_score > 0 and move_str in possible_moves
         if has_move:
-            print(move_str)
             game_ref.board.push_san(move_str)
             possible_moves.clear()
             greedy_move_to_time = {}
@@ -88,6 +77,9 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
         payload = make_update_payload(game_ref.board, greedy=False)
         print("payload", payload)
         # dispatch(game_update(payload))
+        
+    draw_points(video_ref, centers)
+    draw_polygon(video_ref, boundary)
 
     tf.keras.backend.clear_session()
     
@@ -217,12 +209,20 @@ def get_update(scores_tensor, squares):
     scores = scores_tensor.numpy()
     update = np.zeros((64, 12))
 
+    grouped = {i: [] for i in range(64)}
+
     for i, square in enumerate(squares):
-        if square == -1:
-            continue
-        update[square] = np.maximum(update[square], scores[i])
+        square = int(square)
+        if square != -1:
+            grouped[square].append(scores[i])
+
+    for square, group in grouped.items():
+        if group:  # skip empty
+            update[square] = np.max(group, axis=0)
 
     return update
+
+
 
 
 def update_state(state, update, decay=0.5):
