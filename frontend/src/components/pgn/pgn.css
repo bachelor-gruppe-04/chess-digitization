@@ -1,5 +1,5 @@
 .pgn-table .highlight {
-  background-color: #a5c4b3; /* light green-gray */
+  background-color: var(--last-move);
   font-weight: 600; 
 }
   

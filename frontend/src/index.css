@@ -59,7 +59,6 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-/* Reusable table styling */
 table {
   width: 100%;
   max-width: 1200px;
@@ -82,7 +81,7 @@ table th {
 }
 
 table tbody tr:nth-child(even) {
-  background-color: rgba(81, 154, 206, 0.08); /* Subtle light blue */
+  background-color: rgba(81, 154, 206, 0.08);
 }
 
 @media (prefers-color-scheme: light) {
