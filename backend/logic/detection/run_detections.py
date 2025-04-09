@@ -28,6 +28,7 @@ async def find_scaled_labeled_board_corners(
 
     # We extract the top 16 predicted pieces for both black and white players
     # Pieces is on the format [x, y, pieceTypeIndex]
+    
     pieces: List[List[int]] = await run_pieces_model(video_ref, pieces_model_ref)
 
     # Metadata of model tells us white pieces index range from 0-5 

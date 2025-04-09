@@ -33,8 +33,9 @@ async def process_video(video_path, piece_model_session, corner_ort_session, out
             break
 
         # Only process every 40th frame
-        if frame_counter % 28 == 0:
+        if frame_counter % 10 == 0:
             if board_corners_ref is None:
+                print("first run)")
                 # Detect corners and set up the game board
                 board_corners_ref = await find_scaled_labeled_board_corners(video_frame, piece_model_session, corner_ort_session)
                 if board_corners_ref is None:

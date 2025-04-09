@@ -27,22 +27,24 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
 
     if centers is None:
         keypoints = extract_xy_from_corners_mapping(corners_ref, video_ref)
-        print(corners_ref)
-        print("corners ref")
         centers, boundary, centers_3d, boundary_3d = find_centers_and_boundary(corners_ref, video_ref)
         state = np.zeros((64, 12))
         possible_moves = set()
         greedy_move_to_time = {}
 
     start_time = time.time()
+    print("this is start time)")
 
     boxes, scores = await detect(piece_model_ref, video_ref, keypoints)
+    print("this is after doing boxes")
     squares = get_squares(boxes, centers_3d, boundary_3d)
+    
     update = get_update(scores, squares)
+    print("this is after update")
 
     # Draw centers, boundary, polygon...
-    draw_points(video_ref, centers)
-    draw_polygon(video_ref, boundary)
+    # draw_points(video_ref, centers)
+    # draw_polygon(video_ref, boundary)
 
     state = update_state(state, update)
     best_score1, best_score2, best_joint_score, best_move, best_moves = process_state(
@@ -64,7 +66,6 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
         print("move:", move_str)
         has_move = best_score2 > 0 and best_joint_score > 0 and move_str in possible_moves
         if has_move:
-            print("inside has_move")
             print(move_str)
             game_ref.board.push_san(move_str)
             possible_moves.clear()
@@ -77,11 +78,9 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
             greedy_move_to_time[move_str] = end_time
 
         elapsed = (end_time - greedy_move_to_time[move_str]) > 1
-        print("santoLan)")
         is_new = san_to_lan(game_ref.board, move_str) != game_ref.last_move
         has_greedy_move = elapsed and is_new
         if has_greedy_move:
-            print("inside has_greedy_move")
             game_ref["board"].move(move_str)
             greedy_move_to_time = {move_str: greedy_move_to_time[move_str]}
 
@@ -215,17 +214,16 @@ def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -
         return squares
 
 def get_update(scores_tensor, squares):
-    update = np.zeros((64, 12))
     scores = scores_tensor.numpy()
+    update = np.zeros((64, 12))
 
-    for i in range(len(squares)):
-        square = squares[i]
+    for i, square in enumerate(squares):
         if square == -1:
             continue
-        for j in range(12):
-            update[square][j] = max(update[square][j], scores[i][j])
+        update[square] = np.maximum(update[square], scores[i])
 
     return update
+
 
 def update_state(state, update, decay=0.5):
     for i in range(64):
