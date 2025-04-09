@@ -27,3 +27,11 @@
   height: 80%;
   object-fit: contain;
 }
+
+.tile.highlight.black-tile {
+  background-color: var(--dark-last-move);
+}
+
+.tile.highlight.white-tile {
+  background-color: var(--light-last-move);
+}
