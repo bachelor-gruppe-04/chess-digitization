@@ -2,6 +2,7 @@ import './App.css';
 
 import BoardView from './pages/boardview/boardview';
 import TournamentView from './pages/tournamentview/tournamentview';
+import Header from './layouts/header';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 /**
@@ -21,6 +22,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 function App() {
   return (
     <BrowserRouter>
+    <Header />
       <Routes>
         {/* Main tournament view */}
         <Route path="/" element={<TournamentView />} />
