@@ -5,7 +5,7 @@ import time
 from detection_methods import get_input, get_boxes_and_scores, extract_xy_from_corners_mapping
 from piece_detection import predict_pieces
 from game import make_update_payload
-from render import draw_points, draw_polygon
+from render import draw_points, draw_polygon, draw_boxes_with_scores
 from run_detections import find_centers_and_boundary
 
 last_update_time = 0  # Global or external to function if needed
@@ -80,6 +80,8 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
         
     draw_points(video_ref, centers)
     draw_polygon(video_ref, boundary)
+    # draw_boxes_with_scores(video_ref, boxes, scores, threshold=0.5)
+
 
     tf.keras.backend.clear_session()
     

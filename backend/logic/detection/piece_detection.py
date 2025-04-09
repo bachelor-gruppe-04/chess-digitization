@@ -75,39 +75,3 @@ async def run_pieces_model(frame, pieces_model_ref):
     del boxes  
 
     return pieces
-
-
-def visualize_boxes_and_labels(image, xc, yc, w, h, class_indices, scores, class_names):
-    """
-    Visualize bounding boxes and labels on the image.
-
-    Args:
-        image (numpy array): Image to draw the bounding boxes on.
-        xc, yc, width, height (numpy array): Coordinates and size of the bounding boxes.
-        class_indices (numpy array): Indices of the predicted classes.
-        scores (numpy array): Confidence scores for each bounding box.
-        class_names (dict): Dictionary mapping class indices to class names.
-
-    Returns:
-        numpy array: Image with bounding boxes drawn.
-    """
-    for i in range(xc.shape[0]):
-        # Calculate the coordinates of the bounding box
-        x_min = xc[i] - w[i] / 2
-        y_min = yc[i] - h[i] / 2
-        x_max = xc[i] + w[i] / 2
-        y_max = yc[i] + h[i] / 2
-
-        # Draw bounding box
-        cv2.rectangle(image, (int(x_min), int(y_min)), (int(x_max), int(y_max)), (255, 0, 0), 2)
-
-        # Get class label and score
-        class_name = class_names[class_indices[i]]
-        score = scores[i]
-
-        # Add label to the bounding box
-        label = f"{class_name}: {score:.2f}"
-        cv2.putText(image, label, (int(x_min), int(y_min) - 5),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (128, 50, 50), 2)
-
-    return image
