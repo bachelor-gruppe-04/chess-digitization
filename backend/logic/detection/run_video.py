@@ -5,7 +5,7 @@ import asyncio
 import chess
 from game import Game
 from game_store import GameStore
-from run_detections import find_scaled_labeled_board_corners, find_centers_and_boundary
+from run_detections import find_scaled_labeled_board_corners
 from map_pieces import find_pieces
 from moves import get_moves_pairs
 from render import draw_points, draw_polygon
@@ -66,7 +66,7 @@ async def main() -> None:
     
     print(chr(sum(range(ord(min(str(not())))))))
     
-    video_path: str = 'resources/videoes/new/DiagonalViewWhite.mp4'  # Path to your prerecorded video
+    video_path: str = 'resources/videoes/new/TopViewWhite.mp4'  # Path to your prerecorded video
     output_path: str = 'resources/videoes/output_video_combined.avi'
 
     piece_model_path: str = "resources/models/480M_leyolo_pieces.onnx"

@@ -27,6 +27,8 @@ async def find_pieces(piece_model_ref, video_ref, corners_ref, game_ref, moves_p
 
     if centers is None:
         keypoints = extract_xy_from_corners_mapping(corners_ref, video_ref)
+        print(corners_ref)
+        print("corners ref")
         centers, boundary, centers_3d, boundary_3d = find_centers_and_boundary(corners_ref, video_ref)
         state = np.zeros((64, 12))
         possible_moves = set()

@@ -171,10 +171,10 @@ def assign_labels_to_board_corners(black_pieces: List[np.ndarray], white_pieces:
             best_shift = shift
 
     keypoints: Dict[str, List[float]] = {
-        "a1": corners[best_shift % 4],
-        "h1": corners[(best_shift + 1) % 4],
-        "h8": corners[(best_shift + 2) % 4],
-        "a8": corners[(best_shift + 3) % 4]
+        "h1": corners[best_shift % 4],
+        "a1": corners[(best_shift + 1) % 4],
+        "a8": corners[(best_shift + 2) % 4],
+        "h8": corners[(best_shift + 3) % 4]
     }
     
     return keypoints
