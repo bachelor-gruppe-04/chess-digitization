@@ -3,12 +3,12 @@ import chess
 
 from typing import List, Tuple
 from utilities.constants import SQUARE_NAMES, PIECE_SYMBOLS
-from detection.detection_methods import extract_xy_from_corners_mapping
+from detection.detection_methods import extract_xy_from_labeled_corners
 from maths.warp import get_inv_transform, transform_centers, transform_boundary
 from map_pieces import detect, get_squares, get_update
 
 async def find_fen(pieces_model_ref, frame, board_corners):
-    keypoints = extract_xy_from_corners_mapping(board_corners, frame)
+    keypoints = extract_xy_from_labeled_corners(board_corners, frame)
     inv_transform = get_inv_transform(keypoints)
     centers, centers3D = transform_centers(inv_transform)
     boundary, boundary3D = transform_boundary(inv_transform)

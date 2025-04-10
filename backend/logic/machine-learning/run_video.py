@@ -1,10 +1,10 @@
 import cv2
 import onnxruntime as ort
 import asyncio
-from game_store import GameStore
-from detection.run_detections import find_scaled_labeled_board_corners
+from game.game_store import GameStore
+from detection.run_detections import run_find_scaled_labeled_board_corners
 from map_pieces import get_payload
-from move import get_moves_pairs
+from utilities.move import get_moves_pairs
 
 async def process_video(video_path, piece_model_session, corner_ort_session, output_path, game_store, game_id):
     """Main processing loop for the video (equivalent to React's useEffect on load)."""
@@ -32,7 +32,7 @@ async def process_video(video_path, piece_model_session, corner_ort_session, out
         if frame_counter % 5 == 0:
             if board_corners_ref is None:
                 # Detect corners and set up the game board
-                board_corners_ref = await find_scaled_labeled_board_corners(video_frame, piece_model_session, corner_ort_session)
+                board_corners_ref = await run_find_scaled_labeled_board_corners(video_frame, piece_model_session, corner_ort_session)
                 if board_corners_ref is None:
                     print("Failed to detect corners.")
                     break
@@ -63,7 +63,7 @@ async def main() -> None:
     video_path: str = 'resources/videoes/new/TopViewWhite.mp4'  # Path to your prerecorded video
     output_path: str = 'resources/videoes/output_video_combined.avi'
 
-    piece_model_path: str = "resources/models/480M_leyolo_pieces.onnx"
+    piece_model_path: str = "resources/models/480M_leyolo_pieces_simplified.onnx"
     corner_model_path: str = "resources/models/480L_leyolo_xcorners.onnx"
 
     piece_ort_session: ort.InferenceSession = ort.InferenceSession(piece_model_path)

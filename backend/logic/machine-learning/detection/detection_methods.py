@@ -3,8 +3,9 @@ import numpy as np
 import tensorflow as tf
 
 from typing import Tuple, List, Dict, Optional
-from utilities.constants import MODEL_WIDTH, MODEL_HEIGHT, MARKER_DIAMETER, CORNER_KEYS
-from preprocess import preprocess_image
+from utilities.constants import MODEL_WIDTH, MODEL_HEIGHT, MARKER_DIAMETER
+
+from utilities.preprocess import preprocess_image
 
 def process_boxes_and_scores(boxes: tf.Tensor, scores: tf.Tensor) -> np.ndarray:
     """
@@ -186,7 +187,7 @@ def get_centers_of_bbox(boxes: tf.Tensor) -> tf.Tensor:
     
     return centers
 
-def get_box_centers(boxes):
+def get_bbox_centers(boxes):
     # Slice the boxes tensor to get l, r, and b
     l = tf.cast(boxes[:, 0:1], tf.float32)  # Ensure l is float32
     r = tf.cast(boxes[:, 2:3], tf.float32)  # Ensure r is float32
@@ -327,23 +328,6 @@ def get_input(
     return image4d, width, height, padding, roi
 
 
-
-def extract_xy_from_corners_mapping(corners_mapping: Dict[str, Dict[str, Tuple[int, int]]], canvas_ref: np.ndarray) -> List[Tuple[int, int]]:
-    """
-    Extracts normalized (x, y) coordinates from a given corners mapping and a canvas reference.
-
-    Args:
-        corners_mapping (Dict[str, Dict[str, Tuple[int, int]]]): A mapping of corner names to their respective 'xy' coordinates.
-        canvas_ref (np.ndarray): A reference to the canvas as a numpy array, representing the image or drawing.
-
-    Returns:
-        List[Tuple[int, int]]: A list of (x, y) coordinates corresponding to each corner in the mapping.
-    """
-    canvas_height, canvas_width, _ = canvas_ref.shape 
-    return [get_xy(corners_mapping[x]['xy'], canvas_height, canvas_width) for x in CORNER_KEYS]
-
-
-
 def get_xy(marker_xy: Tuple[int, int], height: int, width: int) -> Tuple[float, float]:
     """
     Converts marker coordinates to a normalized system based on frame dimensions.
@@ -360,25 +344,3 @@ def get_xy(marker_xy: Tuple[int, int], height: int, width: int) -> Tuple[float, 
     sy: float = MODEL_HEIGHT / height
     xy: Tuple[float, float] = (sx * marker_xy[0], sy * (marker_xy[1] + height + MARKER_DIAMETER))
     return xy
-
-
-def scale_xy_board_corners(xy: Tuple[float, float], height: int, width: int) -> List[float]:
-    """
-    Scales the (x, y) coordinates of a labeled board marker to fit within the canvas size.
-
-    This function adjusts the coordinates of the marker to match the scaling of the 
-    canvas, accounting for the difference between the model's size and the canvas's size.
-
-    Args:
-        xy (Tuple[float, float]): The (x, y) coordinates of the marker in the model's coordinate system.
-        height (int): The height of the canvas.
-        width (int): The width of the canvas.
-
-    Returns:
-        List[float]: A list containing the scaled (x, y) coordinates of the marker in the canvas coordinate system.
-    """
-    sx: float = width / MODEL_WIDTH
-    sy: float = height / MODEL_HEIGHT
-    marker_xy: List[float] = [sx * xy[0], sy * xy[1] - height - MARKER_DIAMETER]
-    
-    return marker_xy

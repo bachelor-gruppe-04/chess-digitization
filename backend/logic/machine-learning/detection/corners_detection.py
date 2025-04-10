@@ -2,12 +2,12 @@ import numpy as np
 import tensorflow as tf
 import onnxruntime as ort
 
-from typing import List, Optional, Dict
-from utilities.constants import MODEL_WIDTH, MODEL_HEIGHT
+from typing import Tuple, List, Dict, Optional
+from utilities.constants import MODEL_WIDTH, MODEL_HEIGHT, MARKER_DIAMETER, CORNER_KEYS
 from maths.quad_transformation import get_quads, score_quad, perspective_transform, clamp
-from detection.detection_methods import get_input, get_boxes_and_scores, euclidean_distance, get_center_of_set_of_points, process_boxes_and_scores
+from detection.detection_methods import get_input, get_boxes_and_scores, euclidean_distance, get_center_of_set_of_points, process_boxes_and_scores, get_xy
 
-def get_xcorners(image: np.ndarray, corner_ort_session: ort.InferenceSession,):
+def predict_xcorners(image: np.ndarray, corner_ort_session: ort.InferenceSession):
     """
     Perform corner detection on the input image.
 
@@ -66,7 +66,7 @@ async def run_xcorners_model(frame: np.ndarray, corners_model_ref: ort.Inference
     image4d, width, height, padding, roi = get_input(frame, keypoints)
 
     # Run the x_corner detection model on the preprocessed image to get predictions.
-    x_corner_predictions: tf.Tensor = get_xcorners(image4d, corners_model_ref)
+    x_corner_predictions: tf.Tensor = predict_xcorners(image4d, corners_model_ref)
 
     # Extract the bounding boxes and scores from the x_corner predictions
     boxes: tf.Tensor
@@ -177,3 +177,43 @@ def assign_labels_to_board_corners(black_pieces: List[np.ndarray], white_pieces:
     }
     
     return keypoints
+
+
+
+
+def extract_xy_from_labeled_corners(corners_mapping: Dict[str, Dict[str, Tuple[int, int]]], canvas_ref: np.ndarray) -> List[Tuple[int, int]]:
+    """
+    Extracts normalized (x, y) coordinates from a given corners mapping and a canvas reference.
+
+    Args:
+        corners_mapping (Dict[str, Dict[str, Tuple[int, int]]]): A mapping of corner names to their respective 'xy' coordinates.
+        canvas_ref (np.ndarray): A reference to the canvas as a numpy array, representing the image or drawing.
+
+    Returns:
+        List[Tuple[int, int]]: A list of (x, y) coordinates corresponding to each corner in the mapping.
+    """
+    canvas_height, canvas_width, _ = canvas_ref.shape 
+    return [get_xy(corners_mapping[x]['xy'], canvas_height, canvas_width) for x in CORNER_KEYS]
+
+
+
+def scale_xy_board_corners(xy: Tuple[float, float], height: int, width: int) -> List[float]:
+    """
+    Scales the (x, y) coordinates of a labeled board marker to fit within the canvas size.
+
+    This function adjusts the coordinates of the marker to match the scaling of the 
+    canvas, accounting for the difference between the model's size and the canvas's size.
+
+    Args:
+        xy (Tuple[float, float]): The (x, y) coordinates of the marker in the model's coordinate system.
+        height (int): The height of the canvas.
+        width (int): The width of the canvas.
+
+    Returns:
+        List[float]: A list containing the scaled (x, y) coordinates of the marker in the canvas coordinate system.
+    """
+    sx: float = width / MODEL_WIDTH
+    sy: float = height / MODEL_HEIGHT
+    marker_xy: List[float] = [sx * xy[0], sy * xy[1] - height - MARKER_DIAMETER]
+    
+    return marker_xy

@@ -1,11 +1,12 @@
 import numpy as np
 import tensorflow as tf
 import time
+from typing import List, Tuple
 
-from detection.detection_methods import extract_xy_from_corners_mapping
 from detection.piece_detection import detect
-from game import make_update_payload
-from render import draw_points, draw_polygon, draw_boxes_with_scores
+from detection.corners_detection import extract_xy_from_labeled_corners
+from game.game import make_update_payload
+from view.render import draw_points, draw_polygon, draw_boxes_with_scores
 from detection.run_detections import find_centers_and_boundary
 
 last_update_time = 0  # Global or external to function if needed
@@ -44,7 +45,7 @@ async def get_payload(
     greedy_move_to_time = {}
 
     if centers is None:
-        keypoints = extract_xy_from_corners_mapping(corners_ref, video_ref)
+        keypoints = extract_xy_from_labeled_corners(corners_ref, video_ref)
         centers, boundary, centers_3d, boundary_3d = find_centers_and_boundary(corners_ref, video_ref)
         state = np.zeros((64, 12))
         possible_moves = set()
@@ -202,10 +203,6 @@ def get_box_centers(boxes: tf.Tensor) -> tf.Tensor:
     box_centers = tf.concat([cx, cy], axis=1)
 
     return box_centers
-
-import tensorflow as tf
-import numpy as np
-from typing import List, Tuple
 
 def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -> tf.Tensor:
     """

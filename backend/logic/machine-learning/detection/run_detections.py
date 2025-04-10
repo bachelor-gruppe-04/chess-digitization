@@ -3,12 +3,11 @@ import onnxruntime as ort
 
 from typing import List, Dict, Tuple, Optional
 from utilities.constants import CORNER_KEYS
-from detection.corners_detection import run_xcorners_model, find_board_corners_from_xcorners, assign_labels_to_board_corners
+from detection.corners_detection import run_xcorners_model, find_board_corners_from_xcorners, assign_labels_to_board_corners, scale_xy_board_corners, extract_xy_from_labeled_corners
 from detection.piece_detection import run_pieces_model
-from detection.detection_methods import extract_xy_from_corners_mapping, scale_xy_board_corners
 from maths.warp import get_inv_transform, transform_centers, transform_boundary
 
-async def find_scaled_labeled_board_corners(
+async def run_find_scaled_labeled_board_corners(
     video_ref: np.ndarray, 
     pieces_model_ref: ort.InferenceSession, 
     xcorners_model_ref: ort.InferenceSession
@@ -87,7 +86,7 @@ def find_centers_and_boundary(
     - centers (list): The transformed center coordinates of the squares after applying the inverse perspective transformation.
     """
 
-    xy: List[Tuple[int, int]] = extract_xy_from_corners_mapping(corners_mapping, frame)
+    xy: List[Tuple[int, int]] = extract_xy_from_labeled_corners(corners_mapping, frame)
     inv_transform: np.ndarray = get_inv_transform(xy)
     centers, centers3D = transform_centers(inv_transform)
     boundary, boundary3D = transform_boundary(inv_transform)
