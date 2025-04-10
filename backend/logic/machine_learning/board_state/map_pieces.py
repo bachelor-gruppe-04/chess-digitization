@@ -4,12 +4,14 @@ import time
 from typing import List, Tuple
 
 from detection.piece_detection import detect
+from detection.bbox_scores import get_bbox_centers
 from detection.corners_detection import extract_xy_from_labeled_corners
+from utilities.move import san_to_lan, calculate_move_score
 from game.game import make_update_payload
 from view.render import draw_points, draw_polygon, draw_boxes_with_scores
 from detection.run_detections import find_centers_and_boundary
 
-last_update_time = 0  # Global or external to function if needed
+last_update_time = 0 
 
 async def get_payload(
     piece_model_ref: tf.keras.Model,
@@ -107,29 +109,6 @@ async def get_payload(
     return video_ref, payload
 
 
-def calculate_move_score(state: np.ndarray, move: dict, from_thr: float = 0.6, to_thr: float = 0.6) -> float:
-    """
-    Calculates the score for a given move based on the state of the game.
-
-    Args:
-        state (np.ndarray): The current game state (64x12 array).
-        move (dict): A dictionary containing information about the move ('from', 'to', and 'targets').
-        from_thr (float): Threshold for scoring the 'from' squares. Default is 0.6.
-        to_thr (float): Threshold for scoring the 'to' squares. Default is 0.6.
-
-    Returns:
-        float: The calculated score for the move.
-    """
-    score = 0
-    for square in move['from']:
-        score += 1 - max(state[square]) - from_thr
-    
-    for i in range(len(move['to'])):
-        score += state[move['to'][i]][move['targets'][i]] - to_thr
-    
-    return score
-
-
 def process_state(state: np.ndarray, moves_pairs: list, possible_moves: set) -> tuple:
     """
     Processes the game state and determines the best possible moves.
@@ -177,33 +156,6 @@ def process_state(state: np.ndarray, moves_pairs: list, possible_moves: set) -> 
     
     return best_score1, best_score2, best_joint_score, best_move, best_moves
 
-
-def get_box_centers(boxes: tf.Tensor) -> tf.Tensor:
-    """
-    Calculates the center coordinates (cx, cy) of bounding boxes.
-
-    Args:
-        boxes (tf.Tensor): A tensor of shape (N, 4), where each row represents 
-                           a bounding box in the format [left, top, right, bottom].
-
-    Returns:
-        tf.Tensor: A tensor of shape (N, 2), where each row contains the center 
-                   coordinates [cx, cy] of the corresponding bounding box.
-    """
-    # Slice the boxes tensor to get l, r, and b
-    l = tf.cast(boxes[:, 0:1], tf.float32)  # Ensure l is float32
-    r = tf.cast(boxes[:, 2:3], tf.float32)  # Ensure r is float32
-    b = tf.cast(boxes[:, 3:4], tf.float32)  # Ensure b is float32
-
-    # Calculate the center coordinates
-    cx = (l + r) / 2
-    cy = b - (r - l) / 3
-
-    # Concatenate cx and cy to get the box centers
-    box_centers = tf.concat([cx, cy], axis=1)
-
-    return box_centers
-
 def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -> tf.Tensor:
     """
     Given the boxes, centers, and boundary, computes the square for each box by 
@@ -220,7 +172,7 @@ def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -
     """
     with tf.device('/CPU:0'):
         # Get the box centers
-        box_centers_3D = tf.expand_dims(get_box_centers(boxes), 1)
+        box_centers_3D = tf.expand_dims(get_bbox_centers(boxes), 1)
 
         # Calculate distances
         dist = tf.reduce_sum(tf.square(box_centers_3D - centers3D), axis=2)
@@ -314,20 +266,3 @@ def update_state(state: np.ndarray, update: np.ndarray, decay: float = 0.5) -> n
         for j in range(12):
             state[i][j] = decay * state[i][j] + (1 - decay) * update[i][j]
     return state
-
-def san_to_lan(board, san: str) -> str:
-    """
-    Converts a SAN move string to a LAN format by pushing the move to the board and then converting it.
-
-    Args:
-        board: A chess board object (e.g., from python-chess).
-        san (str): A move in SAN (Standard Algebraic Notation) format.
-
-    Returns:
-        str: The corresponding move in LAN (Long Algebraic Notation) format.
-    """
-    board.push_san(san)
-    history = board.move_stack
-    lan = history[-1].uci()
-    board.pop()
-    return lan

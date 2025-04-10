@@ -1,42 +1,11 @@
 import numpy as np
-import tensorflow as tf
 import onnxruntime as ort
 
 from typing import Tuple, List, Dict, Optional
 from utilities.constants import MODEL_WIDTH, MODEL_HEIGHT, MARKER_DIAMETER, CORNER_KEYS
-from maths.quad_transformation import get_quads, score_quad, perspective_transform, clamp
-from detection.detection_methods import get_input, get_boxes_and_scores, euclidean_distance, get_center_of_set_of_points, process_boxes_and_scores, get_xy
-
-def predict_xcorners(image: np.ndarray, corner_ort_session: ort.InferenceSession):
-    """
-    Perform corner detection on the input image.
-
-    Args:
-        image (numpy.ndarray): The input image to detect corners.
-        corner_ort_session: The ONNX Runtime InferenceSession object for the corner detection model.
-
-    Returns:
-        numpy.ndarray: Array of predicted corner points (coordinates and confidence scores).
-    """
-
-    # Run inference for corner detection
-    model_inputs = corner_ort_session.get_inputs()
-    model_outputs = corner_ort_session.get_outputs()
-
-    predictions = corner_ort_session.run(
-        output_names=[output.name for output in model_outputs],
-        input_feed={model_inputs[0].name: image}
-    )
-
-    #After doing the inference we get a prediction of where the corners are in this image. The format
-    #of the prediction is on the form float16[1,5,2835] where 1 is batch size, 5 represents the coordiantes of
-    #the corners (4) and (1) for confidence score. Lastly the 2835 is the number of n_anchors or anchor boxes. Anchor
-    #boxes are pre-defined boxes that the model uses to predict the corners. The image is a grid of 2835 tiny boxes 
-    #where the model uses these to predict the corners
-    xcorner_predictions = predictions[0]  
-
-    return xcorner_predictions
-
+from maths.quad_transformation import get_quads, score_quad, perspective_transform, clamp, euclidean_distance
+from detection.bbox_scores import get_boxes_and_scores, get_center_of_set_of_points, process_boxes_and_scores, get_xy
+from utilities.preprocess import get_input
 
 
 async def run_xcorners_model(frame: np.ndarray, corners_model_ref: ort.InferenceSession, pieces: List[dict]) -> List[List[float]]:
@@ -54,36 +23,29 @@ async def run_xcorners_model(frame: np.ndarray, corners_model_ref: ort.Inference
     video_height, video_width, _ = frame.shape
 
     # Extract the keypoints (coordinates of the chess pieces) from the pieces list.
-    # These will serve as input to the corner detection model to help refine predictions.
-    keypoints: List[List[float]] = [[x[0], x[1]] for x in pieces]  # List of (x, y) positions of the pieces
+    keypoints: List[List[float]] = [[x[0], x[1]] for x in pieces]
 
-    # Prepare the input image for the x_corner detection model, including keypoints as an additional input.
-    image4d: np.ndarray
-    width: int
-    height: int
-    padding: List[int]
-    roi: List[int]
+    # Prepare the input image for the x_corner detection model
     image4d, width, height, padding, roi = get_input(frame, keypoints)
 
-    # Run the x_corner detection model on the preprocessed image to get predictions.
-    x_corner_predictions: tf.Tensor = predict_xcorners(image4d, corners_model_ref)
+    # Run the ONNX model directly, skipping the predict_xcorners wrapper
+    model_inputs = corners_model_ref.get_inputs()
+    
+    x_corner_predictions = corners_model_ref.run(
+        output_names=None,
+        input_feed={model_inputs[0].name: image4d})[0]
 
-    # Extract the bounding boxes and scores from the x_corner predictions
-    boxes: tf.Tensor
-    scores: tf.Tensor
+    # Extract boxes and scores from predictions
     boxes, scores = get_boxes_and_scores(x_corner_predictions, width, height, video_width, video_height, padding, roi)
 
-    # Clean up intermediate variables to free up memory
     del x_corner_predictions 
     del image4d 
-   
-    # Process the boxes and scores using non-max suppression and other techniques
-    # This helps to clean up redundant boxes and refine the corner detection.
-    # Should return 49 x_corners (7x7 grid)
-    x_corners_optimized: np.ndarray = process_boxes_and_scores(boxes, scores)
 
-    # Extracts the x and y values from x_corners_optimized 
-    x_corners: List[List[float]] = [[x[0], x[1]] for x in x_corners_optimized]
+    # Post-process predictions (e.g., non-max suppression)
+    x_corners_optimized = process_boxes_and_scores(boxes, scores)
+
+    # Extract (x, y) coordinates
+    x_corners = [[x[0], x[1]] for x in x_corners_optimized]
 
     return x_corners
 
@@ -177,8 +139,6 @@ def assign_labels_to_board_corners(black_pieces: List[np.ndarray], white_pieces:
     }
     
     return keypoints
-
-
 
 
 def extract_xy_from_labeled_corners(corners_mapping: Dict[str, Dict[str, Tuple[int, int]]], canvas_ref: np.ndarray) -> List[Tuple[int, int]]:

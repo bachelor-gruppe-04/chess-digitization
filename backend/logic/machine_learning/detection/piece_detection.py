@@ -2,7 +2,8 @@ import numpy as np
 import onnxruntime as ort
 from typing import Tuple
 
-from detection.detection_methods import get_input, get_boxes_and_scores, process_boxes_and_scores
+from detection.bbox_scores import get_boxes_and_scores, process_boxes_and_scores
+from utilities.preprocess import get_input
 
 
 async def run_pieces_model(frame, pieces_model_ref):
@@ -64,7 +65,7 @@ async def detect(pieces_model_ref: ort.InferenceSession, video_ref: np.ndarray, 
     frame_height, frame_width, _ = video_ref.shape
 
     image4d, width, height, padding, roi = get_input(video_ref, keypoints)
-    inputs = {pieces_model_ref.get_inputs()[0].name: image4d}  # Assuming the first input is the image tensor
+    inputs = {pieces_model_ref.get_inputs()[0].name: image4d} 
 
     pieces_prediction = pieces_model_ref.run(None, inputs)
     boxes, scores = get_boxes_and_scores(pieces_prediction[0], width, height, frame_width, frame_height, padding, roi)

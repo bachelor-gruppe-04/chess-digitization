@@ -5,8 +5,6 @@ import tensorflow as tf
 from typing import Tuple, List, Dict, Optional
 from utilities.constants import MODEL_WIDTH, MODEL_HEIGHT, MARKER_DIAMETER
 
-from utilities.preprocess import preprocess_image
-
 def process_boxes_and_scores(boxes: tf.Tensor, scores: tf.Tensor) -> np.ndarray:
     """
     Processes bounding boxes and scores to apply non-max suppression (NMS),
@@ -187,7 +185,19 @@ def get_centers_of_bbox(boxes: tf.Tensor) -> tf.Tensor:
     
     return centers
 
-def get_bbox_centers(boxes):
+
+def get_bbox_centers(boxes: tf.Tensor) -> tf.Tensor:
+    """
+    Calculates the center coordinates (cx, cy) of bounding boxes.
+
+    Args:
+        boxes (tf.Tensor): A tensor of shape (N, 4), where each row represents 
+                           a bounding box in the format [left, top, right, bottom].
+
+    Returns:
+        tf.Tensor: A tensor of shape (N, 2), where each row contains the center 
+                   coordinates [cx, cy] of the corresponding bounding box.
+    """
     # Slice the boxes tensor to get l, r, and b
     l = tf.cast(boxes[:, 0:1], tf.float32)  # Ensure l is float32
     r = tf.cast(boxes[:, 2:3], tf.float32)  # Ensure r is float32
@@ -218,115 +228,6 @@ def get_center_of_set_of_points(points: List[Tuple[float, float]]) -> List[float
     center: List[float] = [center_x / len(points), center_y / len(points)]
     
     return center
-
-
-
-def euclidean_distance(a: Tuple[float, float], b: Tuple[float, float]) -> float:
-    """
-    Calculates the Euclidean distance between two points in 2D space.
-
-    Args:
-        a (Tuple[float, float]): The first point as a tuple of (x, y).
-        b (Tuple[float, float]): The second point as a tuple of (x, y).
-
-    Returns:
-        float: The Euclidean distance between the two points.
-    """
-    dx: float = a[0] - b[0]  # Difference in x-coordinates
-    dy: float = a[1] - b[1]  # Difference in y-coordinates
-    
-    # Calculate the Euclidean distance
-    dist: float = (dx ** 2 + dy ** 2) ** 0.5
-    
-    return dist
-
-
-
-def get_input(
-    video_ref: np.ndarray, 
-    keypoints: Optional[np.ndarray] = None, 
-    padding_ratio: int = 12
-) -> Tuple[int, int, Optional[np.ndarray]]:
-    """
-    Processes the input video frame by extracting the region of interest (ROI),
-    resizing it to match the model's input dimensions, and applying necessary padding.
-
-    Args:
-        video_ref (np.ndarray): Input video frame represented as a NumPy array of shape (height, width, channels).
-        keypoints (Optional[np.ndarray]): Array of keypoints used to determine the bounding box (ROI). Defaults to None.
-        padding_ratio (int): Factor to compute padding around the detected bounding box. Defaults to 12.
-
-    Returns:
-        Tuple[np.ndarray, int, int, List[int], List[int]]:
-            - image4d (np.ndarray): Preprocessed and padded input ready for the model.
-            - width (int): Width of the cropped video region.
-            - height (int): Height of the cropped video region.
-            - padding (List[int]): Padding applied as [left, right, top, bottom].
-            - roi (List[int]): Coordinates of the region of interest in the format [xmin, ymin, xmax, ymax].
-    """
-
-    video_height, video_width, _ = video_ref.shape
-    roi = None
-
-    if keypoints is not None:
-        bbox = get_bbox(keypoints)
-        padding_left = int(bbox['width'] / padding_ratio)
-        padding_right = int(bbox['width'] / padding_ratio)
-        padding_top = int(bbox['height'] / padding_ratio)
-        padding_bottom = int(bbox['height'] / padding_ratio)
-
-        padded_roi_width = bbox['width'] + padding_left + padding_right
-        padded_roi_height = bbox['height'] + padding_top + padding_bottom
-        ratio = padded_roi_height / padded_roi_width
-        desired_ratio = MODEL_HEIGHT / MODEL_WIDTH
-
-        if ratio > desired_ratio:
-            target_width = padded_roi_height / desired_ratio
-            dx = target_width - padded_roi_width
-            padding_left += int(dx / 2)
-            padding_right += dx - int(dx / 2)
-        else:
-            target_height = padded_roi_width * desired_ratio
-            padding_top += target_height - padded_roi_height
-
-        roi = [
-            max(int(video_width * (bbox['xmin'] - padding_left) / MODEL_WIDTH), 0),
-            max(int(video_height * (bbox['ymin'] - padding_top) / MODEL_HEIGHT), 0),
-            min(int(video_width * (bbox['xmax'] + padding_right) / MODEL_WIDTH), video_width),
-            min(int(video_height * (bbox['ymax'] + padding_bottom) / MODEL_HEIGHT), video_height)
-        ]
-    else:
-        roi = [0, 0, video_width, video_height]
-
-    # Cropping
-    video_ref = video_ref[roi[1]:roi[3], roi[0]:roi[2], :]
-    
-    # Resizing
-    height, width, _ = video_ref.shape
-    ratio = height / width
-    desired_ratio = MODEL_HEIGHT / MODEL_WIDTH
-    resize_height = MODEL_HEIGHT
-    resize_width = MODEL_WIDTH
-    if ratio > desired_ratio:
-        resize_width = int(MODEL_HEIGHT / ratio)
-    else:
-        resize_height = int(MODEL_WIDTH * ratio)
-    
-    video_ref = tf.image.resize(video_ref, [resize_height, resize_width])
-    
-    # Padding
-    dx = MODEL_WIDTH - video_ref.shape[1]
-    dy = MODEL_HEIGHT - video_ref.shape[0]
-    pad_right = dx // 2
-    pad_left = dx - pad_right
-    pad_bottom = dy // 2
-    pad_top = dy - pad_bottom
-    padding = [pad_left, pad_right, pad_top, pad_bottom]
-
-    image4d = preprocess_image(video_ref.numpy())
-    
-    return image4d, width, height, padding, roi
-
 
 def get_xy(marker_xy: Tuple[int, int], height: int, width: int) -> Tuple[float, float]:
     """

@@ -7,7 +7,7 @@ from detection.corners_detection import run_xcorners_model, find_board_corners_f
 from detection.piece_detection import run_pieces_model
 from maths.warp import get_inv_transform, transform_centers, transform_boundary
 
-async def run_find_scaled_labeled_board_corners(
+async def get_board_corners(
     video_ref: np.ndarray, 
     pieces_model_ref: ort.InferenceSession, 
     xcorners_model_ref: ort.InferenceSession

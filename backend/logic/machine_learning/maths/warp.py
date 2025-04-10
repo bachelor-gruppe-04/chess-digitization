@@ -169,7 +169,6 @@ def transform_centers(inv_transform: np.ndarray) -> List[List[float]]:
 
 
 
-
 def transform_boundary(inv_transform: np.ndarray):
     """
     Transforms the boundary of an 8x8 chessboard grid from its ideal square representation 

@@ -3,7 +3,6 @@ import chess.pgn
 
 from utilities.constants import START_FEN
 
-
 class Game:
     def __init__(self, game_id: str, fen: str = START_FEN, moves: str = "", start: str = START_FEN, last_move: str = "", greedy: bool = False):
         self.id = game_id  # Unique game identifier
@@ -34,6 +33,7 @@ def get_moves_from_pgn(board):
     
     pgn = game.accept(exporter)
     return pgn.replace("\n", " ").replace("\r", "")
+
 
 def make_update_payload(board: chess.Board, greedy: bool = False):
     moves = get_moves_from_pgn(board)  # Assuming you have this function

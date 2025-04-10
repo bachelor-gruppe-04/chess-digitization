@@ -2,10 +2,10 @@ import tensorflow as tf
 import chess
 
 from typing import List, Tuple
-from utilities.constants import SQUARE_NAMES, PIECE_SYMBOLS
-from detection.detection_methods import extract_xy_from_labeled_corners
+from utilities.constants import PIECE_SYMBOLS
 from maths.warp import get_inv_transform, transform_centers, transform_boundary
-from map_pieces import detect, get_squares, get_update
+from board_state.map_pieces import detect, get_squares, get_update
+from detection.corners_detection import extract_xy_from_labeled_corners
 
 async def find_fen(pieces_model_ref, frame, board_corners):
     keypoints = extract_xy_from_labeled_corners(board_corners, frame)

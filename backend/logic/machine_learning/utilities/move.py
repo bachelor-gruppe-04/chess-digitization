@@ -1,16 +1,7 @@
 import chess
+import numpy as np
 
-from utilities.constants import SQUARE_MAP, LABEL_MAP
-
-
-# Castling map to handle rook movement during castling
-# Maps king's destination square to: (rook start square, rook end square, rook label)
-castling_map = {
-    "g1": [SQUARE_MAP["h1"], SQUARE_MAP["f1"], LABEL_MAP["R"]],
-    "c1": [SQUARE_MAP["a1"], SQUARE_MAP["d1"], LABEL_MAP["R"]],
-    "g8": [SQUARE_MAP["h8"], SQUARE_MAP["f8"], LABEL_MAP["r"]],
-    "c8": [SQUARE_MAP["a8"], SQUARE_MAP["d8"], LABEL_MAP["r"]]
-}
+from utilities.constants import LABEL_MAP, CASTLING_MAP
 
 def get_piece_idx(board, move):
     """
@@ -63,7 +54,7 @@ def get_data(board, move):
 
     if board.is_castling(move):
         # Handle castling moves (kingside or queenside)
-        rook_from, rook_to = castling_map.get(move.to_square, (None, None))
+        rook_from, rook_to = CASTLING_MAP.get(move.to_square, (None, None))
         if rook_from and rook_to:
             from_squares.append(rook_from)
             to_squares.append(rook_to)
@@ -166,3 +157,43 @@ def get_moves_pairs(board: chess.Board):
     
     return moves_pairs
 
+
+def san_to_lan(board, san: str) -> str:
+    """
+    Converts a SAN move string to a LAN format by pushing the move to the board and then converting it.
+
+    Args:
+        board: A chess board object (e.g., from python-chess).
+        san (str): A move in SAN (Standard Algebraic Notation) format.
+
+    Returns:
+        str: The corresponding move in LAN (Long Algebraic Notation) format.
+    """
+    board.push_san(san)
+    history = board.move_stack
+    lan = history[-1].uci()
+    board.pop()
+    return lan
+
+
+def calculate_move_score(state: np.ndarray, move: dict, from_thr: float = 0.6, to_thr: float = 0.6) -> float:
+    """
+    Calculates the score for a given move based on the state of the game.
+
+    Args:
+        state (np.ndarray): The current game state (64x12 array).
+        move (dict): A dictionary containing information about the move ('from', 'to', and 'targets').
+        from_thr (float): Threshold for scoring the 'from' squares. Default is 0.6.
+        to_thr (float): Threshold for scoring the 'to' squares. Default is 0.6.
+
+    Returns:
+        float: The calculated score for the move.
+    """
+    score = 0
+    for square in move['from']:
+        score += 1 - max(state[square]) - from_thr
+    
+    for i in range(len(move['to'])):
+        score += state[move['to'][i]][move['targets'][i]] - to_thr
+    
+    return score

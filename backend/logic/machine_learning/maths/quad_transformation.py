@@ -188,6 +188,27 @@ def cross_distance(a: List[Tuple[float, float]], b: List[Tuple[float, float]]) -
     return dist
 
 
+def euclidean_distance(a: Tuple[float, float], b: Tuple[float, float]) -> float:
+    """
+    Calculates the Euclidean distance between two points in 2D space.
+
+    Args:
+        a (Tuple[float, float]): The first point as a tuple of (x, y).
+        b (Tuple[float, float]): The second point as a tuple of (x, y).
+
+    Returns:
+        float: The Euclidean distance between the two points.
+    """
+    dx: float = a[0] - b[0]  # Difference in x-coordinates
+    dy: float = a[1] - b[1]  # Difference in y-coordinates
+    
+    # Calculate the Euclidean distance
+    dist: float = (dx ** 2 + dy ** 2) ** 0.5
+    
+    return dist
+
+
+
 
 def calculate_offset_score(warped_x_corners: List[Tuple[float, float]], shift: List[int]) -> float:
     """

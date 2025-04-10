@@ -2,8 +2,8 @@ import cv2
 import onnxruntime as ort
 import asyncio
 from game.game_store import GameStore
-from detection.run_detections import run_find_scaled_labeled_board_corners
-from map_pieces import get_payload
+from detection.run_detections import get_board_corners
+from board_state.map_pieces import get_payload
 from utilities.move import get_moves_pairs
 
 async def process_video(video_path, piece_model_session, corner_ort_session, output_path, game_store, game_id):
@@ -32,7 +32,7 @@ async def process_video(video_path, piece_model_session, corner_ort_session, out
         if frame_counter % 5 == 0:
             if board_corners_ref is None:
                 # Detect corners and set up the game board
-                board_corners_ref = await run_find_scaled_labeled_board_corners(video_frame, piece_model_session, corner_ort_session)
+                board_corners_ref = await get_board_corners(video_frame, piece_model_session, corner_ort_session)
                 if board_corners_ref is None:
                     print("Failed to detect corners.")
                     break
