@@ -1,9 +1,15 @@
 import chess
 import numpy as np
-
+from typing import Dict, List, Optional
 from utilities.constants import LABEL_MAP, CASTLING_MAP
 
-def get_piece_idx(board, move):
+class MoveData(Dict):
+    sans: List[str]
+    from_: List[int]
+    to: List[int]
+    targets: List[Optional[int]]
+
+def get_piece_idx(board: chess.Board, move: chess.Move) -> Optional[int]:
     """
     Returns the label index of the piece involved in a move.
 
@@ -12,8 +18,8 @@ def get_piece_idx(board, move):
         move (chess.Move): The move being analyzed.
 
     Returns:
-        int or None: The index from LABEL_MAP corresponding to the piece symbol,
-                     or None if no piece was found at the source square.
+        Optional[int]: The index from LABEL_MAP corresponding to the piece symbol,
+                       or None if no piece was found at the source square.
     """
     piece = board.piece_at(move.from_square)
     if not piece:
@@ -28,10 +34,10 @@ def get_piece_idx(board, move):
     return LABEL_MAP.get(piece_symbol)
 
 
-def get_data(board, move):
+def get_data(board: chess.Board, move: chess.Move) -> MoveData:
     """
     Gathers data for a single move, including from/to squares and piece identity.
-
+    
     Handles special moves such as castling and en passant.
 
     Args:
@@ -39,7 +45,7 @@ def get_data(board, move):
         move (chess.Move): The move to be analyzed.
 
     Returns:
-        dict: A dictionary with:
+        MoveData: A dictionary with:
             - 'sans': [move in standard algebraic notation],
             - 'from': list of squares the pieces move from,
             - 'to': list of destination squares,
@@ -67,29 +73,28 @@ def get_data(board, move):
         ))
         from_squares.append(captured_pawn_square)
 
-    move_data = {
+    move_data: MoveData = {
         "sans": [board.san(move)],  # Standard algebraic notation
-        "from": from_squares,
+        "from_": from_squares,
         "to": to_squares,
         "targets": targets
     }
     return move_data
 
 
-
-def combine_data(move1_data, move2_data):
+def combine_data(move1_data: MoveData, move2_data: MoveData) -> MoveData:
     """
     Combines data from two sequential moves, avoiding overlapping squares.
 
     Args:
-        move1_data (dict): Output of get_data for the first move.
-        move2_data (dict): Output of get_data for the second move.
+        move1_data (MoveData): Output of get_data for the first move.
+        move2_data (MoveData): Output of get_data for the second move.
 
     Returns:
-        dict: A merged move data dictionary with cleaned `from`, `to`, and `targets` lists.
+        MoveData: A merged move data dictionary with cleaned `from`, `to`, and `targets` lists.
     """
-    bad_squares = move2_data["from"] + move2_data["to"]
-    from1 = [x for x in move1_data["from"] if x not in bad_squares]
+    bad_squares = move2_data["from_"] + move2_data["to"]
+    from1 = [x for x in move1_data["from_"] if x not in bad_squares]
     
     to1 = []
     targets1 = []
@@ -99,13 +104,13 @@ def combine_data(move1_data, move2_data):
         to1.append(move1_data["to"][i])
         targets1.append(move1_data["targets"][i])
     
-    from_combined = from1 + move2_data["from"]
+    from_combined = from1 + move2_data["from_"]
     to_combined = to1 + move2_data["to"]
     targets_combined = targets1 + move2_data["targets"]
     
-    data = {
+    data: MoveData = {
         "sans": [move1_data["sans"][0], move2_data["sans"][0]],
-        "from": from_combined,
+        "from_": from_combined,
         "to": to_combined,
         "targets": targets_combined
     }
@@ -113,7 +118,7 @@ def combine_data(move1_data, move2_data):
     return data
 
 
-def get_moves_pairs(board: chess.Board):
+def get_moves_pairs(board: chess.Board) -> List[Dict[str, object]]:
     """
     Generates all legal move pairs from the current board position.
 
@@ -124,7 +129,7 @@ def get_moves_pairs(board: chess.Board):
         board (chess.Board): The current chess position.
 
     Returns:
-        list: List of dictionaries with structure:
+        List[Dict[str, object]]: List of dictionaries with structure:
             - 'move1': data from the first move
             - 'move2': data from the second move (or None if no legal replies)
             - 'moves': combined move data (or None if no legal replies)
@@ -158,12 +163,12 @@ def get_moves_pairs(board: chess.Board):
     return moves_pairs
 
 
-def san_to_lan(board, san: str) -> str:
+def san_to_lan(board: chess.Board, san: str) -> str:
     """
     Converts a SAN move string to a LAN format by pushing the move to the board and then converting it.
 
     Args:
-        board: A chess board object (e.g., from python-chess).
+        board (chess.Board): A chess board object (e.g., from python-chess).
         san (str): A move in SAN (Standard Algebraic Notation) format.
 
     Returns:
@@ -176,13 +181,13 @@ def san_to_lan(board, san: str) -> str:
     return lan
 
 
-def calculate_move_score(state: np.ndarray, move: dict, from_thr: float = 0.6, to_thr: float = 0.6) -> float:
+def calculate_move_score(state: np.ndarray, move: MoveData, from_thr: float = 0.6, to_thr: float = 0.6) -> float:
     """
     Calculates the score for a given move based on the state of the game.
 
     Args:
         state (np.ndarray): The current game state (64x12 array).
-        move (dict): A dictionary containing information about the move ('from', 'to', and 'targets').
+        move (MoveData): A dictionary containing information about the move ('from', 'to', and 'targets').
         from_thr (float): Threshold for scoring the 'from' squares. Default is 0.6.
         to_thr (float): Threshold for scoring the 'to' squares. Default is 0.6.
 
@@ -190,7 +195,7 @@ def calculate_move_score(state: np.ndarray, move: dict, from_thr: float = 0.6, t
         float: The calculated score for the move.
     """
     score = 0
-    for square in move['from']:
+    for square in move['from_']:
         score += 1 - max(state[square]) - from_thr
     
     for i in range(len(move['to'])):

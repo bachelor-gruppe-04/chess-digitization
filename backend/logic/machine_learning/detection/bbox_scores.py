@@ -2,7 +2,7 @@
 import numpy as np
 import tensorflow as tf
 
-from typing import Tuple, List, Dict, Optional
+from typing import Tuple, List, Dict
 from utilities.constants import MODEL_WIDTH, MODEL_HEIGHT, MARKER_DIAMETER
 
 def process_boxes_and_scores(boxes: tf.Tensor, scores: tf.Tensor) -> np.ndarray:
@@ -37,8 +37,8 @@ def process_boxes_and_scores(boxes: tf.Tensor, scores: tf.Tensor) -> np.ndarray:
     
     return res_array
 
-def get_boxes_and_scores(preds, width, height, video_width, video_height, padding, roi):
-    
+def get_boxes_and_scores(preds: np.ndarray, width: int, height: int, video_width: int, video_height: int, padding: Tuple[int, int, int, int], roi: Tuple[int, int]
+) -> Tuple[tf.Tensor, tf.Tensor]:
     """
     This function processes predictions to extract bounding boxes and their associated scores.
 
@@ -92,8 +92,6 @@ def get_boxes_and_scores(preds, width, height, video_width, video_height, paddin
     t *= (MODEL_HEIGHT / video_height)
     b *= (MODEL_HEIGHT / video_height)
     
-    
-
     # Concatenate the left, top, right, and bottom coordinates to form the bounding boxes
     boxes = np.concatenate([l, t, r, b], axis=2) 
 
@@ -109,7 +107,6 @@ def get_boxes_and_scores(preds, width, height, video_width, video_height, paddin
     scores_tf = tf.convert_to_tensor(scores, dtype=tf.float32)
 
     return boxes_tf, scores_tf
-
 
 
 def get_bbox(points: List[Tuple[float, float]]) -> Dict[str, float]:

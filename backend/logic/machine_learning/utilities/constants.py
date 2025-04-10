@@ -20,11 +20,13 @@ SQUARE_NAMES = [
     'a8', 'b8', 'c8', 'd8', 'e8', 'f8', 'g8', 'h8'
 ]
 
+# Creates a dictionary that maps square names to indices
 def make_square_map():
     return {square: i for i, square in enumerate(SQUARE_NAMES)}
 
 SQUARE_MAP = make_square_map()
 
+# Creates a dictionary that maps piece labels to indices
 def make_label_map():
     return {label: i for i, label in enumerate(LABELS)}
 

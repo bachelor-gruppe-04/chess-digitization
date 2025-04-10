@@ -7,11 +7,7 @@ from detection.corners_detection import run_xcorners_model, find_board_corners_f
 from detection.piece_detection import run_pieces_model
 from maths.warp import get_inv_transform, transform_centers, transform_boundary
 
-async def get_board_corners(
-    video_ref: np.ndarray, 
-    pieces_model_ref: ort.InferenceSession, 
-    xcorners_model_ref: ort.InferenceSession
-) -> Optional[np.ndarray]: 
+async def get_board_corners(video_ref: np.ndarray, pieces_model_ref: ort.InferenceSession, xcorners_model_ref: ort.InferenceSession) -> Optional[np.ndarray]: 
     """
     Detects corners on a chessboard using ONNX models.
 
@@ -66,10 +62,7 @@ async def get_board_corners(
     return scaled_labeled_board_corners
 
 
-def find_centers_and_boundary(
-    corners_mapping: Dict[str, Dict[str, Tuple[int, int]]], 
-    frame: np.ndarray
-) -> List[List[Tuple[float, float]]]:
+def find_centers_and_boundary(corners_mapping: Dict[str, Dict[str, Tuple[int, int]]], frame: np.ndarray) -> List[List[Tuple[float, float]]]:
     """
     Finds the centers of squares from video frame.
 

@@ -19,9 +19,9 @@ async def find_fen(pieces_model_ref, frame, board_corners):
     state = get_update(scores, squares) 
     fen = set_fen_from_state(state)
         
-    tf.keras.backend.clear_session()
+    del pieces_model_ref    
     
-    return fen   
+    return fen  
     
 def set_fen_from_state(state):
     assignment = [-1] * 64

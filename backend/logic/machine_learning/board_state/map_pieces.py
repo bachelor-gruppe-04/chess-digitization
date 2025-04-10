@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 import time
-from typing import List, Tuple
+import onnxruntime as ort
 
 from detection.piece_detection import detect
 from detection.bbox_scores import get_bbox_centers
@@ -13,8 +13,7 @@ from detection.run_detections import find_centers_and_boundary
 
 last_update_time = 0 
 
-async def get_payload(
-    piece_model_ref: tf.keras.Model,
+async def get_payload(piece_model_ref: ort.InferenceSession,
     video_ref: np.ndarray,
     corners_ref: np.ndarray,
     game_ref: any,
@@ -25,7 +24,7 @@ async def get_payload(
     updates the state of the board, processes possible moves, and prepares the payload for dispatch.
 
     Args:
-        piece_model_ref (tf.keras.Model): The model used for piece detection.
+        piece_model_ref (ort.InferenceSession): The model used for piece detection.
         video_ref (np.ndarray): The video frame from the game.
         corners_ref (np.ndarray): Coordinates of the corners in the video frame.
         game_ref (any): The game object, representing the current state of the game.
@@ -104,7 +103,7 @@ async def get_payload(
     draw_polygon(video_ref, boundary)
     # draw_boxes_with_scores(video_ref, boxes, scores, threshold=0.5)
 
-    tf.keras.backend.clear_session()
+    del piece_model_ref
     
     return video_ref, payload
 
