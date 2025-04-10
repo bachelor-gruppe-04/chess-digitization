@@ -55,6 +55,9 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
     start_time = time.time()
     
     boxes, scores = await detect(piece_model_ref, video_ref, keypoints)
+    
+    del piece_model_ref
+
 
     squares = get_squares(boxes, centers_3d, boundary_3d)
 
@@ -97,13 +100,10 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
 
     if has_move or has_greedy_move:
         payload = make_update_payload(game_ref.board, greedy=False)
-        # dispatch(game_update(payload))
         
     draw_points(video_ref, centers)
     draw_polygon(video_ref, boundary)
     # draw_boxes_with_scores(video_ref, boxes, scores, threshold=0.5)
-
-    del piece_model_ref
     
     return video_ref, payload
 
@@ -154,6 +154,7 @@ def process_state(state: np.ndarray, moves_pairs: list, possible_moves: set) -> 
             best_moves = move_pair['moves']
     
     return best_score1, best_score2, best_joint_score, best_move, best_moves
+
 
 def get_squares(boxes: tf.Tensor, centers3D: tf.Tensor, boundary3D: tf.Tensor) -> tf.Tensor:
     """
