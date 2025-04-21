@@ -62,7 +62,10 @@ def find_board_corners_from_xcorners(x_corners: np.ndarray) -> Optional[List[Lis
     - A list of four corners (each represented as [x, y] coordinates) if a valid quadrilateral is found.
     - None if no valid quadrilateral could be determined.
     """
-    quads: List[np.ndarray] = get_quads(x_corners)
+    quads: List[List[Tuple[float, float]]] = get_quads(x_corners)
+    print(quads)
+    print("quads")
+    print(len(quads))
     
     if len(quads) == 0:
         return None

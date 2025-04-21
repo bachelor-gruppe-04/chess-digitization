@@ -21,7 +21,7 @@ def get_quads(x_corners: List[List[Tuple[float, float]]]) -> List[List[List[Tupl
     points: np.ndarray = np.array(x_corners)
     delaunay = Delaunay(points)
     triangles: np.ndarray = delaunay.simplices
-    quads: List[List[List[Tuple[float, float]]]] = []
+    quads: List[List[Tuple[float, float]]] = []
 
     for i in range(0, len(triangles), 1):
         t1, t2, t3 = triangles[i]

@@ -62,7 +62,7 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
     squares = get_squares(boxes, centers_3d, boundary_3d)
 
     current_time = time.time()
-    if current_time - last_update_time >= 4.0:
+    if current_time - last_update_time >= 1:
         update = get_update(scores, squares)
         last_update_time = current_time
     else:
@@ -72,33 +72,44 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
     best_score1, best_score2, best_joint_score, best_move, best_moves = process_state(
         state, moves_pairs_ref, possible_moves
     )
+    print("Best Move:", best_move)
+    print("Best Moves:", best_moves)
+    print("Best Score1:", best_score1)
+    print("Best Score2:", best_score2)
+    print("Best Joint Score:", best_joint_score)
 
     end_time = time.time()
     print("FPS:", round(1 / (end_time - start_time), 1))
 
-    has_move = False
-    if best_moves is not None:
-        move_str = best_moves["sans"][0]
-        has_move = best_score2 > 0 and best_joint_score > 0 and move_str in possible_moves
-        if has_move:
-            game_ref.board.push_san(move_str)
-            possible_moves.clear()
-            greedy_move_to_time = {}
+    # has_move = False
+    # if best_moves is not None:
+        # move_str = best_moves["sans"][0]
+        # has_move = best_score2 > 0 and best_joint_score > 0 and move_str in possible_moves
+    # has_move = best_score1 > 0.2 and move_str in possible_moves
+    has_move = best_score1 > 0.1616 or best_score2 > 0.0
+    print("has_move", has_move)
+    if has_move:
+        print("move applied with pusH_san")
+        game_ref.board.push_san(best_move["sans"][0])
+        possible_moves.clear()
+        greedy_move_to_time = {}
 
-    has_greedy_move = False
-    if best_move is not None and not has_move and best_score1 > 0:
-        move_str = best_move["sans"][0]
-        if move_str not in greedy_move_to_time:
-            greedy_move_to_time[move_str] = end_time
+    # has_greedy_move = False
+    # if best_move is not None and not has_move and best_score1 > 0:
+    #     move_str = best_move["sans"][0]
+    #     if move_str not in greedy_move_to_time:
+    #         greedy_move_to_time[move_str] = end_time
 
-        elapsed = (end_time - greedy_move_to_time[move_str]) > 1
-        is_new = san_to_lan(game_ref.board, move_str) != game_ref.last_move
-        has_greedy_move = elapsed and is_new
-        if has_greedy_move:
-            game_ref["board"].move(move_str)
-            greedy_move_to_time = {move_str: greedy_move_to_time[move_str]}
+    #     elapsed = (end_time - greedy_move_to_time[move_str]) > 0.3
+    #     is_new = san_to_lan(game_ref.board, move_str) != game_ref.last_move
+    #     has_greedy_move = elapsed and is_new
+    #     if has_greedy_move:
+    #         print("move applied with .move")
+    #         game_ref["board"].move(move_str)
+    #         greedy_move_to_time = {move_str: greedy_move_to_time[move_str]}
 
-    if has_move or has_greedy_move:
+    # if has_move or has_greedy_move:
+    if has_move:
         payload = make_update_payload(game_ref.board, greedy=False)
         
     draw_points(video_ref, centers)
