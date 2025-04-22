@@ -12,11 +12,11 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --main-color:#5A8193;
-  --dark-tile: #93ABB7;
-  --light-tile: #D1D7DA;
-  --dark-last-move: #7CBCCD;
-  --light-last-move: #A3D3DE;
+  --main-color:#6CADD5;
+  --dark-tile: #6CADD5;
+  --light-tile: #EFF3FF;
+  --dark-last-move: green;
+  --light-last-move: yellow;
 }
 
 a {
