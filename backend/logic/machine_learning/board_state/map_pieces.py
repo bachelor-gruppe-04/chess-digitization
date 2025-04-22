@@ -62,7 +62,7 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
     squares = get_squares(boxes, centers_3d, boundary_3d)
 
     current_time = time.time()
-    if current_time - last_update_time >= 4.0:
+    if current_time - last_update_time >= 0.5:
         update = get_update(scores, squares)
         last_update_time = current_time
     else:
@@ -99,7 +99,7 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
             greedy_move_to_time = {move_str: greedy_move_to_time[move_str]}
 
     if has_move or has_greedy_move:
-        payload = make_update_payload(game_ref.board, greedy=False)
+        payload = make_update_payload(game_ref.board, greedy=False), best_move
         
     draw_points(video_ref, centers)
     draw_polygon(video_ref, boundary)

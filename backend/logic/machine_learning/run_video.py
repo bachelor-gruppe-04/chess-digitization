@@ -63,7 +63,7 @@ async def process_video(
                 moves_pairs = get_moves_pairs(game.board)
                 video_frame, payload = await get_payload(piece_model_session, video_frame, board_corners_ref, game, moves_pairs)
                 if payload is not None:
-                    print("Payload:", payload)
+                    print("Payload:", payload[1]["sans"])
 
             resized_frame = cv2.resize(video_frame, (1280, 720))
             cv2.imshow("Chess Board Detection", resized_frame)
