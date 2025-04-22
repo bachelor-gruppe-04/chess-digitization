@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Path
 from fastapi.responses import StreamingResponse
-from services.board_service import boards
+from logic.api.services.board_service import boards
 
 router = APIRouter()
 

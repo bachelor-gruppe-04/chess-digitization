@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from services.board_service import reset_game, reset_all_games
+from logic.api.services.board_service import reset_game, reset_all_games
 
 router = APIRouter()
 
@@ -12,3 +12,4 @@ async def reset_board(board_id: int):
 async def reset_all():
   await reset_all_games()
   return {"status": "all boards reset"}
+#

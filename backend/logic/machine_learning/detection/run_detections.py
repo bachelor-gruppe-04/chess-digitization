@@ -2,10 +2,10 @@ import numpy as np
 import onnxruntime as ort
 
 from typing import List, Dict, Tuple, Optional
-from utilities.constants import CORNER_KEYS
-from detection.corners_detection import run_xcorners_model, find_board_corners_from_xcorners, assign_labels_to_board_corners, scale_xy_board_corners, extract_xy_from_labeled_corners
-from detection.piece_detection import run_pieces_model
-from maths.warp import get_inv_transform, transform_centers, transform_boundary
+from logic.machine_learning.utilities.constants import CORNER_KEYS
+from logic.machine_learning.detection.corners_detection import run_xcorners_model, find_board_corners_from_xcorners, assign_labels_to_board_corners, scale_xy_board_corners, extract_xy_from_labeled_corners
+from logic.machine_learning.detection.piece_detection import run_pieces_model
+from logic.machine_learning.maths.warp import get_inv_transform, transform_centers, transform_boundary
 
 async def get_board_corners(video_ref: np.ndarray, pieces_model_ref: ort.InferenceSession, xcorners_model_ref: ort.InferenceSession) -> Optional[np.ndarray]: 
     """

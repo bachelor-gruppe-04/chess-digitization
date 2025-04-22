@@ -3,8 +3,8 @@ import numpy as np
 import tensorflow as tf
 
 from typing import Tuple, List, Dict, Optional
-from detection.bbox_scores import get_bbox
-from utilities.constants import MODEL_WIDTH, MODEL_HEIGHT
+from logic.machine_learning.detection.bbox_scores import get_bbox
+from logic.machine_learning.utilities.constants import MODEL_WIDTH, MODEL_HEIGHT
 
 def preprocess_image(image: np.ndarray) -> np.ndarray:
     """

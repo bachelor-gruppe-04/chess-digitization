@@ -1,5 +1,7 @@
 from typing import Generator
+from .detectora import Detector
 import cv2
+import asyncio
 
 class Camera:
   """ Camera class to handle webcam. """
@@ -12,6 +14,8 @@ class Camera:
     """
     self.cam_id = cam_id
     self.camera = cv2.VideoCapture(cam_id)
+    self.detector = Detector(self.camera)
+    
       
   def generate_frames(self) -> Generator[bytes, None, None]:
     """ Generate frames from the laptop webcam.
