@@ -15,8 +15,9 @@
   --main-color:#6CADD5;
   --dark-tile: #6CADD5;
   --light-tile: #EFF3FF;
-  --dark-last-move: green;
-  --light-last-move: yellow;
+  --dark-last-move: #92B166;
+  --light-last-move: rgba(146, 177, 102, 0.6);
+  
 }
 
 a {

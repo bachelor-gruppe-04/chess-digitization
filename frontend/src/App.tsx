@@ -2,6 +2,8 @@ import './App.css';
 
 import BoardView from './pages/boardview/boardview';
 import TournamentView from './pages/tournamentview/tournamentview';
+import HowItWorks from './pages/HowItWorks/howItWorks';
+import AboutUs from './pages/aboutUs/aboutUs';
 import Header from './layouts/header';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
@@ -26,6 +28,10 @@ function App() {
       <Routes>
         {/* Main tournament view */}
         <Route path="/" element={<TournamentView />} />
+        {/* How it works view */}
+        <Route path="/how-it-works" element={<HowItWorks />} />
+        {/* About us view */}
+        <Route path="/about" element={<AboutUs />} />
 
         {/* Individual board views with IDs */}
         <Route path="/board/1" element={<BoardView id={1} />} />
