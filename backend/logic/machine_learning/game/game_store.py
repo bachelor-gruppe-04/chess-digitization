@@ -1,4 +1,5 @@
-from game.game import Game
+from logic.machine_learning.game.game import Game
+
 
 from typing import Optional
 

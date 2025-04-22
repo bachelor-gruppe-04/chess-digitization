@@ -2,8 +2,8 @@ import numpy as np
 import onnxruntime as ort
 from typing import Tuple
 
-from detection.bbox_scores import get_boxes_and_scores, process_boxes_and_scores
-from utilities.preprocess import get_input
+from logic.machine_learning.detection.bbox_scores import get_boxes_and_scores, process_boxes_and_scores
+from logic.machine_learning.utilities.preprocess import get_input
 
 
 async def run_pieces_model(frame, pieces_model_ref):

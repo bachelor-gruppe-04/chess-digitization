@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 
 from typing import List, Tuple, Union
-from utilities.constants import MODEL_WIDTH, MODEL_HEIGHT
+from logic.machine_learning.utilities.constants import MODEL_WIDTH, MODEL_HEIGHT
 
 
 def draw_boxes_with_scores(frame: np.ndarray, boxes: tf.Tensor, scores: tf.Tensor, threshold: float = 0.5) -> None:

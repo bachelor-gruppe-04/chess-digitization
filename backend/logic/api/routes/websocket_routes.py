@@ -1,5 +1,5 @@
 from fastapi import APIRouter, WebSocket
-from services.board_service import boards
+from logic.api.services.board_service import boards
 
 router = APIRouter()
 

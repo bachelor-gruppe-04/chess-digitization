@@ -3,13 +3,13 @@ import tensorflow as tf
 import time
 import onnxruntime as ort
 
-from detection.piece_detection import detect
-from detection.bbox_scores import get_bbox_centers
-from detection.corners_detection import extract_xy_from_labeled_corners
-from utilities.move import san_to_lan, calculate_move_score
-from game.game import make_update_payload
-from view.render import draw_points, draw_polygon, draw_boxes_with_scores
-from detection.run_detections import find_centers_and_boundary
+from logic.machine_learning.detection.piece_detection import detect
+from logic.machine_learning.detection.bbox_scores import get_bbox_centers
+from logic.machine_learning.detection.corners_detection import extract_xy_from_labeled_corners
+from logic.machine_learning.utilities.move import san_to_lan, calculate_move_score
+from logic.machine_learning.game.game import make_update_payload
+from logic.machine_learning.view.render import draw_points, draw_polygon, draw_boxes_with_scores
+from logic.machine_learning.detection.run_detections import find_centers_and_boundary
 
 last_update_time = 0 
 
@@ -62,7 +62,7 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
     squares = get_squares(boxes, centers_3d, boundary_3d)
 
     current_time = time.time()
-    if current_time - last_update_time >= 0.5:
+    if current_time - last_update_time >= 1.0:
         update = get_update(scores, squares)
         last_update_time = current_time
     else:

@@ -1,7 +1,10 @@
 import chess
 import numpy as np
 from typing import Dict, List, Optional
-from utilities.constants import LABEL_MAP, CASTLING_MAP
+from logic.machine_learning.utilities.constants import LABEL_MAP, CASTLING_MAP
+
+
+
 
 class MoveData(Dict):
     sans: List[str]
