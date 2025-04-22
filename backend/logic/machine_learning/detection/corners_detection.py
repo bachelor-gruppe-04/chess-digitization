@@ -2,10 +2,10 @@ import numpy as np
 import onnxruntime as ort
 
 from typing import Tuple, List, Dict, Optional
-from utilities.constants import MODEL_WIDTH, MODEL_HEIGHT, MARKER_DIAMETER, CORNER_KEYS
-from maths.quad_transformation import get_quads, score_quad, perspective_transform, clamp, euclidean_distance
-from detection.bbox_scores import get_boxes_and_scores, get_center_of_set_of_points, process_boxes_and_scores, get_xy
-from utilities.preprocess import get_input
+from logic.machine_learning.utilities.constants import MODEL_WIDTH, MODEL_HEIGHT, MARKER_DIAMETER, CORNER_KEYS
+from logic.machine_learning.maths.quad_transformation import get_quads, score_quad, perspective_transform, clamp, euclidean_distance
+from logic.machine_learning.detection.bbox_scores import get_boxes_and_scores, get_center_of_set_of_points, process_boxes_and_scores, get_xy
+from logic.machine_learning.utilities.preprocess import get_input
 
 
 async def run_xcorners_model(frame: np.ndarray, corners_model_ref: ort.InferenceSession, pieces: List[dict]) -> List[List[float]]:

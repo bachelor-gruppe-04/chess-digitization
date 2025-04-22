@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 
 from typing import Tuple, List, Dict
-from utilities.constants import MODEL_WIDTH, MODEL_HEIGHT, MARKER_DIAMETER
+from logic.machine_learning.utilities.constants import MODEL_WIDTH, MODEL_HEIGHT, MARKER_DIAMETER
 
 def process_boxes_and_scores(boxes: tf.Tensor, scores: tf.Tensor) -> np.ndarray:
     """

@@ -3,14 +3,13 @@ import onnxruntime as ort
 import asyncio
 from typing import Optional
 
-from game.game_store import GameStore
-from detection.run_detections import get_board_corners
-from board_state.map_pieces import get_payload
-from utilities.move import get_moves_pairs
-
+from logic.machine_learning.game.game_store import GameStore
+from logic.machine_learning.detection.run_detections import get_board_corners
+from logic.machine_learning.board_state.map_pieces import get_payload
+from logic.machine_learning.utilities.move import get_moves_pairs
 
 async def process_video(
-    video_path: str,
+    video_path,
     piece_model_session: ort.InferenceSession,
     corner_ort_session: ort.InferenceSession,
     output_path: str,
@@ -28,7 +27,8 @@ async def process_video(
         game_store (GameStore): GameStore instance managing the state of ongoing games.
         game_id (str): Unique identifier for the game session.
     """
-    cap: cv2.VideoCapture = cv2.VideoCapture(video_path)
+    cap: cv2.VideoCapture = video_path
+    from logic.api.services.board_service import send_move
     if not cap.isOpened():
         print("Error: Cannot open video source.")
         return
@@ -64,6 +64,9 @@ async def process_video(
                 video_frame, payload = await get_payload(piece_model_session, video_frame, board_corners_ref, game, moves_pairs)
                 if payload is not None:
                     print("Payload:", payload[1]["sans"])
+                    
+                    await send_move(1, payload[1]["sans"])
+                    
 
             resized_frame = cv2.resize(video_frame, (1280, 720))
             cv2.imshow("Chess Board Detection", resized_frame)
@@ -76,12 +79,13 @@ async def process_video(
     cv2.destroyAllWindows()
 
 
-async def main() -> None:
+async def prepare_to_run_video(video) -> None:
     """
     Main entry point for running the chessboard processing pipeline.
     Loads models, initializes game session, and starts video processing.
     """
-    video_path: str = 'resources/videoes/new/TopViewWhite.mp4'
+    #video_path: str = 'resources/videoes/new/TopViewWhite.mp4'
+    video_path = video
     output_path: str = 'resources/videoes/output_video_combined.avi'
 
     piece_model_path: str = "resources/models/480M_leyolo_pieces_simplified.onnx"
@@ -97,5 +101,5 @@ async def main() -> None:
     await process_video(video_path, piece_ort_session, corner_ort_session, output_path, game_store, game_id)
 
 
-if __name__ == "__main__":
-    asyncio.run(main())
+# if __name__ == "__main__":
+#     asyncio.run(main())

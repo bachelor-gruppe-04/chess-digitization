@@ -19,7 +19,7 @@ class Board:
     self.chess_board = chess.Board()
     self.invalid_latched = False
       
-  def validate_move(self, move: str) -> (tuple[Literal['INVALID'], Literal[False]] | tuple[str, Literal[True]]):
+  def validate_move(self, move) -> (tuple[Literal['INVALID'], Literal[False]] | tuple[str, Literal[True]]):
     """ Check if a chess move is valid. 
     
     Args: 
@@ -27,7 +27,7 @@ class Board:
     Returns:
       tuple[str, bool]: Tuple containing the move and a boolean indicating if the move was valid.
     """
-    move = move.strip()
+    move = move[-1].strip()
     
     if self.invalid_latched:
         return "INVALID", False

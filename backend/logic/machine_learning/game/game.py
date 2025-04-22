@@ -1,7 +1,7 @@
 import chess
 import chess.pgn
 
-from utilities.constants import START_FEN
+from logic.machine_learning.utilities.constants import START_FEN
 
 
 class Game:

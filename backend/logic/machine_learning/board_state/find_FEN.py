@@ -3,10 +3,10 @@ import numpy as np
 import chess
 
 from typing import List, Tuple, Optional
-from utilities.constants import PIECE_SYMBOLS
-from maths.warp import get_inv_transform, transform_centers, transform_boundary
-from board_state.map_pieces import detect, get_squares, get_update
-from detection.corners_detection import extract_xy_from_labeled_corners
+from logic.machine_learning.utilities.constants import PIECE_SYMBOLS
+from logic.machine_learning.maths.warp import get_inv_transform, transform_centers, transform_boundary
+from logic.machine_learning.board_statestate.map_pieces import detect, get_squares, get_update
+from logic.machine_learning.detection.corners_detection import extract_xy_from_labeled_corners
 
 async def find_fen(pieces_model_ref: tf.Module, frame: np.ndarray, board_corners: np.ndarray) -> str:
     """

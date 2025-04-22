@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 
 from typing import List, Tuple
-from utilities.constants import SQUARE_SIZE, BOARD_SIZE
+from logic.machine_learning.utilities.constants import SQUARE_SIZE, BOARD_SIZE
 
 def perspective_transform(src: List[List[float]], transform: np.ndarray) -> List[List[float]]:
     """
