@@ -30,6 +30,8 @@
 .camera-wrapper img {
   width: 100%;
   height: 100%;
+  max-width: 50vmin;
+  max-height: 50vmin;
   object-fit: cover;
   border-radius: 8px; /* optional: just makes it look nicer */
 }
@@ -37,15 +39,20 @@
 .pgn-wrapper {
   flex: 1;
   overflow-y: scroll;
-  padding: 1rem;
-  border: 1px solid #ddd;
+  padding-left: 1rem;
+  padding-right: 1rem;
   border-radius: 6px;
   scroll-behavior: smooth;
 }
 
 .chessboard-wrapper {
-  width: 60%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  width: min(60vw, 80vh);      /* Take up to 60% of screen width but not more than 80% of screen height */
+  position: relative;
+  margin: auto;
+}
+
+.chessboard-wrapper::after {
+  content: "";
+  display: block;
+  padding-top: 100%;           /* Makes it square */
 }
