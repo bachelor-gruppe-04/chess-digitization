@@ -1,5 +1,7 @@
 import "./pgn.css";
 
+import { useEffect, useState } from "react";
+
 /**
  * PGN Component
  *
@@ -32,6 +34,33 @@ function PGN({ moves }: PGNProps) {
     });
   }
 
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  if (isMobile) {
+    return (
+      <div className="pgn-line">
+        {rows.map((row, index) => (
+          <span key={index}>
+            {row.turn}.{" "}
+            <span className={index * 2 === moves.length - 1 ? "highlight" : ""}>
+              {row.white}
+            </span>{" "}
+            <span className={index * 2 + 1 === moves.length - 1 ? "highlight" : ""}>
+              {row.black}
+            </span>
+          </span>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <table className="pgn-table">
       <thead>
@@ -45,17 +74,14 @@ function PGN({ moves }: PGNProps) {
         {rows.map((row, index) => (
           <tr key={index}>
             <td>{row.turn}.</td>
-            <td className={index * 2 === moves.length - 1 ? "highlight" : ""}>
-              {row.white}
-            </td>
-            <td className={index * 2 + 1 === moves.length - 1 ? "highlight" : ""}>
-              {row.black}
-            </td>
+            <td className={index * 2 === moves.length - 1 ? "highlight" : ""}>{row.white}</td>
+            <td className={index * 2 + 1 === moves.length - 1 ? "highlight" : ""}>{row.black}</td>
           </tr>
         ))}
       </tbody>
     </table>
   );
 }
+
 
 export default PGN;
