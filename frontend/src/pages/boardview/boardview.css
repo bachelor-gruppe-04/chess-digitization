@@ -34,7 +34,7 @@
   max-width: 50vmin;
   max-height: 50vmin;
   object-fit: cover;
-  border-radius: 8px; /* optional: just makes it look nicer */
+  border-radius: 8px;
 }
 
 .pgn-wrapper {
@@ -47,7 +47,7 @@
 }
 
 .chessboard-wrapper {
-  width: min(60vw, 80vh);      /* Take up to 60% of screen width but not more than 80% of screen height */
+  width: min(60vw, 80vh);
   position: relative;
   margin: auto;
 }
@@ -55,7 +55,7 @@
 .chessboard-wrapper::after {
   content: "";
   display: block;
-  padding-top: 100%;           /* Makes it square */
+  padding-top: 100%;
 }
 
 @media (max-width: 768px) {
@@ -97,5 +97,9 @@
     width: 100vw;
     max-width: 100%;
     aspect-ratio: 1 / 1;
+  }
+
+  body {
+    padding-top: 4rem;
   }
 }
