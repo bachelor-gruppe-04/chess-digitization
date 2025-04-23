@@ -2,7 +2,7 @@ import './App.css';
 
 import BoardView from './pages/boardview/boardview';
 import TournamentView from './pages/tournamentview/tournamentview';
-import HowItWorks from './pages/HowItWorks/howItWorks';
+import HowItWorks from './pages/howItWorks/howItWorks';
 import AboutUs from './pages/aboutUs/aboutUs';
 import Header from './layouts/header';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
