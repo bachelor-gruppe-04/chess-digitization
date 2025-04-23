@@ -5,9 +5,9 @@ import { useEffect, useState } from "react";
 /**
  * PGN Component
  *
- * Displays a list of chess moves in Portable Game Notation (PGN) format.
- * It takes an array of move strings and formats them into rows,
- * each representing a turn with a white and black move.
+ * Displays a list of chess moves using the PGN (Portable Game Notation) format.
+ * Each turn consists of a pair of white and black moves. This component adapts to both
+ * desktop (tabular view) and mobile (linear text view) for responsive display.
  */
 
 /**
@@ -34,8 +34,12 @@ function PGN({ moves }: PGNProps) {
     });
   }
 
-  const [isMobile, setIsMobile] = useState(false);
-  
+  const [isMobile, setIsMobile] = useState(false); // Tracks if the screen is mobile-sized
+
+  /**
+   * Handle responsive layout by listening to window resize events.
+   * Sets `isMobile` to true when the screen width is 768px or less.
+   */
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     handleResize();
@@ -43,6 +47,9 @@ function PGN({ moves }: PGNProps) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  /**
+   * If isMobile is true, the layout is set to inline text format
+   */
   if (isMobile) {
     return (
       <div className="pgn-line">
@@ -61,6 +68,9 @@ function PGN({ moves }: PGNProps) {
     );
   }
 
+  /**
+   * If isMobile is false, the layout is set to table format
+   */
   return (
     <table className="pgn-table">
       <thead>
