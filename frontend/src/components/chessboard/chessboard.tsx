@@ -77,7 +77,7 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
   const [pieces, setPieces] = useState<Piece[]>([]); // Current piece layout
   const chess = new Chess(); // Chess game instance
   const [moveList, setMoveList] = useState<string[]>([]); // Local move history
-  const [lastMoveSquares, setLastMoveSquares] = useState<{ from: string; to: string } | null>(null);  // Last move data
+  const [lastMoveSquares, setLastMoveSquares] = useState<string[]>([]);  // Last move data
   const moves = useWebSocket(`ws://localhost:8000/moves/${id}`); // WebSocket listener for this board
 
   /**
@@ -102,7 +102,18 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
       if (move) {
         setPieces(generatePositionFromFen(chess.fen()));
         setMoveList((prev) => [...prev, move.san]);
-        setLastMoveSquares({ from: move.from, to: move.to });
+
+        let highlights: string[] = [];
+
+        if (move.san === "O-O") {
+          highlights = [move.from, move.color === "w" ? "h1" : "h8"];
+        } else if (move.san === "O-O-O") {
+          highlights = [move.from, move.color === "w" ? "a1" : "a8"];
+        } else {
+          highlights = [move.from, move.to];
+        }
+
+        setLastMoveSquares(highlights);
       } else {
         console.warn("Illegal move:", notation);
       }
@@ -134,9 +145,19 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
 
     if (validSanMoves.length > 0) {
       const history = chess.history({ verbose: true });
-      const lastMove = history[history.length - 1];
-      if (lastMove) {
-        setLastMoveSquares({ from: lastMove.from, to: lastMove.to });
+      const move = history[history.length - 1];
+      if (move) {
+        let highlights: string[] = [];
+
+        if (move.san === "O-O") {
+          highlights = [move.from, move.color === "w" ? "h1" : "h8"];
+        } else if (move.san === "O-O-O") {
+          highlights = [move.from, move.color === "w" ? "a1" : "a8"];
+        } else {
+          highlights = [move.from, move.to];
+        }
+
+        setLastMoveSquares(highlights);
       }
       setPieces(generatePositionFromFen(chess.fen()));
     }
@@ -163,8 +184,7 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
       });
 
       const square = `${horizontalAxis[i]}${verticalAxis[j]}`;
-      const isHighlighted =
-        lastMoveSquares?.from === square || lastMoveSquares?.to === square;
+      const isHighlighted = lastMoveSquares.includes(square);
 
       board.push(
         <Tile
