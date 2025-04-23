@@ -1,8 +1,9 @@
 .table-view {
   display: flex;
   gap: 1rem;
-  padding-left: 3rem;
-  padding-right: 3rem;
+  
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
 .left-wrapper {
@@ -11,7 +12,6 @@
   width: 40%;
   gap: 1rem;
   width: 80vmin;
-  height: 80vmin;
 }
 
 .back-button {
@@ -24,6 +24,7 @@
   justify-content: center;
   align-items: center;
   padding: 1rem;
+  background-color: aqua;
 }
 
 .camera-wrapper video,
@@ -55,4 +56,46 @@
   content: "";
   display: block;
   padding-top: 100%;           /* Makes it square */
+}
+
+@media (max-width: 768px) {
+  .table-view {
+    flex-direction: column-reverse;
+  }
+
+  .left-wrapper {
+    padding: 0.5rem;
+    display: contents;
+  }
+  
+  .back-button {
+    order: 4;
+    font-size: 0.85rem;
+    margin: 0.5rem 0;
+  }
+
+  .pgn-wrapper {
+    order: 2;
+    max-height: 150px;
+    font-size: 0.85rem;
+    padding: 0.5rem;
+    max-width: 100%;
+  }
+
+  .camera-wrapper {
+    order: 1;
+    padding: 0.5rem;
+    max-width: 100%;
+  }
+
+  .chessboard-wrapper {
+    order: 3;
+    padding: 1rem;
+  }
+
+  .chessboard-wrapper > * {
+    width: 100vw;
+    max-width: 100%;
+    aspect-ratio: 1 / 1;
+  }
 }
