@@ -102,6 +102,7 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
       if (move) {
         setPieces(generatePositionFromFen(chess.fen()));
         setMoveList((prev) => [...prev, move.san]);
+        setLastMoveSquares({ from: move.from, to: move.to });
       } else {
         console.warn("Illegal move:", notation);
       }
