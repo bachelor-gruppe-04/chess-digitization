@@ -1,7 +1,7 @@
 import customtkinter as ctk
 
 class BoardResetSelectorTopLevel(ctk.CTkToplevel):
-  def __init__(self, parent, total_cameras, on_close_callback):
+  def __init__(self, parent, total_cameras:int, on_close_callback):
     super().__init__(parent)
     self.title("Reset Specific Board")
     self.geometry("400x500")

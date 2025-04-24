@@ -1,7 +1,7 @@
 import customtkinter as ctk
 
 class ProgressBarTopLevel(ctk.CTkToplevel):
-  def __init__(self, parent, total_cameras, on_finish_callback):
+  def __init__(self, parent, total_cameras:int, on_finish_callback):
     super().__init__(parent)
     self.title("Connecting to Cameras...")
     self.geometry("420x130")

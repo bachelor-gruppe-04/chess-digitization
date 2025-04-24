@@ -75,7 +75,7 @@ class App(ctk.CTk):
     )
     self.start_button.pack(pady=(10, 10))
     
-    self.bind('<Return>', lambda: self.apply_number_of_cameras())
+    self.bind('<Return>', lambda e: self.apply_number_of_cameras())
     
   def validate_entry(self, value:any) -> bool:
     """ Validate the entry to only allow digits and empty string. """
