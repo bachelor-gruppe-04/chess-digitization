@@ -1,0 +1,17 @@
+.live-button {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  background-color: var(--main-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+}
+
+.live-button:hover {
+  background-color: rgba(81, 154, 206, 0.85);
+  color: white;
+}

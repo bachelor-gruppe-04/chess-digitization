@@ -1,28 +1,38 @@
-.pgn-list {
-    background-color: white;
-    color: black;
-    font-family: system-ui, sans-serif;
-    font-size: 18px;
+.pgn-table .highlight {
+  background-color: var(--light-last-move);
+  font-weight: 600; 
+}
+
+.pgn-table th,
+.pgn-table td {
+  padding: 0.5rem 1.5rem;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .pgn-table {
+    display: none;
   }
-  
-  .pgn-header,
-  .pgn-row {
-    display: grid;
-    grid-template-columns: 1fr 2fr 2fr;
-    align-items: center;
+
+  .pgn-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--light-tile);
+    border-radius: 6px;
+    overflow-x: auto;
   }
-  
-  .pgn-header {
-    font-weight: 600;
-  }
-  
-  .pgn-row span {
+
+  .pgn-line span {
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
-  
-  .highlight {
-    background-color: rgba(77, 128, 85, 0.5);
+
+  .pgn-line .highlight {
+    background-color: var(--light-last-move);
+    font-weight: 600;
+    padding: 0 0.25rem;
+    border-radius: 4px;
   }
-  
+}
