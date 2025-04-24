@@ -1,5 +1,7 @@
 import './camera.css';
 
+import { useState  } from 'react';
+
 /**
  * Camera Component
  *
@@ -18,14 +20,46 @@ interface CameraProps {
 }
 
 function Camera({ id }: CameraProps) {
+  const [isFullscreen, setIsFullscreen] = useState(false); // Tracks whether the fullscreen view is active
+
+  /**
+   * Toggles fullscreen mode for the webcam feed.
+   * When enabled, the webcam image is shown in an overlay with a close button.
+   */
+  const toggleFullscreen = () => {
+    setIsFullscreen((prev) => !prev);
+  };
+
   return (
-    <div className="webcam-container">
-      <img
-        src={`http://localhost:8000/video/${id}`}
-        alt="Webcam Feed"
-        className="webcam-feed"
-      />
-    </div>
+    <>
+      {/* Main webcam feed container */}
+      <div className="webcam-container">
+        <img
+          src={`http://localhost:8000/video/${id}`}
+          alt="Webcam Feed"
+          className="webcam-feed"
+        />
+        <button className="fullscreen-button" onClick={toggleFullscreen}>
+          ⛶
+        </button>
+      </div>
+
+      {/* Fullscreen overlay (only rendered when fullscreen is active) */}
+      {isFullscreen && (
+        <div className="fullscreen-overlay" onClick={toggleFullscreen}>
+          <div className="fullscreen-content" onClick={(e) => e.stopPropagation()}>
+            <button className="close-button" onClick={toggleFullscreen}>
+              ×
+            </button>
+            <img
+              src={`http://localhost:8000/video/${id}`}
+              alt="Webcam Fullscreen"
+              className="webcam-fullscreen"
+            />
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
