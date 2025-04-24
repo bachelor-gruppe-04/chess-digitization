@@ -1,11 +1,9 @@
 .webcam-container {
     display: flex;
-    gap: 20px;
     align-items: center;
   }
   
   .webcam-feed {
-    width: 500px;
     border-radius: 8px;
   }
   
