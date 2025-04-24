@@ -27,17 +27,17 @@ async def process_video(
         game_store (GameStore): GameStore instance managing the state of ongoing games.
         game_id (str): Unique identifier for the game session.
     """
-    cap: cv2.VideoCapture = video_path
+    cap: cv2.VideoCapture = cv2.VideoCapture(0, cv2.CAP_MSMF)
     from logic.api.services.board_service import send_move
     if not cap.isOpened():
         print("Error: Cannot open video source.")
         return
 
-    frame_width: int = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    frame_height: int = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fps: float = cap.get(cv2.CAP_PROP_FPS)
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out: cv2.VideoWriter = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
+    # frame_width: int = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    # frame_height: int = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    # fps: float = cap.get(cv2.CAP_PROP_FPS)
+    # fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    # out: cv2.VideoWriter = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
     
     frame_counter: int = 0
     board_corners_ref: Optional[list] = None
@@ -75,7 +75,6 @@ async def process_video(
         frame_counter += 1
 
     cap.release()
-    out.release()
     cv2.destroyAllWindows()
 
 
@@ -84,7 +83,6 @@ async def prepare_to_run_video(video) -> None:
     Main entry point for running the chessboard processing pipeline.
     Loads models, initializes game session, and starts video processing.
     """
-    #video_path: str = 'resources/videoes/new/TopViewWhite.mp4'
     video_path = video
     output_path: str = 'resources/videoes/output_video_combined.avi'
 
