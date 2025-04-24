@@ -1,16 +1,18 @@
 import customtkinter as ctk
-from progress_bar_view import ProgressBarTopLevel
-from reset_specific_board_view import BoardResetSelectorTopLevel
+from logic.view.progress_bar_view import ProgressBarTopLevel
+from logic.view.reset_specific_board_view import BoardResetSelectorTopLevel
 
 ctk.set_appearance_mode("system")
 ctk.set_default_color_theme("blue")
 
 class App(ctk.CTk):
-  def __init__(self):
+  def __init__(self, reset_game_func:any=None):
     super().__init__()
     self.title("Control Panel")
     self.geometry("800x500")
     self.minsize(600, 400)
+    
+    self.reset_game_command = reset_game_func
     
     self.number_of_cameras = 0
     self.progress_window = None
@@ -77,6 +79,12 @@ class App(ctk.CTk):
     
     self.bind('<Return>', lambda e: self.apply_number_of_cameras())
     
+  def __new__(cls):
+    """ Ensure only one instance of the app is created. """
+    if not hasattr(cls, 'instance'):
+      cls.instance = super(App, cls).__new__(cls)
+    return cls.instance
+    
   def validate_entry(self, value:any) -> bool:
     """ Validate the entry to only allow digits and empty string. """
     return value.isdigit() or value == ""
@@ -130,9 +138,6 @@ class App(ctk.CTk):
     """ Open the board reset selector window. """
     if self.number_of_cameras > 0:
       self.disable_main_buttons()
-      BoardResetSelectorTopLevel(self, self.number_of_cameras, self.enable_main_buttons)
+      BoardResetSelectorTopLevel(self, self.number_of_cameras, self.enable_main_buttons, func=self.reset_game_command )
     else:
       print("Please apply a valid number of cameras first.")
-            
-app = App()
-app.mainloop()
