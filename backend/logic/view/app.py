@@ -87,7 +87,6 @@ class App(ctk.CTk):
     if number.isdigit() and int(number) > 0:
       self.number_of_cameras = int(number)
       print(f"Number of cameras set to {self.number_of_cameras}")
-      
       self.disable_main_buttons()
       self.progress_window = ProgressBarTopLevel(self, self.number_of_cameras, self.on_connection_finished)
     else:
