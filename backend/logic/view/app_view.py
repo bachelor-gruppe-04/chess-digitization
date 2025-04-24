@@ -1,6 +1,6 @@
 import customtkinter as ctk
-from progress_bar import ProgressBarTopLevel
-from reset_specific_board import BoardResetSelectorTopLevel
+from progress_bar_view import ProgressBarTopLevel
+from reset_specific_board_view import BoardResetSelectorTopLevel
 
 ctk.set_appearance_mode("system")
 ctk.set_default_color_theme("blue")
