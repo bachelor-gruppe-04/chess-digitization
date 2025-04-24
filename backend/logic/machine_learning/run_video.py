@@ -27,11 +27,29 @@ async def process_video(
         game_store (GameStore): GameStore instance managing the state of ongoing games.
         game_id (str): Unique identifier for the game session.
     """
-    cap: cv2.VideoCapture = cv2.VideoCapture(1)
+    cap: cv2.VideoCapture = cv2.VideoCapture(0)
     from logic.api.services.board_service import send_move
     if not cap.isOpened():
         print("Error: Cannot open video source.")
         return
+    
+    # # Show camera feed immediately (for debugging purposes)
+    # while True:
+    #     ret: bool
+    #     video_frame: Optional[cv2.typing.MatLike]
+    #     ret, video_frame = cap.read()
+        
+    #     if not ret or video_frame is None:
+    #         print("Failed to capture frame.")
+    #         break
+
+    #     # Display the video frame as soon as it's captured
+    #     cv2.imshow("Camera Feed", video_frame)
+
+    #     # Wait for 1 ms before moving to the next frame
+    #     key = cv2.waitKey(1) & 0xFF
+    #     if key == ord('q'):  # Press 'q' to exit the camera feed
+    #         break
     
     frame_counter: int = 0
     board_corners_ref: Optional[list] = None
