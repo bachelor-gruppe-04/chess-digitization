@@ -39,7 +39,8 @@ class BoardResetSelectorTopLevel(ctk.CTkToplevel):
       )
       reset_button.pack(side="right", padx=(0, 10))
       
-  def center_on_parent(self):
+  def center_on_parent(self) -> None:
+    """ Center the window on the parent window. """
     self.update_idletasks()
     
     px = self.master.winfo_rootx()
@@ -55,10 +56,12 @@ class BoardResetSelectorTopLevel(ctk.CTkToplevel):
     
     self.geometry(f"+{x}+{y}")
     
-  def reset_board(self, camera_id):
+  def reset_board(self, camera_id:int) -> None:
+    """ Reset the board with the given camera ID. """
     print(f"Resetting {camera_id}")
     
-  def on_close(self):
+  def on_close(self) -> None:
+    """ Handle the window close event. """
     self.destroy()
     if self.on_close_callback:
       self.on_close_callback()
