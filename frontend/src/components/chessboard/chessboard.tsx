@@ -8,9 +8,9 @@ import { useWebSocket } from "../../hooks/useWebSocket";
 /**
  * Chessboard Component
  *
- * This component renders a visual chessboard, maintains game state using `chess.ts`,
- * listens to real-time move updates over WebSocket, and exposes its current move list
- * to parent components via a forwarded ref.
+ * This component renders a full chessboard UI and manages game state using `chess.ts`.
+ * It receives move updates via WebSocket, updates board position accordingly,
+ * highlights the most recent move, and exposes its move list to parent components via ref.
  */
 
 // Represents a single piece's position and image
@@ -77,6 +77,7 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
   const [pieces, setPieces] = useState<Piece[]>([]); // Current piece layout
   const chess = new Chess(); // Chess game instance
   const [moveList, setMoveList] = useState<string[]>([]); // Local move history
+  const [lastMoveSquares, setLastMoveSquares] = useState<string[]>([]);  // Last move data
   const moves = useWebSocket(`ws://localhost:8000/moves/${id}`); // WebSocket listener for this board
 
   /**
@@ -101,6 +102,18 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
       if (move) {
         setPieces(generatePositionFromFen(chess.fen()));
         setMoveList((prev) => [...prev, move.san]);
+
+        let highlights: string[] = [];
+
+        if (move.san === "O-O") {
+          highlights = [move.from, move.color === "w" ? "h1" : "h8"];
+        } else if (move.san === "O-O-O") {
+          highlights = [move.from, move.color === "w" ? "a1" : "a8"];
+        } else {
+          highlights = [move.from, move.to];
+        }
+
+        setLastMoveSquares(highlights);
       } else {
         console.warn("Illegal move:", notation);
       }
@@ -108,8 +121,9 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
   }, []);
 
   /**
-   * Listens for new moves from the WebSocket and applies them sequentially.
-   * Filters out illegal moves and syncs the internal state (move list and pieces).
+   * Apply all moves received from the WebSocket.
+   * Valid moves are added to the move list and used to update the board.
+   * The most recent move's squares are tracked for highlighting.
    */
   useEffect(() => {
     if (!moves || moves.length === 0) return;
@@ -130,6 +144,21 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
     setMoveList(validSanMoves);
 
     if (validSanMoves.length > 0) {
+      const history = chess.history({ verbose: true });
+      const move = history[history.length - 1];
+      if (move) {
+        let highlights: string[] = [];
+
+        if (move.san === "O-O") {
+          highlights = [move.from, move.color === "w" ? "h1" : "h8"];
+        } else if (move.san === "O-O-O") {
+          highlights = [move.from, move.color === "w" ? "a1" : "a8"];
+        } else {
+          highlights = [move.from, move.to];
+        }
+
+        setLastMoveSquares(highlights);
+      }
       setPieces(generatePositionFromFen(chess.fen()));
     }
   }, [moves]);
@@ -154,7 +183,17 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
         }
       });
 
-      board.push(<Tile key={`${j},${i}`} image={image} number={number} />);
+      const square = `${horizontalAxis[i]}${verticalAxis[j]}`;
+      const isHighlighted = lastMoveSquares.includes(square);
+
+      board.push(
+        <Tile
+          key={`${j},${i}`}
+          image={image}
+          number={number}
+          highlight={isHighlighted}
+        />
+      );
     }
   }
 
