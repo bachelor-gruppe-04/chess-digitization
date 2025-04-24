@@ -1,87 +1,70 @@
-import cv2
-import onnxruntime as ort
-import asyncio
+import time, cv2, onnxruntime as ort
 from typing import Optional
-
 from logic.machine_learning.game.game_store import GameStore
 from logic.machine_learning.detection.run_detections import get_board_corners
 from logic.machine_learning.board_state.map_pieces import get_payload
 from logic.machine_learning.utilities.move import get_moves_pairs
+import asyncio
+
+# ──────────────────────────────────────────────────────────────
+# tiny helper
+def t(label: str, _last=[time.time()]):
+    now = time.time()
+    print(f"{label:<35} {(now - _last[0]) * 1000:7.1f} ms")
+    _last[0] = now
+# ──────────────────────────────────────────────────────────────
+
 
 async def process_video(
-    video_path,
     piece_model_session: ort.InferenceSession,
     corner_ort_session: ort.InferenceSession,
-    output_path: str,
     game_store: GameStore,
     game_id: str
 ) -> None:
-    """
-    Process a video file to detect a chessboard and map piece positions frame by frame.
 
-    Args:
-        video_path (str): Path to the input video.
-        piece_model_session (ort.InferenceSession): ONNX runtime session for detecting chess pieces.
-        corner_ort_session (ort.InferenceSession): ONNX runtime session for detecting board corners.
-        output_path (str): Path to save the output video.
-        game_store (GameStore): GameStore instance managing the state of ongoing games.
-        game_id (str): Unique identifier for the game session.
-    """
-    cap: cv2.VideoCapture = cv2.VideoCapture(0)
-    from logic.api.services.board_service import send_move
+    t("Opening VideoCapture(0)")
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)      # try CAP_DSHOW vs CAP_MSMF
     if not cap.isOpened():
-        print("Error: Cannot open video source.")
+        print("Error: Cannot open camera.")
         return
-    
-    # # Show camera feed immediately (for debugging purposes)
-    # while True:
-    #     ret: bool
-    #     video_frame: Optional[cv2.typing.MatLike]
-    #     ret, video_frame = cap.read()
-        
-    #     if not ret or video_frame is None:
-    #         print("Failed to capture frame.")
-    #         break
+    t("cap.isOpened()")                           # << measure
 
-    #     # Display the video frame as soon as it's captured
-    #     cv2.imshow("Camera Feed", video_frame)
+    t("First cap.read()")
+    ok, frame = cap.read()
+    t("First frame grabbed")
+    if not ok:
+        print("Could not read first frame."); return
 
-    #     # Wait for 1 ms before moving to the next frame
-    #     key = cv2.waitKey(1) & 0xFF
-    #     if key == ord('q'):  # Press 'q' to exit the camera feed
-    #         break
-    
-    frame_counter: int = 0
+    frame_counter = 0
     board_corners_ref: Optional[list] = None
+    from logic.api.services.board_service import send_move
 
-    while cap.isOpened():
-        ret: bool
-        video_frame: Optional[cv2.typing.MatLike]
-        ret, video_frame = cap.read()
-        
-        if not ret or video_frame is None:
+    while True:
+        ok, frame = cap.read()
+        if not ok:
             break
 
-        if frame_counter % 5 == 0:
+        if frame_counter % 1 == 0:
             if board_corners_ref is None:
-                # Detect corners on the first frame
-                board_corners_ref = await get_board_corners(video_frame, piece_model_session, corner_ort_session)
+                board_corners_ref = await get_board_corners(
+                    frame, piece_model_session, corner_ort_session
+                )
+                t("get_board_corners")            # << measure
                 if board_corners_ref is None:
-                    print("Failed to detect corners.")
-                    break
+                    print("Corners not found."); break
 
             game = game_store.get_game(game_id)
             if game:
                 moves_pairs = get_moves_pairs(game.board)
-                video_frame, payload = await get_payload(piece_model_session, video_frame, board_corners_ref, game, moves_pairs)
-                if payload is not None:
-                    print("Payload:", payload[1]["sans"])
-                    
+                frame, payload = await get_payload(
+                    piece_model_session, frame, board_corners_ref, game, moves_pairs
+                )
+                t("get_payload")                  # << measure
+                if payload:
+                    print("Payload:", payload)
                     await send_move(1, payload[1]["sans"])
-                    
 
-            resized_frame = cv2.resize(video_frame, (1280, 720))
-            cv2.imshow("Chess Board Detection", resized_frame)
+            cv2.imshow("Chess Board Detection", cv2.resize(frame, (1280, 720)))
             cv2.waitKey(1)
 
         frame_counter += 1
@@ -90,26 +73,16 @@ async def process_video(
     cv2.destroyAllWindows()
 
 
-async def prepare_to_run_video(video) -> None:
-    """
-    Main entry point for running the chessboard processing pipeline.
-    Loads models, initializes game session, and starts video processing.
-    """
-    video_path = video
-    output_path: str = 'resources/videoes/output_video_combined.avi'
+async def prepare_to_run_video(video=None):
+    t("Loading piece model")
+    piece_session  = ort.InferenceSession("resources/models/480M_leyolo_pieces.onnx")
+    t("Loading corner model")
+    corner_session = ort.InferenceSession("resources/models/480L_leyolo_xcorners.onnx")
 
-    piece_model_path: str = "resources/models/480M_leyolo_pieces.onnx"
-    corner_model_path: str = "resources/models/480L_leyolo_xcorners.onnx"
-
-    piece_ort_session: ort.InferenceSession = ort.InferenceSession(piece_model_path)
-    corner_ort_session: ort.InferenceSession = ort.InferenceSession(corner_model_path)
-
-    game_store: GameStore = GameStore()
-    game_id: str = "game_1"
-    game_store.add_game(game_id)
-
-    await process_video(video_path, piece_ort_session, corner_ort_session, output_path, game_store, game_id)
+    game_store = GameStore(); game_id = "game_1"; game_store.add_game(game_id)
+    await process_video(piece_session, corner_session, game_store, game_id)
 
 
-# if __name__ == "__main__":
-#     asyncio.run(main())
+# quick manual test
+if __name__ == "__main__":
+    asyncio.run(prepare_to_run_video())
