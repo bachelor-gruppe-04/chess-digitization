@@ -32,6 +32,7 @@ async def get_board_corners(video_ref: np.ndarray, pieces_model_ref: ort.Inferen
     white_pieces: List[List[int]] = [x for x in pieces if x[2] > 5]
 
     if len(black_pieces) == 0 or len(white_pieces) == 0:
+        print("Blakc or white pieces not detected")
         return None
 
     # Extracts the top 49 predicted x_corners for the chess board (inner 7x7 grid)

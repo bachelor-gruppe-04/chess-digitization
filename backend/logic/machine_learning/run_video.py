@@ -27,17 +27,11 @@ async def process_video(
         game_store (GameStore): GameStore instance managing the state of ongoing games.
         game_id (str): Unique identifier for the game session.
     """
-    cap: cv2.VideoCapture = cv2.VideoCapture(0, cv2.CAP_MSMF)
+    cap: cv2.VideoCapture = cv2.VideoCapture(1)
     from logic.api.services.board_service import send_move
     if not cap.isOpened():
         print("Error: Cannot open video source.")
         return
-
-    # frame_width: int = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    # frame_height: int = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    # fps: float = cap.get(cv2.CAP_PROP_FPS)
-    # fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    # out: cv2.VideoWriter = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
     
     frame_counter: int = 0
     board_corners_ref: Optional[list] = None
@@ -86,7 +80,7 @@ async def prepare_to_run_video(video) -> None:
     video_path = video
     output_path: str = 'resources/videoes/output_video_combined.avi'
 
-    piece_model_path: str = "resources/models/480M_leyolo_pieces_simplified.onnx"
+    piece_model_path: str = "resources/models/480M_leyolo_pieces.onnx"
     corner_model_path: str = "resources/models/480L_leyolo_xcorners.onnx"
 
     piece_ort_session: ort.InferenceSession = ort.InferenceSession(piece_model_path)
