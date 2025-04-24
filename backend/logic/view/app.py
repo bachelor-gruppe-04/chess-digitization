@@ -19,7 +19,6 @@ class App(ctk.CTk):
     container.pack(expand=True)
     
     ctk.CTkLabel(container, text="Control Panel", font=("Segoe UI", 28, "bold")).pack(pady=(10, 10))
-    
     vcmd = self.register(self.validate_entry)
     
     self.number_of_cameras_entry = ctk.CTkEntry(
