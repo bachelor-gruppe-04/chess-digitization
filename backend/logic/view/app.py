@@ -78,10 +78,12 @@ class App(ctk.CTk):
     
     self.bind('<Return>', lambda: self.apply_number_of_cameras())
     
-  def validate_entry(self, value):
+  def validate_entry(self, value:any) -> bool:
+    """ Validate the entry to only allow digits and empty string. """
     return value.isdigit() or value == ""
   
-  def apply_number_of_cameras(self):
+  def apply_number_of_cameras(self) -> None:
+    """ Apply the number of cameras and start the connection test. """
     number = self.number_of_cameras_entry.get().strip()
     
     if number.isdigit() and int(number) > 0:
@@ -93,27 +95,31 @@ class App(ctk.CTk):
       print("Invalid number of cameras. Please enter a positive integer.")
       self.number_of_cameras = 0
       
-  def start_tournament(self):
+  def start_tournament(self) -> None:
+    """ Start the tournament if cameras are connected. """
     if self.number_of_cameras > 0:
       print("Starting tournament...")
     else:
       print("Please apply a valid number of cameras first.")
       
-  def disable_main_buttons(self):
+  def disable_main_buttons(self) -> None:
+    """ Disable main buttons during connection test. """
     self.apply_button.configure(state="disabled")
     self.start_button.configure(state="disabled")
     self.reset_select_button.configure(state="disabled")
     self.reset_button.configure(state="disabled")
     self.number_of_cameras_entry.configure(state="disabled")
     
-  def enable_main_buttons(self):
+  def enable_main_buttons(self) -> None:
+    """ Enable main buttons after connection test. """
     self.apply_button.configure(state="normal")
     self.start_button.configure(state="normal")
     self.reset_select_button.configure(state="normal")
     self.reset_button.configure(state="normal")
     self.number_of_cameras_entry.configure(state="normal")
     
-  def on_connection_finished(self, was_cancelled=False):
+  def on_connection_finished(self, was_cancelled:bool=False) -> None:
+    """ Callback when the connection test is finished. """
     if was_cancelled:
       print("Camera test cancelled.")
     else:
@@ -121,7 +127,8 @@ class App(ctk.CTk):
       
     self.enable_main_buttons()
     
-  def open_board_reset_window(self):
+  def open_board_reset_window(self) -> None:
+    """ Open the board reset selector window. """
     if self.number_of_cameras > 0:
       self.disable_main_buttons()
       BoardResetSelectorTopLevel(self, self.number_of_cameras, self.enable_main_buttons)
