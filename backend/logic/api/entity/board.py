@@ -12,12 +12,24 @@ class Board:
     Args:
       id (int): Board ID
     """
-    self.id = id
+    self.set_id(id)
     self.camera = Camera(id)
     self.move_history: List[str] = []
     self.clients: List[WebSocket] = []
     self.chess_board = chess.Board()
     self.invalid_latched = False
+    
+  def set_id(self, id: int) -> None:
+    """ Set the board ID.
+    
+    Args:
+      id (int): Board ID
+    Raises:
+      TypeError: If id is not an integer.
+    """
+    if not isinstance(id, int):
+      raise TypeError("ID must be an integer.")
+    self.id = id
       
   def validate_move(self, move) -> (tuple[Literal['INVALID'], Literal[False]] | tuple[str, Literal[True]]):
     """ Check if a chess move is valid. 
@@ -44,9 +56,12 @@ class Board:
     """ Reset the chess board and move history.
     
     Returns:
-      str: "RESET" if the board was reset successfully.
+      str: "RESET" if the board was reset successfully, "RESET_FAILED" if the reset failed.
     """
-    self.chess_board.reset()
-    self.move_history = []
-    self.invalid_latched = False
+    try:
+      self.chess_board.reset()
+      self.move_history = []
+      self.invalid_latched = False
+    except Exception:
+      return "RESET_FAILED"
     return "RESET"
