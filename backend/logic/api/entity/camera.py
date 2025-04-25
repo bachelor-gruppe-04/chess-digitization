@@ -14,7 +14,7 @@ class Camera:
     """
     self.cam_id = cam_id
     self.camera = cv2.VideoCapture(self.cam_id, cv2.CAP_DSHOW)
-    self.detector = Detector(self.camera)
+    self.detector = Detector(cam_id, self.camera)
     
   def generate_frames(self) -> Generator[bytes, None, None]:
     """ Generate frames from the laptop webcam.

@@ -19,11 +19,13 @@ async def process_video(
     piece_model_session: ort.InferenceSession,
     corner_ort_session: ort.InferenceSession,
     game_store: GameStore,
-    game_id: str
+    game_id: str,
+    video: cv2.VideoCapture,
+    board_id: int,
 ) -> None:
 
     t("Opening VideoCapture(0)")
-    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)      # try CAP_DSHOW vs CAP_MSMF
+    cap = video#cv2.VideoCapture(0, cv2.CAP_DSHOW)      # try CAP_DSHOW vs CAP_MSMF
     if not cap.isOpened():
         print("Error: Cannot open camera.")
         return
@@ -62,7 +64,7 @@ async def process_video(
                 t("get_payload")                  # << measure
                 if payload:
                     print("Payload:", payload)
-                    await send_move(1, payload[1]["sans"])
+                    await send_move(board_id, payload[1]["sans"])
 
             cv2.imshow("Chess Board Detection", cv2.resize(frame, (1280, 720)))
             cv2.waitKey(1)
@@ -73,16 +75,16 @@ async def process_video(
     cv2.destroyAllWindows()
 
 
-async def prepare_to_run_video(video=None):
+async def prepare_to_run_video(board_id: int, video=None):
     t("Loading piece model")
     piece_session  = ort.InferenceSession("resources/models/480M_leyolo_pieces.onnx")
     t("Loading corner model")
     corner_session = ort.InferenceSession("resources/models/480L_leyolo_xcorners.onnx")
 
     game_store = GameStore(); game_id = "game_1"; game_store.add_game(game_id)
-    await process_video(piece_session, corner_session, game_store, game_id)
+    await process_video(piece_session, corner_session, game_store, game_id, video, board_id)
 
 
 # quick manual test
-if __name__ == "__main__":
-    asyncio.run(prepare_to_run_video())
+# if __name__ == "__main__":
+#     asyncio.run(prepare_to_run_video())
