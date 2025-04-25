@@ -12,23 +12,10 @@ class Camera:
     Args:
       cam_id (int): Camera ID
     """
-    self.set_cam_id(cam_id)
-    self.camera = cv2.VideoCapture(self.cam_id)
+    self.cam_id = cam_id
+    self.camera = cv2.VideoCapture(self.cam_id, cv2.CAP_DSHOW)
     self.detector = Detector(self.camera)
     
-  def set_cam_id(self, cam_id: int) -> None:
-    """ Set the camera ID.
-    
-    Args: 
-      cam_id (int): Camera ID
-    Raises:
-      TypeError: If cam_id is not an integer.
-    """
-    if not isinstance(cam_id, int):
-      raise TypeError("Camera ID must be an integer.")
-    self.cam_id = cam_id
-    
-      
   def generate_frames(self) -> Generator[bytes, None, None]:
     """ Generate frames from the laptop webcam.
   
