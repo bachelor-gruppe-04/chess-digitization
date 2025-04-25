@@ -12,4 +12,3 @@ async def reset_board(board_id: int):
 async def reset_all():
   await reset_all_games()
   return {"status": "all boards reset"}
-#
