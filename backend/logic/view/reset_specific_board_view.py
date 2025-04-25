@@ -13,7 +13,7 @@ class BoardResetSelectorTopLevel(ctk.CTkToplevel):
     
     self.total = total_cameras
     self.on_close_callback = on_close_callback
-    self.function =func
+    self.function = func
 
     self.center_on_parent()
     ctk.CTkLabel(self, text="Select Board to Reset", font=("Segoe UI", 20, "bold")).pack(pady=(10, 20))
