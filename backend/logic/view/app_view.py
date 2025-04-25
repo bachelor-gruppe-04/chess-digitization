@@ -1,4 +1,6 @@
 import customtkinter as ctk
+import asyncio
+import logic.view.state as state
 from logic.view.progress_bar_view import ProgressBarTopLevel
 from logic.view.reset_specific_board_view import BoardResetSelectorTopLevel
 
@@ -6,13 +8,14 @@ ctk.set_appearance_mode("system")
 ctk.set_default_color_theme("blue")
 
 class App(ctk.CTk):
-  def __init__(self, reset_game_func:any=None):
+  def __init__(self, reset_game_func:any=None, reset_all_games_func:any=None):
     super().__init__()
     self.title("Control Panel")
     self.geometry("800x500")
     self.minsize(600, 400)
     
     self.reset_game_command = reset_game_func
+    self.reset_all_games_command = reset_all_games_func
     
     self.number_of_cameras = 0
     self.progress_window = None
@@ -63,7 +66,7 @@ class App(ctk.CTk):
       width=200,
       height=45,
       font=("Segoe UI", 14),
-      command=lambda: print("Resetting all boards...")
+      command=lambda: self.reset_all_boards()
     )
     self.reset_button.pack(side="left")
     
@@ -79,11 +82,17 @@ class App(ctk.CTk):
     
     self.bind('<Return>', lambda e: self.apply_number_of_cameras())
     
-  def __new__(cls):
-    """ Ensure only one instance of the app is created. """
-    if not hasattr(cls, 'instance'):
-      cls.instance = super(App, cls).__new__(cls)
-    return cls.instance
+  def reset_all_boards(self) -> None:
+    asyncio.run_coroutine_threadsafe(self._async_reset_all_boards(), state.event_loop)
+    
+  async def _async_reset_all_boards(self) -> None:
+    try:
+      await self.reset_all_games_command()
+      print("Resetting all boards...")
+    except Exception as e:
+      import traceback
+      print(f"Error resetting all boards: {e}")
+      traceback.print_exc()
     
   def validate_entry(self, value:any) -> bool:
     """ Validate the entry to only allow digits and empty string. """
