@@ -15,12 +15,12 @@ app.include_router(websocket_routes.router)
 app.include_router(admin_routes.router)
 
 def start_gui():
-  window = App(reset_game_func=reset_game)
+  window = App(reset_game_func=reset_game, reset_all_games_func=reset_all_games)
   window.mainloop()
 
 @app.on_event("startup")
 async def main():
-  # asyncio.create_task(simulate_multiple_fake_ml_moves())
+  asyncio.create_task(simulate_multiple_fake_ml_moves())
   # asyncio.create_task(start_detector())
   
   state.event_loop = asyncio.get_event_loop()
