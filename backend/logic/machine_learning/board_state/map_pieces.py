@@ -10,31 +10,21 @@ from logic.machine_learning.utilities.move import san_to_lan, calculate_move_sco
 from logic.machine_learning.game.game import make_update_payload
 from logic.machine_learning.view.render import draw_points, draw_polygon, draw_boxes_with_scores
 from logic.machine_learning.detection.run_detections import find_centers_and_boundary
+import time
 
-last_update_time = 0 
+last_update_time = 0
+# global state for greedy_move_to_time
+greedy_move_to_time = {}
 
 async def get_payload(piece_model_ref: ort.InferenceSession,
-    video_ref: np.ndarray,
-    corners_ref: np.ndarray,
-    game_ref: any,
-    moves_pairs_ref: list
-) -> tuple:
-    """
-    Main function to generate the payload for the game. It computes the state of the game based on the current video frame,
-    updates the state of the board, processes possible moves, and prepares the payload for dispatch.
+                      video_ref: np.ndarray,
+                      corners_ref: np.ndarray,
+                      game_ref: any,
+                      moves_pairs_ref: list):
+    global greedy_move_to_time  # Ensure we're using the global variable
+    global last_update_time  # Ensure we're using the global variable
 
-    Args:
-        piece_model_ref (ort.InferenceSession): The model used for piece detection.
-        video_ref (np.ndarray): The video frame from the game.
-        corners_ref (np.ndarray): Coordinates of the corners in the video frame.
-        game_ref (any): The game object, representing the current state of the game.
-        moves_pairs_ref (list): List of possible move pairs in the game.
-
-    Returns:
-        tuple: A tuple containing the updated video frame and the game payload.
-    """
-    global last_update_time
-
+    # Internal state variables
     centers = None
     boundary = None
     centers_3d = None
@@ -43,69 +33,79 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
     payload = None
     keypoints = None
     possible_moves = set()
-    greedy_move_to_time = {}
 
     if centers is None:
         keypoints = extract_xy_from_labeled_corners(corners_ref, video_ref)
         centers, boundary, centers_3d, boundary_3d = find_centers_and_boundary(corners_ref, video_ref)
         state = np.zeros((64, 12))
         possible_moves = set()
-        greedy_move_to_time = {}
 
     start_time = time.time()
-    
     boxes, scores = await detect(piece_model_ref, video_ref, keypoints)
-    
-    del piece_model_ref
-
+    del piece_model_ref  # Free memory
 
     squares = get_squares(boxes, centers_3d, boundary_3d)
-
-    current_time = time.time()
-    if current_time - last_update_time >= 1.0:
+    
+    update = np.zeros((64, 12))  # Default update
+    if time.time() - last_update_time >= 2.0:
         update = get_update(scores, squares)
-        last_update_time = current_time
-    else:
-        update = np.zeros((64, 12))  # No update this frame
+        last_update_time = time.time()
 
+    # Update state
     state = update_state(state, update)
+
+    # Get best moves
     best_score1, best_score2, best_joint_score, best_move, best_moves = process_state(
         state, moves_pairs_ref, possible_moves
     )
 
     end_time = time.time()
-    print("FPS:", round(1 / (end_time - start_time), 1))
+    fps = round(1 / (end_time - start_time), 1)
 
     has_move = False
     if best_moves is not None:
         move_str = best_moves["sans"][0]
-        has_move = best_score2 > 0 and best_joint_score > 0 and move_str in possible_moves
+        has_move = (best_score2 > 0 and best_joint_score > 0 and move_str in possible_moves)
         if has_move:
             game_ref.board.push_san(move_str)
+            game_ref.last_move = game_ref.board.peek().uci()
             possible_moves.clear()
-            greedy_move_to_time = {}
+            greedy_move_to_time = {}  # Reset for greedy moves
 
     has_greedy_move = False
     if best_move is not None and not has_move and best_score1 > 0:
         move_str = best_move["sans"][0]
+
         if move_str not in greedy_move_to_time:
             greedy_move_to_time[move_str] = end_time
 
-        elapsed = (end_time - greedy_move_to_time[move_str]) > 1
+        elapsed = (end_time - greedy_move_to_time[move_str]) > 1.0
         is_new = san_to_lan(game_ref.board, move_str) != game_ref.last_move
+        
+        print("elapsed", elapsed, "is_new", is_new, "greedy_move_to_time", greedy_move_to_time[move_str])
+        print("end_time", end_time, "greedy_move_to_time", greedy_move_to_time[move_str])
+
         has_greedy_move = elapsed and is_new
+        print("hasGreedyMove", has_greedy_move, elapsed, is_new)
+
         if has_greedy_move:
-            game_ref["board"].move(move_str)
-            greedy_move_to_time = {move_str: greedy_move_to_time[move_str]}
+            game_ref.board.push_san(move_str)
+            game_ref.last_move = game_ref.board.peek().uci()
+            greedy_move_to_time = {move_str: greedy_move_to_time[move_str]}  # Preserve last move time
 
     if has_move or has_greedy_move:
-        payload = make_update_payload(game_ref.board, greedy=False), best_move
-        
+        greedy = has_greedy_move
+        payload = make_update_payload(game_ref.board, greedy), best_move
+
     draw_points(video_ref, centers)
     draw_polygon(video_ref, boundary)
-    # draw_boxes_with_scores(video_ref, boxes, scores, threshold=0.5)
     
+    print(payload)
+    print("sending payload")
+
     return video_ref, payload
+
+
 
 
 def process_state(state: np.ndarray, moves_pairs: list, possible_moves: set) -> tuple:
@@ -128,26 +128,35 @@ def process_state(state: np.ndarray, moves_pairs: list, possible_moves: set) -> 
     seen = set()
     
     for move_pair in moves_pairs:
-        if move_pair['move1']['sans'][0] not in seen:
-            seen.add(move_pair['move1']['sans'][0])
+        move1_san = move_pair['move1']['sans'][0]
+
+        if move1_san not in seen:
+            seen.add(move1_san)
             score = calculate_move_score(state, move_pair['move1'])
-            
+
             if score > 0:
-                possible_moves.add(move_pair['move1']['sans'][0])
+                possible_moves.add(move1_san)
 
             if score > best_score1:
                 best_move = move_pair['move1']
                 best_score1 = score
-        
-        if move_pair['move2'] is None or move_pair['moves'] is None or move_pair['move1']['sans'][0] not in possible_moves:
+                print("Best move:", move1_san, "Score:", best_score1)
+
+        # ✅ New condition added to match TS behavior
+        if (
+            move_pair['move2'] is None 
+            or move_pair['moves'] is None 
+            or move1_san not in possible_moves
+        ):
             continue
-        
+
         score2 = calculate_move_score(state, move_pair['move2'])
         if score2 < 0:
             continue
         if score2 > best_score2:
             best_score2 = score2
-        
+            print("Best move2:", move_pair['move2']['sans'][0], "Score:", best_score2)
+
         joint_score = calculate_move_score(state, move_pair['moves'])
         if joint_score > best_joint_score:
             best_joint_score = joint_score
@@ -266,3 +275,5 @@ def update_state(state: np.ndarray, update: np.ndarray, decay: float = 0.5) -> n
         for j in range(12):
             state[i][j] = decay * state[i][j] + (1 - decay) * update[i][j]
     return state
+
+
