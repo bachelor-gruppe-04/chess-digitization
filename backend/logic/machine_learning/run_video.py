@@ -44,7 +44,7 @@ async def process_video(
         if not ok:
             break
 
-        if frame_counter % 1 == 0:
+        if frame_counter % 5 == 0:
             if board_corners_ref is None:
                 board_corners_ref = await get_board_corners(
                     frame, piece_model_session, corner_ort_session
