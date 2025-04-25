@@ -2,6 +2,9 @@
 
 The Live Chess Game Digitization project provides a solution for automatically recording chess games played on a traditional board. Using computer vision and machine learning, the application captures moves via a webcam and converts them into Portable Game Notation (PGN) format. This can replace the expensive electronic chessboards while ensuring accurate move recognition and rule validation in real time.
 
+Thanks to Peter Batchelor for the models and much of the code. You can view his repo here: [ChessCam](https://github.com/Pbatch/CameraChessWeb)
+
+
 ## Backend
 
 To view how to install required requirements and how to run the backend, please read the [**Backend README.md file**](/backend/README.md "Backend README.md file").
