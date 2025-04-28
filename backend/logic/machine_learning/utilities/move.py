@@ -199,7 +199,7 @@ def calculate_move_score(state: np.ndarray, move: MoveData, from_thr: float = 0.
     """
     score = 0
     for square in move['from_']:
-        score += 1 - max(state[square]) - from_thr
+        score += 1 - max(state[int(square)]) - from_thr
     
     for i in range(len(move['to'])):
         score += state[move['to'][i]][move['targets'][i]] - to_thr

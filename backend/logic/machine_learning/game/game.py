@@ -14,14 +14,6 @@ class Game:
         self.greedy: bool = greedy  # Boolean flag for greedy mode
         self.board: chess.Board = chess.Board(fen)  # Chess board initialized from FEN
 
-    def get_moves_pairs(self) -> list[str]:
-        """Returns a list of moves played."""
-        return self.moves.strip().split() if self.moves else []
-
-    def get_fen(self) -> str:
-        """Returns the current board state in FEN notation."""
-        return self.board.fen()
-
 def get_moves_from_pgn(board: chess.Board) -> str:
     """Convert board history to PGN string."""
     game = chess.pgn.Game.from_board(board)

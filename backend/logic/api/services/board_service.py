@@ -4,12 +4,15 @@ from logic.api.config import BOARD_COUNT
 
 boards = {i: Board(i) for i in range(1, (BOARD_COUNT + 1))}
 
-async def start_detector() -> None:
+async def start_detectors() -> None:
   for board_id in boards:
-    print(f"Starting detector for board {board_id}")
-    print(boards[board_id])
-    print(boards[board_id].camera.detector)
-    asyncio.create_task(boards[board_id].camera.detector.run())
+    # print(f"Starting detector for board {board_id}")
+    # print(boards[board_id])
+    # print(boards[board_id].camera.detector)
+    await start_detector(board_id)
+    
+async def start_detector(id:int) -> None:
+  asyncio.create_task(boards[id].camera.detector.run())
     
 
 async def send_move(board_id: int, move: str):

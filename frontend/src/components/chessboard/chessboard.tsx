@@ -126,9 +126,15 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
    * The most recent move's squares are tracked for highlighting.
    */
   useEffect(() => {
-    if (!moves || moves.length === 0) return;
-
     chess.reset();
+
+    if (!moves || moves.length === 0){
+      setMoveList([]);
+      setLastMoveSquares([]);
+      setPieces(generatePositionFromFen(chess.fen()));
+      return;
+    };
+
     const validSanMoves: string[] = [];
   
     // Attempt to apply each move to the chess instance
