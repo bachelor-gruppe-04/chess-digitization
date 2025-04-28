@@ -1,5 +1,8 @@
 import customtkinter as ctk
 import asyncio
+from logic.api.services import board_storage
+from logic.api.services.board_service import BoardService
+from logic.api.entity.board_factory import BoardFactory
 import logic.view.state as state
 from logic.view.progress_bar_view import ProgressBarTopLevel
 from logic.view.reset_specific_board_view import BoardResetSelectorTopLevel
@@ -8,16 +11,15 @@ ctk.set_appearance_mode("system")
 ctk.set_default_color_theme("blue")
 
 class App(ctk.CTk):
-  def __init__(self, reset_game_func:any=None, reset_all_games_func:any=None):
+  def __init__(self):
     super().__init__()
     self.title("Control Panel")
     self.geometry("800x500")
     self.minsize(600, 400)
     
-    self.reset_game_command = reset_game_func
-    self.reset_all_games_command = reset_all_games_func
-    
     self.number_of_cameras = 0
+    self.boards = None
+    self.board_service = None
     self.progress_window = None
     
     container = ctk.CTkFrame(self, fg_color="transparent")
@@ -87,7 +89,7 @@ class App(ctk.CTk):
     
   async def _async_reset_all_boards(self) -> None:
     try:
-      await self.reset_all_games_command()
+      await self.board_service.reset_all_games()
       print("Resetting all boards...")
     except Exception as e:
       import traceback
@@ -104,6 +106,13 @@ class App(ctk.CTk):
     
     if number.isdigit() and int(number) > 0:
       self.number_of_cameras = int(number)
+      
+      board_factory = BoardFactory()
+      self.boards = board_factory.create_boards(self.number_of_cameras)
+      self.board_service = BoardService(self.boards)
+      
+      board_storage.boards = self.boards
+      
       print(f"Number of cameras set to {self.number_of_cameras}")
       self.disable_main_buttons()
       self.progress_window = ProgressBarTopLevel(self, self.number_of_cameras, self.on_connection_finished)
@@ -113,7 +122,8 @@ class App(ctk.CTk):
       
   def start_tournament(self) -> None:
     """ Start the tournament if cameras are connected. """
-    if self.number_of_cameras > 0:
+    if self.number_of_cameras > 0 and self.board_service:
+      asyncio.run_coroutine_threadsafe(self.board_service.start_detectors(), state.event_loop)
       print("Starting tournament...")
     else:
       print("Please apply a valid number of cameras first.")
@@ -135,11 +145,11 @@ class App(ctk.CTk):
     self.number_of_cameras_entry.configure(state="normal")
     
   def on_connection_finished(self, was_cancelled:bool=False) -> None:
-    """ Callback when the connection test is finished. """
+    """ Callback when the connection is finished. """
     if was_cancelled:
-      print("Camera test cancelled.")
+      print("Camera connection cancelled.")
     else:
-      print("Camera test completed.")
+      print("Camera connection completed.")
       
     self.enable_main_buttons()
     
@@ -147,6 +157,6 @@ class App(ctk.CTk):
     """ Open the board reset selector window. """
     if self.number_of_cameras > 0:
       self.disable_main_buttons()
-      BoardResetSelectorTopLevel(self, self.number_of_cameras, self.enable_main_buttons, func=self.reset_game_command )
+      BoardResetSelectorTopLevel(self, self.number_of_cameras, self.enable_main_buttons, func=self.board_service.reset_game )
     else:
       print("Please apply a valid number of cameras first.")

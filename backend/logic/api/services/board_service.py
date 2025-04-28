@@ -11,10 +11,7 @@ class BoardService:
 
   async def start_detectors(self) -> None:
     for board_id in self.boards:
-      # print(f"Starting detector for board {board_id}")
-      # print(boards[board_id])
-      # print(boards[board_id].camera.detector)
-      await self.start_detector(board_id)
+      asyncio.create_task(self.start_detector(board_id))
       
   async def start_detector(self, id:int) -> None:
     asyncio.create_task(self.boards[id].camera.detector.run())
@@ -27,7 +24,9 @@ class BoardService:
       move (str): Chess move
     """
     board = self.boards[board_id]
+    print(board)
     checked_move, valid = board.validate_move(move)
+    print(checked_move, valid)
     if valid:
       for client in board.clients:
         await client.send_text(checked_move)
