@@ -64,7 +64,7 @@ async def process_video(
                 t("get_payload")                  # << measure
                 if payload:
                     print("Payload:", payload)
-                    await send_move(board_id, payload[1]["sans"])
+                    await send_move(board_id, payload[1]["sans"][0])
 
             cv2.imshow("Chess Board Detection", cv2.resize(frame, (1280, 720)))
             cv2.waitKey(1)
