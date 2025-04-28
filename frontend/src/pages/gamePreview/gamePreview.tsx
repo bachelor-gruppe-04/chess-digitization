@@ -1,22 +1,48 @@
+import './gamePreview.css';
+
+import { NavLink } from "react-router-dom";
+import Chessboard from '../../components/chessboard/chessboard';
+import { boards } from '../../data/boards';
+
 /**
  * GamePreview Component
- * 
- * This component serves as a navigation hub for multiple chess boards in a tournament.
- * It renders links to individual board views using React Router's `NavLink` component.
- * 
- * Each link directs the user to a unique board route (e.g., `/board/1`, `/board/2`).
- * This is a scalable layout for managing and switching between boards in a tournament.
+ *
+ * Provides a visual overview of all games in progress during a tournament.
+ * Each board is displayed as a card with:
+ * - Board (table) number
+ * - White and black players with their ratings
+ * - A live mini-chessboard preview
+ *
+ * Clicking on a card navigates the user to the full board view using React Router's `NavLink`.
+ * The layout is grid-based and responsive for scalability.
  */
 
 function GamePreview() {
   return (
-    <div className='game-view'>
+    <div className="game-preview">
       <div className="heading">
         Game<span> Preview</span>
       </div>
-      
+      <div className="boards-grid">
+        {boards.map((board) => (
+          <NavLink key={board.id} to={`/board/${board.id}`} className="board-card">
+            <div className="table-label">Table {board.id}</div>
+            <div className="player-info">
+              <span>{board.whitePlayer} | {board.whiteRating}</span>
+            </div>
+            <div className="board-preview">
+              <div className="chessboard-preview-wrapper">
+                <Chessboard id={board.id} />
+              </div>
+            </div>
+            <div className="player-info">
+              <span>{board.blackPlayer} | {board.blackRating}</span>
+            </div>
+          </NavLink>
+        ))}
+      </div>
     </div>
   );
 }
-
+  
 export default GamePreview;
