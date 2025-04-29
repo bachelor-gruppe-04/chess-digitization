@@ -11,7 +11,7 @@ ctk.set_appearance_mode("system")
 ctk.set_default_color_theme("blue")
 
 class App(ctk.CTk):
-  def __init__(self):
+  def __init__(self, reset_board_function=None, reset_all_boards_function=None):
     super().__init__()
     self.title("Control Panel")
     self.geometry("800x500")
@@ -21,6 +21,9 @@ class App(ctk.CTk):
     self.boards = None
     self.board_service = None
     self.progress_window = None
+    
+    self.reset_board_command = reset_board_function
+    self.reset_all_boards_command = reset_all_boards_function
     
     container = ctk.CTkFrame(self, fg_color="transparent")
     container.pack(expand=True)
@@ -89,7 +92,7 @@ class App(ctk.CTk):
     
   async def _async_reset_all_boards(self) -> None:
     try:
-      await self.board_service.reset_all_games()
+      await self.reset_all_boards_command()
       print("Resetting all boards...")
     except Exception as e:
       import traceback
@@ -109,7 +112,7 @@ class App(ctk.CTk):
       
       board_factory = BoardFactory()
       self.boards = board_factory.create_boards(self.number_of_cameras)
-      self.board_service = BoardService(self.boards)
+      self.board_service = BoardService()
       
       board_storage.boards = self.boards
       
@@ -157,6 +160,6 @@ class App(ctk.CTk):
     """ Open the board reset selector window. """
     if self.number_of_cameras > 0:
       self.disable_main_buttons()
-      BoardResetSelectorTopLevel(self, self.number_of_cameras, self.enable_main_buttons, func=self.board_service.reset_game )
+      BoardResetSelectorTopLevel(self, self.number_of_cameras, self.enable_main_buttons, func=self.reset_board_command)
     else:
       print("Please apply a valid number of cameras first.")
