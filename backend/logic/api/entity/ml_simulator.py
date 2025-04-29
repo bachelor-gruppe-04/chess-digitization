@@ -1,11 +1,11 @@
 import asyncio
 # from logic.api.services.board_service import send_move, reset_all_games
 
-from logic.api.entity.board import Board
+# from logic.api.entity.board import Board
 from logic.api.services.board_service import BoardService
-from logic.api.services.board_storage import boards
+# from logic.api.services.board_storage import boards
 
-board_service = BoardService(boards)
+board_service = BoardService()
 
 async def fake_ml_moves() -> None:
   """ Simulate a chess game using hardcoded moves. """
