@@ -1,15 +1,21 @@
 import './tournamentview.css';
 
 import TableRow from '../../components/tableRow/tableRow';
+import { boards } from '../../data/boards';
 
 /**
  * TournamentView Component
- * 
- * This component serves as a navigation hub for multiple chess boards in a tournament.
- * It renders links to individual board views using React Router's `NavLink` component.
- * 
- * Each link directs the user to a unique board route (e.g., `/board/1`, `/board/2`).
- * This is a scalable layout for managing and switching between boards in a tournament.
+ *
+ * This component serves as the main hub for navigating between multiple live chess boards
+ * during a tournament. It displays a table listing all active games.
+ *
+ * Each row shows:
+ * - Board number
+ * - White player (name and rating)
+ * - Black player (name and rating)
+ * - A link to the live game view
+ *
+ * Data is dynamically loaded from the `boards` array for scalability.
  */
 
 function TournamentView() {
@@ -29,14 +35,14 @@ function TournamentView() {
           </tr>
         </thead>
         <tbody>
-          <TableRow boardNumber={1} whitePlayer="Player A" blackPlayer="Player B" />
-          <TableRow boardNumber={2} whitePlayer="Player C" blackPlayer="Player D" />
-          <TableRow boardNumber={3} whitePlayer="Player E" blackPlayer="Player F" />
-          <TableRow boardNumber={4} whitePlayer="Player G" blackPlayer="Player H" />
-          <TableRow boardNumber={5} whitePlayer="Player I" blackPlayer="Player J" />
-          <TableRow boardNumber={6} whitePlayer="Player K" blackPlayer="Player L" />
-          <TableRow boardNumber={7} whitePlayer="Player M" blackPlayer="Player N" />
-          <TableRow boardNumber={8} whitePlayer="Player O" blackPlayer="Player P" />
+          {boards.map((board) => (
+            <TableRow 
+              key={board.id} 
+              boardNumber={board.id} 
+              whitePlayer={`${board.whitePlayer} (${board.whiteRating})`} 
+              blackPlayer={`${board.blackPlayer} (${board.blackRating})`} 
+            />
+          ))}
         </tbody>
       </table>
     </div>
