@@ -9,8 +9,6 @@
  * - `blackPlayer`: Name of the player playing black
  * - `blackRating`: Black player's ELO rating
  *
- * This data structure is used to dynamically render the tournament table
- * and link each board to its live view.
  */
 
 export const boards = [
