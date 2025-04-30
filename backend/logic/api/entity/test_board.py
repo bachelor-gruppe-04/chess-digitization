@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import MagicMock
-from .board import Board
+from logic.api.entity.board import Board
 
 class TestBoard(unittest.TestCase):
 
