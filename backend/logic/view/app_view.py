@@ -93,7 +93,6 @@ class App(ctk.CTk):
   async def _async_reset_all_boards(self) -> None:
     try:
       await self.reset_all_boards_command()
-      print("Resetting all boards...")
     except Exception as e:
       import traceback
       print(f"Error resetting all boards: {e}")
@@ -116,20 +115,17 @@ class App(ctk.CTk):
       
       board_storage.boards = self.boards
       
-      print(f"Number of cameras set to {self.number_of_cameras}")
       self.disable_main_buttons()
       self.progress_window = ProgressBarTopLevel(self, self.number_of_cameras, self.on_connection_finished)
     else:
-      print("Invalid number of cameras. Please enter a positive integer.")
       self.number_of_cameras = 0
       
   def start_tournament(self) -> None:
     """ Start the tournament if cameras are connected. """
     if self.number_of_cameras > 0 and self.board_service:
-      asyncio.run_coroutine_threadsafe(self.board_service.start_detectors(), state.event_loop)
-      print("Starting tournament...")
-    else:
-      print("Please apply a valid number of cameras first.")
+      self.board_service.start_detectors()
+    # else:
+    #   print("Please apply a valid number of cameras first.")
       
   def disable_main_buttons(self) -> None:
     """ Disable main buttons during connection test. """
@@ -149,10 +145,10 @@ class App(ctk.CTk):
     
   def on_connection_finished(self, was_cancelled:bool=False) -> None:
     """ Callback when the connection is finished. """
-    if was_cancelled:
-      print("Camera connection cancelled.")
-    else:
-      print("Camera connection completed.")
+    # if was_cancelled:
+    #   print("Camera connection cancelled.")
+    # else:
+    #   print("Camera connection completed.")
       
     self.enable_main_buttons()
     
@@ -161,5 +157,5 @@ class App(ctk.CTk):
     if self.number_of_cameras > 0:
       self.disable_main_buttons()
       BoardResetSelectorTopLevel(self, self.number_of_cameras, self.enable_main_buttons, func=self.reset_board_command)
-    else:
-      print("Please apply a valid number of cameras first.")
+    # else:
+    #   print("Please apply a valid number of cameras first.")
