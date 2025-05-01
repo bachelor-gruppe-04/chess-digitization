@@ -47,7 +47,7 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
     squares = get_squares(boxes, centers_3d, boundary_3d)
     
     update = np.zeros((64, 12))  # Default update
-    if time.time() - last_update_time >= 2.0:
+    if time.time() - last_update_time >= 0.5:
         update = get_update(scores, squares)
         last_update_time = time.time()
 
@@ -81,12 +81,8 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
 
         elapsed = (end_time - greedy_move_to_time[move_str]) > 1.0
         is_new = san_to_lan(game_ref.board, move_str) != game_ref.last_move
-        
-        print("elapsed", elapsed, "is_new", is_new, "greedy_move_to_time", greedy_move_to_time[move_str])
-        print("end_time", end_time, "greedy_move_to_time", greedy_move_to_time[move_str])
 
         has_greedy_move = elapsed and is_new
-        print("hasGreedyMove", has_greedy_move, elapsed, is_new)
 
         if has_greedy_move:
             game_ref.board.push_san(move_str)
@@ -97,11 +93,8 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
         greedy = has_greedy_move
         payload = make_update_payload(game_ref.board, greedy), best_move
 
-    draw_points(video_ref, centers)
-    draw_polygon(video_ref, boundary)
-    
-    print(payload)
-    print("sending payload")
+    # draw_points(video_ref, centers)
+    # draw_polygon(video_ref, boundary)
 
     return video_ref, payload
 
@@ -140,7 +133,6 @@ def process_state(state: np.ndarray, moves_pairs: list, possible_moves: set) -> 
             if score > best_score1:
                 best_move = move_pair['move1']
                 best_score1 = score
-                print("Best move:", move1_san, "Score:", best_score1)
 
         # ✅ New condition added to match TS behavior
         if (
@@ -155,7 +147,6 @@ def process_state(state: np.ndarray, moves_pairs: list, possible_moves: set) -> 
             continue
         if score2 > best_score2:
             best_score2 = score2
-            print("Best move2:", move_pair['move2']['sans'][0], "Score:", best_score2)
 
         joint_score = calculate_move_score(state, move_pair['moves'])
         if joint_score > best_joint_score:

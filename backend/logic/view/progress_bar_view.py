@@ -65,11 +65,9 @@ class ProgressBarTopLevel(ctk.CTkToplevel):
     if self.current <= self.total:
       progress = self.current / self.total
       self.progressbar.set(progress)
-      print(f"Camera {self.current}/{self.total} connected")
       self.current += 1
       self.after(300, self.update_progress)
     else:
-      print("All cameras connected successfully.")
       self.after(700, self.finish_test)
       
   def cancel_test(self) -> None:
