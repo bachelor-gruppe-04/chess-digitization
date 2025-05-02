@@ -19,7 +19,7 @@ def start_gui():
 
 @app.on_event("startup")
 async def main():
-  # asyncio.create_task(simulate_multiple_fake_ml_moves())
+  asyncio.create_task(simulate_multiple_fake_ml_moves())
   state.event_loop = asyncio.get_event_loop()
   gui_thread = threading.Thread(target=start_gui, daemon=True)
   gui_thread.start()
