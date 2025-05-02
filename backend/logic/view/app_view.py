@@ -136,8 +136,9 @@ class App(ctk.CTk):
     """ Start the tournament if cameras are connected. """
     if self.number_of_cameras > 0 and self.board_service:
       self.board_service.start_detectors()
-    # else:
-    #   print("Please apply a valid number of cameras first.")
+      print("Tournament started.")
+    else:
+      print("Please apply a valid number of cameras first.")
       
   def disable_main_buttons(self) -> None:
     """ Disable main buttons during connection test. """
