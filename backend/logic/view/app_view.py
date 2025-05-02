@@ -36,10 +36,19 @@ class App(ctk.CTk):
         width=300,
         height=40,
         font=("Segoe UI", 14),
-        fg_color=("#ffffff","#333333")
+        fg_color=("#ffffff","#333333"),
+        border_width=0
     )
     self.number_of_cameras_entry.insert(0, "Number of Cameras")
     self.number_of_cameras_entry.pack(pady=(5, 15))
+    
+    self.error_label = ctk.CTkLabel(
+      container,
+      text="",
+      text_color="red",
+      font=("Segoe UI", 12)
+    )
+    self.error_label.pack(pady=(0, 10))
 
     def on_focus_in(event):
         if event.widget.get() == "Number of Cameras":
@@ -73,6 +82,7 @@ class App(ctk.CTk):
       width=200,
       height=45,
       font=("Segoe UI", 14),
+      state="disabled",
       command=self.open_board_reset_window
     )
     self.reset_select_button.pack(side="left", padx=(0, 20))
@@ -83,6 +93,7 @@ class App(ctk.CTk):
       width=200,
       height=45,
       font=("Segoe UI", 14),
+      state="disabled",
       command=lambda: self.reset_all_boards()
     )
     self.reset_button.pack(side="left")
@@ -93,6 +104,7 @@ class App(ctk.CTk):
       width=200,
       height=45,
       font=("Segoe UI", 14),
+      state="disabled",
       command=self.start_tournament
     )
     self.start_button.pack(pady=(10, 10))
@@ -114,31 +126,44 @@ class App(ctk.CTk):
     """ Validate the entry to only allow digits and empty string. """
     return value.isdigit() or value == ""
   
+  def highlight_entry_error(self, msg: str):
+    self.number_of_cameras_entry.configure(border_color="red", border_width=2)
+    self.error_label.configure(text=msg)
+    self.after(3000, self.clear_entry_error)
+      
+  def clear_entry_error(self):
+    self.number_of_cameras_entry.configure(border_color="", border_width=0)
+    self.error_label.configure(text="")
+  
   def apply_number_of_cameras(self) -> None:
     """ Apply the number of cameras and start the connection test. """
     number = self.number_of_cameras_entry.get().strip()
     
     if number.isdigit() and int(number) > 0:
-      self.number_of_cameras = int(number)
+      self.clear_entry_error()
       
+      
+      
+      self.number_of_cameras = int(number)
       board_factory = BoardFactory()
       self.boards = board_factory.create_boards(self.number_of_cameras)
       self.board_service = BoardService()
-      
       board_storage.boards = self.boards
+      
+      self.reset_select_button.configure(state="normal")
+      self.reset_button.configure(state="normal")
+      self.start_button.configure(state="normal")
       
       self.disable_main_buttons()
       self.progress_window = ProgressBarTopLevel(self, self.number_of_cameras, self.on_connection_finished)
     else:
+      self.highlight_entry_error("Please enter a valid number of cameras.")
       self.number_of_cameras = 0
       
   def start_tournament(self) -> None:
     """ Start the tournament if cameras are connected. """
     if self.number_of_cameras > 0 and self.board_service:
       self.board_service.start_detectors()
-      print("Tournament started.")
-    else:
-      print("Please apply a valid number of cameras first.")
       
   def disable_main_buttons(self) -> None:
     """ Disable main buttons during connection test. """
