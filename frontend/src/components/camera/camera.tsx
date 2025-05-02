@@ -1,14 +1,16 @@
 import './camera.css';
 
-import { useState  } from 'react';
+import { createPortal } from 'react-dom';
+import { useEffect, useState } from 'react';
 
 /**
  * Camera Component
  *
- * Displays a live webcam feed for a given board using an image stream.
- * The video stream is served from a backend endpoint and updated automatically by the browser.
+ * Displays a live webcam feed for a given chess board using an MJPEG stream (as an <img>).
+ * Users can toggle fullscreen mode for a larger view of the board.
  *
- * The stream URL is constructed using the board ID: `http://localhost:8000/video/{id}`
+ * Uses React Portal to render fullscreen overlay at the top-level DOM node (`#fullscreen-root`)
+ * to avoid CSS stacking or layout issues.
  */
 
 /**
@@ -30,9 +32,39 @@ function Camera({ id }: CameraProps) {
     setIsFullscreen((prev) => !prev);
   };
 
+   /**
+   * When fullscreen is active, prevent body scroll to avoid background scrolling.
+   * Restore scroll on unmount or when fullscreen is disabled.
+   */
+  useEffect(() => {
+    document.body.style.overflow = isFullscreen ? 'hidden' : 'auto';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isFullscreen]);
+
+  /**
+   * Fullscreen overlay element (rendered via portal)
+   * - Click outside image closes fullscreen
+   * - Click on the image itself does NOT close (uses event.stopPropagation)
+   */
+  const fullscreenContent = (
+    <div className="fullscreen-overlay" >
+      <div className="fullscreen-content" onClick={toggleFullscreen}>
+        <div className="webcam-fullscreen-wrapper" onClick={(e) => e.stopPropagation()}>
+          <button className="close-button" onClick={toggleFullscreen}>×</button>
+          <img
+            src={`http://localhost:8000/video/${id}`}
+            alt="Webcam Fullscreen"
+            className="webcam-fullscreen"
+          />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <>
-      {/* Main webcam feed container */}
       <div className="webcam-container">
         <img
           src={`http://localhost:8000/video/${id}`}
@@ -43,22 +75,7 @@ function Camera({ id }: CameraProps) {
           ⛶
         </button>
       </div>
-
-      {/* Fullscreen overlay (only rendered when fullscreen is active) */}
-      {isFullscreen && (
-        <div className="fullscreen-overlay" onClick={toggleFullscreen}>
-          <div className="fullscreen-content" onClick={(e) => e.stopPropagation()}>
-            <button className="close-button" onClick={toggleFullscreen}>
-              ×
-            </button>
-            <img
-              src={`http://localhost:8000/video/${id}`}
-              alt="Webcam Fullscreen"
-              className="webcam-fullscreen"
-            />
-          </div>
-        </div>
-      )}
+      {isFullscreen && createPortal(fullscreenContent, document.getElementById('fullscreen-root')!)}
     </>
   );
 }

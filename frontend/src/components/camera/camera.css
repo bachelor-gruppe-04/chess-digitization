@@ -1,3 +1,4 @@
+/* Normal camera view */
 .webcam-container {
   position: relative;
   display: inline-block;
@@ -30,6 +31,13 @@
   background: rgba(0, 0, 0, 0.8);
 }
 
+/* Fullscreen camera overlay */
+.webcam-fullscreen-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
 .close-button {
   position: absolute;
   top: 10px;
@@ -44,12 +52,17 @@
   z-index: 2;
 }
 
+.close-button:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+
 .fullscreen-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   background: rgba(0, 0, 0, 0.75);
   display: flex;
   align-items: center;
@@ -59,13 +72,19 @@
 
 .fullscreen-content {
   position: relative;
-  max-width: 90%;
-  max-height: 90%;
+  width: 100vw;
+  height: 100vh;
+  padding: 4rem;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .webcam-fullscreen {
   width: 100%;
-  height: auto;
-  border-radius: 10px;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  display: block;
 }
-
