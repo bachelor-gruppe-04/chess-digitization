@@ -1,5 +1,5 @@
 from fastapi import APIRouter, WebSocket
-from logic.api.services.board_service import boards
+from logic.api.services.board_storage import boards
 
 router = APIRouter()
 
@@ -22,5 +22,6 @@ async def websocket_endpoint(websocket: WebSocket, board_id: int) -> None:
       await websocket.send_text(move)
     while True:
       await websocket.receive_text()
-  except:
-    boards[board_id].clients.remove(websocket)
+  except Exception:
+    if websocket in boards[board_id].clients:
+      boards[board_id].clients.remove(websocket)

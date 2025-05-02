@@ -11,17 +11,18 @@ import { useState } from "react";
  * - Provides navigation links to key pages
  * - Includes a hamburger menu button for toggling visibility on smaller screens
  */
+
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false); // Controls visibility of the navigation menu
 
   return (
     <header className="header">
-      <div className="header-logo">
+      <Link to="/" className="header-logo">
         Chess<span>Camera</span>
-      </div>
+      </Link>
 
       <nav className={`header-links ${menuOpen ? "open" : ""}`}>
-        <Link to="/" onClick={() => setMenuOpen(false)}>Tournament View</Link>
+        <Link to="/game-preview" onClick={() => setMenuOpen(false)}>Game Preview</Link>
         <Link to="/how-it-works" onClick={() => setMenuOpen(false)}>How it works</Link>
         <Link to="/about" onClick={() => setMenuOpen(false)}>About</Link>
       </nav>

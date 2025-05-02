@@ -68,7 +68,6 @@ class BoardResetSelectorTopLevel(ctk.CTkToplevel):
     """ Asynchronous function to reset the selected board. """
     try:
       await self.function(camera_id)
-      print(f"Resetting {camera_id}")
     except Exception as e:
       import traceback
       print(f"Error resetting {camera_id}: {e}")

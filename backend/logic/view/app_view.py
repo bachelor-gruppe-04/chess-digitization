@@ -1,5 +1,8 @@
 import customtkinter as ctk
 import asyncio
+from logic.api.services import board_storage
+from logic.api.services.board_service import BoardService
+from logic.api.entity.board_factory import BoardFactory
 import logic.view.state as state
 from logic.view.progress_bar_view import ProgressBarTopLevel
 from logic.view.reset_specific_board_view import BoardResetSelectorTopLevel
@@ -8,34 +11,47 @@ ctk.set_appearance_mode("system")
 ctk.set_default_color_theme("blue")
 
 class App(ctk.CTk):
-  def __init__(self, reset_game_func:any=None, reset_all_games_func:any=None):
+  def __init__(self, reset_board_function=None, reset_all_boards_function=None):
     super().__init__()
     self.title("Control Panel")
     self.geometry("800x500")
     self.minsize(600, 400)
     
-    self.reset_game_command = reset_game_func
-    self.reset_all_games_command = reset_all_games_func
-    
     self.number_of_cameras = 0
+    self.boards = None
+    self.board_service = None
     self.progress_window = None
+    
+    self.reset_board_command = reset_board_function
+    self.reset_all_boards_command = reset_all_boards_function
     
     container = ctk.CTkFrame(self, fg_color="transparent")
     container.pack(expand=True)
     
     ctk.CTkLabel(container, text="Control Panel", font=("Segoe UI", 28, "bold")).pack(pady=(10, 10))
     vcmd = self.register(self.validate_entry)
-    
+
     self.number_of_cameras_entry = ctk.CTkEntry(
-      container,
-      placeholder_text="Number of Cameras",
-      width=300,
-      height=40,
-      font=("Segoe UI", 14),
-      validate="key",
-      validatecommand=(vcmd, '%P')
+        container,
+        width=300,
+        height=40,
+        font=("Segoe UI", 14),
+        fg_color=("#ffffff","#333333")
     )
+    self.number_of_cameras_entry.insert(0, "Number of Cameras")
     self.number_of_cameras_entry.pack(pady=(5, 15))
+
+    def on_focus_in(event):
+        if event.widget.get() == "Number of Cameras":
+            event.widget.delete(0, "end")
+
+    def on_focus_out(event):
+        if not event.widget.get():
+            event.widget.insert(0, "Number of Cameras")
+
+    self.number_of_cameras_entry.bind("<FocusIn>", on_focus_in)
+    self.number_of_cameras_entry.bind("<FocusOut>", on_focus_out)
+
     
     self.apply_button = ctk.CTkButton(
       container,
@@ -46,6 +62,7 @@ class App(ctk.CTk):
       command=self.apply_number_of_cameras
     )
     self.apply_button.pack(pady=(5, 20))
+    self.apply_button.focus_set()
     
     button_frame = ctk.CTkFrame(container, fg_color="transparent")
     button_frame.pack(pady=10)
@@ -87,8 +104,7 @@ class App(ctk.CTk):
     
   async def _async_reset_all_boards(self) -> None:
     try:
-      await self.reset_all_games_command()
-      print("Resetting all boards...")
+      await self.reset_all_boards_command()
     except Exception as e:
       import traceback
       print(f"Error resetting all boards: {e}")
@@ -104,19 +120,24 @@ class App(ctk.CTk):
     
     if number.isdigit() and int(number) > 0:
       self.number_of_cameras = int(number)
-      print(f"Number of cameras set to {self.number_of_cameras}")
+      
+      board_factory = BoardFactory()
+      self.boards = board_factory.create_boards(self.number_of_cameras)
+      self.board_service = BoardService()
+      
+      board_storage.boards = self.boards
+      
       self.disable_main_buttons()
       self.progress_window = ProgressBarTopLevel(self, self.number_of_cameras, self.on_connection_finished)
     else:
-      print("Invalid number of cameras. Please enter a positive integer.")
       self.number_of_cameras = 0
       
   def start_tournament(self) -> None:
     """ Start the tournament if cameras are connected. """
-    if self.number_of_cameras > 0:
-      print("Starting tournament...")
-    else:
-      print("Please apply a valid number of cameras first.")
+    if self.number_of_cameras > 0 and self.board_service:
+      self.board_service.start_detectors()
+    # else:
+    #   print("Please apply a valid number of cameras first.")
       
   def disable_main_buttons(self) -> None:
     """ Disable main buttons during connection test. """
@@ -135,11 +156,11 @@ class App(ctk.CTk):
     self.number_of_cameras_entry.configure(state="normal")
     
   def on_connection_finished(self, was_cancelled:bool=False) -> None:
-    """ Callback when the connection test is finished. """
-    if was_cancelled:
-      print("Camera test cancelled.")
-    else:
-      print("Camera test completed.")
+    """ Callback when the connection is finished. """
+    # if was_cancelled:
+    #   print("Camera connection cancelled.")
+    # else:
+    #   print("Camera connection completed.")
       
     self.enable_main_buttons()
     
@@ -147,6 +168,6 @@ class App(ctk.CTk):
     """ Open the board reset selector window. """
     if self.number_of_cameras > 0:
       self.disable_main_buttons()
-      BoardResetSelectorTopLevel(self, self.number_of_cameras, self.enable_main_buttons, func=self.reset_game_command )
-    else:
-      print("Please apply a valid number of cameras first.")
+      BoardResetSelectorTopLevel(self, self.number_of_cameras, self.enable_main_buttons, func=self.reset_board_command)
+    # else:
+    #   print("Please apply a valid number of cameras first.")

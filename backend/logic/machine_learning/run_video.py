@@ -4,14 +4,15 @@ from logic.machine_learning.game.game_store import GameStore
 from logic.machine_learning.detection.run_detections import get_board_corners
 from logic.machine_learning.board_state.map_pieces import get_payload
 from logic.machine_learning.utilities.move import get_moves_pairs
+from logic.api.services import board_storage
 import asyncio
 
 # ──────────────────────────────────────────────────────────────
 # tiny helper
-def t(label: str, _last=[time.time()]):
-    now = time.time()
-    print(f"{label:<35} {(now - _last[0]) * 1000:7.1f} ms")
-    _last[0] = now
+# def t(label: str, _last=[time.time()]):
+#     now = time.time()
+#     print(f"{label:<35} {(now - _last[0]) * 1000:7.1f} ms")
+#     _last[0] = now
 # ──────────────────────────────────────────────────────────────
 
 
@@ -21,25 +22,21 @@ async def process_video(
     game_store: GameStore,
     game_id: str,
     video: cv2.VideoCapture,
-    board_id: int,
+    board_id: int
 ) -> None:
 
-    t("Opening VideoCapture(0)")
-    cap = video#cv2.VideoCapture(0, cv2.CAP_DSHOW)      # try CAP_DSHOW vs CAP_MSMF
+    cap = video 
     if not cap.isOpened():
         print("Error: Cannot open camera.")
         return
-    t("cap.isOpened()")                           # << measure
 
-    t("First cap.read()")
     ok, frame = cap.read()
-    t("First frame grabbed")
     if not ok:
         print("Could not read first frame."); return
 
     frame_counter = 0
     board_corners_ref: Optional[list] = None
-    from logic.api.services.board_service import send_move
+    from logic.api.services.board_service import BoardService
 
     while True:
         ok, frame = cap.read()
@@ -51,7 +48,6 @@ async def process_video(
                 board_corners_ref = await get_board_corners(
                     frame, piece_model_session, corner_ort_session
                 )
-                t("get_board_corners")            # << measure
                 if board_corners_ref is None:
                     print("Corners not found."); break
 
@@ -61,24 +57,25 @@ async def process_video(
                 frame, payload = await get_payload(
                     piece_model_session, frame, board_corners_ref, game, moves_pairs
                 )
-                t("get_payload")                  # << measure
                 if payload:
-                    print("Payload:", payload)
-                    await send_move(board_id, payload[1]["sans"])
+                    move = payload[1]["sans"][0]
+                    
+                    boards = board_storage.boards
+                    board_service = BoardService()
+                    if board_id in boards:
+                        await board_service.send_move(board_id, move)
 
-            cv2.imshow("Chess Board Detection", cv2.resize(frame, (1280, 720)))
-            cv2.waitKey(1)
+            # cv2.imshow("Chess Board Detection", cv2.resize(frame, (1280, 720)))
+            # cv2.waitKey(1)
 
         frame_counter += 1
 
-    cap.release()
-    cv2.destroyAllWindows()
+    # cap.release()
+    # cv2.destroyAllWindows()
 
 
-async def prepare_to_run_video(board_id: int, video=None):
-    t("Loading piece model")
+async def prepare_to_run_video(board_id: int, video:cv2.VideoCapture):
     piece_session  = ort.InferenceSession("resources/models/480M_leyolo_pieces.onnx")
-    t("Loading corner model")
     corner_session = ort.InferenceSession("resources/models/480L_leyolo_xcorners.onnx")
 
     game_store = GameStore(); game_id = "game_1"; game_store.add_game(game_id)
@@ -86,5 +83,5 @@ async def prepare_to_run_video(board_id: int, video=None):
 
 
 # quick manual test
-# if __name__ == "__main__":
-#     asyncio.run(prepare_to_run_video())
+if __name__ == "__main__":
+    asyncio.run(prepare_to_run_video())
