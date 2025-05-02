@@ -5,12 +5,17 @@
 }
   
 .heading span {
-  color: black;
+  color: var(--light-text);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   .heading span {
-    color: white;
+    color: var(--dark-text);
+  }
+  .heading {
+    font-size: 4rem;
+    font-weight: 700;
+    color: var(--light-main-color);
   }
 }
 
