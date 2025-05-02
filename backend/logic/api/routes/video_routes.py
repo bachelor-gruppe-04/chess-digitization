@@ -8,7 +8,7 @@ router = APIRouter()
 def video_feed(id: int = Path(..., ge=1)) -> StreamingResponse:
   """Dynamic video stream from multiple webcams. """
   if id not in storage.boards:
-    raise HTTPException(404, f"No such board: {id}")
+    raise HTTPException(404, f"Board {id} not found.")
   
   return StreamingResponse(
     storage.boards[id].camera.generate_frames(),
