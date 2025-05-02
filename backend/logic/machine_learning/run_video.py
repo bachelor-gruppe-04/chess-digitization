@@ -23,7 +23,6 @@ async def process_video(
     video: cv2.VideoCapture,
     board_id: int
 ) -> None:
-    print("Starting video processing...")
 
     cap = video 
     if not cap.isOpened():

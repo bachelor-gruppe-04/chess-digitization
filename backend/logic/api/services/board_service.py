@@ -13,7 +13,6 @@ class BoardService:
         daemon=True
       )
       thread.start()
-      print("Thread started for board:", board_id)
       
   def _run_detector_thread(self, board_id: int):
     """ Run the detector in a separate thread. """
