@@ -1,7 +1,6 @@
 from fastapi import APIRouter
-
 from logic.api.services.board_service import BoardService
-# from logic.api.services.board_service import reset_game, reset_all_games
+import logic.api.services.board_storage as storage
 
 router = APIRouter()
 
@@ -16,3 +15,7 @@ async def reset_board(board_id: int):
 async def reset_all_boards():
   await board_service.reset_all_games()
   return {"status": "all boards reset"}
+
+@router.get("/boards")
+async def list_boards():
+  return {"board_count": len(storage.boards)}
