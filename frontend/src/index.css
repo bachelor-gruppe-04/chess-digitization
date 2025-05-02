@@ -13,6 +13,8 @@
   -moz-osx-font-smoothing: grayscale;
 
   --main-color:#6CADD5;
+  --light-text:#ffffff;
+  --dark-text:#333333;
   --dark-tile: #6CADD5;
   --light-tile: #EFF3FF;
   --dark-last-move: #92B166;
@@ -78,7 +80,7 @@ table td {
 
 table th {
   background-color: var(--main-color);
-  color: white;
+  color: var(--dark-text);
   font-weight: 600;
 }
 
@@ -96,5 +98,8 @@ table tbody tr:nth-child(even) {
   }
   button {
     background-color: #f9f9f9;
+  }
+  table th {
+    color: var(--light-text);
   }
 }
