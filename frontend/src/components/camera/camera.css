@@ -34,7 +34,7 @@
 /* Fullscreen camera overlay */
 .webcam-fullscreen-wrapper {
   position: relative;
-  width: 100%;
+  width: auto;
   height: 100%;
 }
 
