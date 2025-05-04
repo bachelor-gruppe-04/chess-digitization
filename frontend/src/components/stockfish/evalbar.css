@@ -2,16 +2,31 @@
   width: 30px;
   border: 1px solid #999;
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* Default vertical layout */
   overflow: hidden;
 }
 
 .white-bar {
   background-color: #eeeeee;
-  transition: height 0.3s ease;
+  transition: height 0.3s ease, width 0.3s ease;
 }
 
 .black-bar {
   background-color: #333333;
-  transition: height 0.3s ease;
+  transition: height 0.3s ease, width 0.3s ease;
+}
+
+/* Media query for screen widths less than 768px */
+@media (max-width: 768px) {
+  .eval-bar {
+    flex-direction: row; /* Change to row for horizontal layout */
+    width: 100%; /* Make the width 100% of the available space */
+    height: 30px; /* Set a fixed height for the horizontal bar */
+  }
+
+  .white-bar,
+  .black-bar {
+    height: 100%; /* Make bars fill the height */
+    flex: 1; /* Allow bars to expand and fill available space */
+  }
 }
