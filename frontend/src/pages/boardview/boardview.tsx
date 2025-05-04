@@ -5,6 +5,7 @@ import Chessboard, { ChessboardHandle } from '../../components/chessboard/chessb
 import PGN from '../../components/pgn/pgn';
 import { useRef, useEffect, useState } from "react";
 import { NavLink } from 'react-router-dom';
+import EvalBar from '../../components/stockfish/evalbar';
 
 /**
  * BoardView Component
@@ -75,6 +76,8 @@ function BoardView({ id }: BoardViewProps) {
         <div className="chessboard-wrapper">
           <Chessboard ref={boardRef} id={id} />
         </div>
+        
+        <EvalBar id={id} evaluation={0} /> {/* Placeholder for EvalBar, replace 0 with actual evaluation value */}
     </div>
   );
 }
