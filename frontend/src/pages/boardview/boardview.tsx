@@ -6,6 +6,7 @@ import PGN from '../../components/pgn/pgn';
 import { useRef, useEffect, useState } from "react";
 import { NavLink } from 'react-router-dom';
 import EvalBar from '../../components/stockfish/evalbar';
+import useEvaluation from '../../components/stockfish/stockfish';
 
 /**
  * BoardView Component
@@ -31,6 +32,9 @@ function BoardView({ id }: BoardViewProps) {
   const pgnRef = useRef<HTMLDivElement>(null); // Ref to scroll the PGN list container
   const boardRef = useRef<ChessboardHandle>(null); // Ref to access Chessboard's imperative handle (exposes getMoves method)
   const [moves, setMoves] = useState<string[]>([]); // State to hold the current list of moves in algebraic notation (SAN)
+  const [fen, setFen] = useState<string>('');
+  const evaluation = useEvaluation(fen); // Fetch evaluation from Stockfish API based on the current FEN
+
 
    /**
    * Sets up a polling interval to sync moves from the Chessboard component.
@@ -55,7 +59,14 @@ function BoardView({ id }: BoardViewProps) {
     if (pgnRef.current) {
       pgnRef.current.scrollTop = pgnRef.current.scrollHeight;
     }
+  
+    const newFEN = boardRef.current?.getFEN();
+    if (newFEN) {
+      setFen(newFEN);
+      console.log('New FEN:', newFEN);
+    }
   }, [moves]);
+  
 
   return (
     <div className="table-view">
@@ -77,8 +88,8 @@ function BoardView({ id }: BoardViewProps) {
           <Chessboard ref={boardRef} id={id} />
         </div>
         
-        <EvalBar id={id} evaluation={0} /> {/* Placeholder for EvalBar, replace 0 with actual evaluation value */}
-    </div>
+        <EvalBar id={id} evaluation={evaluation} />
+      </div>
   );
 }
 
