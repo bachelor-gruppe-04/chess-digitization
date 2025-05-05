@@ -30,17 +30,28 @@ class App(ctk.CTk):
     
     ctk.CTkLabel(container, text="Control Panel", font=("Segoe UI", 28, "bold")).pack(pady=(10, 10))
     vcmd = self.register(self.validate_entry)
-    
+
     self.number_of_cameras_entry = ctk.CTkEntry(
-      container,
-      placeholder_text="Number of Cameras",
-      width=300,
-      height=40,
-      font=("Segoe UI", 14),
-      validate="key",
-      validatecommand=(vcmd, '%P')
+        container,
+        width=300,
+        height=40,
+        font=("Segoe UI", 14),
+        fg_color=("#ffffff","#333333")
     )
+    self.number_of_cameras_entry.insert(0, "Number of Cameras")
     self.number_of_cameras_entry.pack(pady=(5, 15))
+
+    def on_focus_in(event):
+        if event.widget.get() == "Number of Cameras":
+            event.widget.delete(0, "end")
+
+    def on_focus_out(event):
+        if not event.widget.get():
+            event.widget.insert(0, "Number of Cameras")
+
+    self.number_of_cameras_entry.bind("<FocusIn>", on_focus_in)
+    self.number_of_cameras_entry.bind("<FocusOut>", on_focus_out)
+
     
     self.apply_button = ctk.CTkButton(
       container,
@@ -51,6 +62,7 @@ class App(ctk.CTk):
       command=self.apply_number_of_cameras
     )
     self.apply_button.pack(pady=(5, 20))
+    self.apply_button.focus_set()
     
     button_frame = ctk.CTkFrame(container, fg_color="transparent")
     button_frame.pack(pady=10)

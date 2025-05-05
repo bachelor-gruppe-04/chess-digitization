@@ -29,8 +29,8 @@ function generatePositionFromFen(fen: string): Piece[] {
     let x = 0;
     for (const char of rows[y]) {
       if (isNaN(Number(char))) {
-        const image = `/assets/images/${pieceMap[char]}.png`;
-        pieces.push({ image, x, y: 7 - y });
+        const image = `/assets/images/${pieceMap[char]}.svg`;
+        pieces.push({ image, x, y: 7 - y }); // Flip y to match board orientation
         x++;
       } else {
         x += parseInt(char);
