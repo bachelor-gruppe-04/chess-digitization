@@ -1,7 +1,6 @@
-/* Position relative for container */
 .eval-bar {
   position: relative;
-  width: 50px; /* Increased width */
+  width: 50px; 
   border: 1px solid #999;
   display: flex;
   flex-direction: column;
@@ -22,15 +21,14 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);  /* Center horizontally and vertically */
+  transform: translate(-50%, -50%);
   font-size: 14px;
   font-weight: bold;
   pointer-events: none;
   white-space: nowrap;
-  color: white; /* Default color */
+  color: white;
 }
 
-/* Optional: if evaluation is strongly positive/negative, you could still adjust color */
 .eval-text.black-text {
   color: black;
 }
