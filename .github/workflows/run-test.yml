@@ -39,7 +39,7 @@ jobs:
     - name: Start backend server
       run: |
         cd backend
-        uvicorn main:app --host
+        uvicorn main:app --reload --host
 
     - name: Start frontend client
       run: |
