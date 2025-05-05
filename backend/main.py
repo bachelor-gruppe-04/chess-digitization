@@ -23,11 +23,13 @@ app.include_router(websocket_routes.router)
 app.include_router(admin_routes.router)
 
 def start_gui():
+  """ Start the GUI in a separate thread. """
   window = App(reset_board_function=reset_board, reset_all_boards_function=reset_all_boards)
   window.mainloop()
 
 @app.on_event("startup")
 async def main():
+  """ Main function to start the FastAPI server and GUI. """
   # asyncio.create_task(simulate_multiple_fake_ml_moves())
   state.event_loop = asyncio.get_event_loop()
   gui_thread = threading.Thread(target=start_gui, daemon=True)
