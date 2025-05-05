@@ -18,7 +18,7 @@ import { useEffect, useState } from 'react';
  * - `id`: Unique identifier used to fetch the correct webcam stream for a specific board
  */
 interface CameraProps {
-  id: number;
+  id: any;
 }
 
 function Camera({ id }: CameraProps) {

@@ -62,7 +62,7 @@ function generatePositionFromFen(fen: string): Piece[] {
  * - `id`: Unique ID for the board, used in WebSocket connection
  */
 interface ChessboardProps {
-  id: number;
+  id: any;
 }
 
 /**

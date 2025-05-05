@@ -4,7 +4,7 @@ import Camera from '../../components/camera/camera';
 import Chessboard, { ChessboardHandle } from '../../components/chessboard/chessboard';
 import PGN from '../../components/pgn/pgn';
 import { useRef, useEffect, useState } from "react";
-import { NavLink } from 'react-router-dom';
+import { NavLink, useParams } from 'react-router-dom';
 
 /**
  * BoardView Component
@@ -23,13 +23,14 @@ import { NavLink } from 'react-router-dom';
  * - `id`: Unique identifier for the board, used to connect to the correct data stream (e.g., WebSocket or camera).
  */
 interface BoardViewProps {
-  id: number;
+  id: string;
 }
 
-function BoardView({ id }: BoardViewProps) {
+function BoardView() {
   const pgnRef = useRef<HTMLDivElement>(null); // Ref to scroll the PGN list container
   const boardRef = useRef<ChessboardHandle>(null); // Ref to access Chessboard's imperative handle (exposes getMoves method)
   const [moves, setMoves] = useState<string[]>([]); // State to hold the current list of moves in algebraic notation (SAN)
+  const { id } = useParams<{ id: string }>(); // Extract the board ID from the URL parameters
 
    /**
    * Sets up a polling interval to sync moves from the Chessboard component.
