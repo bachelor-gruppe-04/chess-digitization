@@ -2,7 +2,7 @@ name: Run Application Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ feature/63-initialize-number-of-boards ] # Replace with main when ready
   pull_request:
     branches: [ main ]
 
