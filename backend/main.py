@@ -22,6 +22,11 @@ app.include_router(video_routes.router)
 app.include_router(websocket_routes.router)
 app.include_router(admin_routes.router)
 
+@app.get("/healthcheck")
+async def health_check():
+  return {"status": "ok"}
+
+
 def start_gui():
   """ Start the GUI in a separate thread. """
   window = App(reset_board_function=reset_board, reset_all_boards_function=reset_all_boards)
