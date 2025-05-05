@@ -15,3 +15,10 @@ class GameStore:
     def get_game(self, game_id: str) -> Optional[Game]:
         """Retrieves a game instance by ID."""
         return self.games.get(game_id, None)
+    
+    def reset_game(self, game_id: str):
+        game = self.get_game(game_id)
+        if game:
+            game.board.reset()  # Assuming your board has a reset method that resets it to the initial state
+            game.last_move = None
+            print(f"Game {game_id} has been reset.")

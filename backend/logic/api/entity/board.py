@@ -6,7 +6,7 @@ from .camera import Camera
 class Board:
   """ Chess board class to handle chess moves and history. """
   
-  def __init__(self, id: int):
+  def __init__(self, id: int, last_move: str = "", greedy: bool = False):
     """ Initialize the chess board object.
     
     Args:
@@ -18,6 +18,16 @@ class Board:
     self.clients: List[WebSocket] = []
     self.chess_board = chess.Board()
     self.invalid_latched = False
+    self.last_move: str = last_move  
+    self.greedy: bool = greedy
+      
+        # self.fen: str = fen  # FEN representation of the board
+        # self.moves: str = moves  # PGN-like move history
+        # self.start: str = start  # Initial FEN or start position
+        # self.last_move: str = last_move  # Last move played
+        # self.greedy: bool = greedy  # Boolean flag for greedy mode
+        # self.board: chess.Board = chess.Board(fen)  # Chess board initialized from FEN   
+      
       
   def validate_move(self, move) -> (tuple[Literal['INVALID'], Literal[False]] | tuple[str, Literal[True]]):
     """ Check if a chess move is valid. 
