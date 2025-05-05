@@ -1,8 +1,10 @@
+/* Position relative for container */
 .eval-bar {
-  width: 30px;
+  position: relative;
+  width: 50px; /* Increased width */
   border: 1px solid #999;
   display: flex;
-  flex-direction: column; /* Default vertical layout */
+  flex-direction: column;
   overflow: hidden;
 }
 
@@ -16,17 +18,24 @@
   transition: height 0.3s ease, width 0.3s ease;
 }
 
-/* Media query for screen widths less than 768px */
-@media (max-width: 768px) {
-  .eval-bar {
-    flex-direction: row; /* Change to row for horizontal layout */
-    width: 100%; /* Make the width 100% of the available space */
-    height: 30px; /* Set a fixed height for the horizontal bar */
-  }
+.eval-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);  /* Center horizontally and vertically */
+  font-size: 14px;
+  font-weight: bold;
+  pointer-events: none;
+  white-space: nowrap;
+  color: white; /* Default color */
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9); /* Shadow for contrast on both white and black */
+}
 
-  .white-bar,
-  .black-bar {
-    height: 100%; /* Make bars fill the height */
-    flex: 1; /* Allow bars to expand and fill available space */
-  }
+/* Optional: if evaluation is strongly positive/negative, you could still adjust color */
+.eval-text.black-text {
+  color: black;
+}
+
+.eval-text.white-text {
+  color: white;
 }
