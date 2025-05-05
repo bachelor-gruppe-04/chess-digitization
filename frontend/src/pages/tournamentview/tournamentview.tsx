@@ -1,52 +1,71 @@
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import TableRow from '../../components/tableRow/tableRow';
 import './tournamentview.css';
 
-import TableRow from '../../components/tableRow/tableRow';
-import { boards } from '../../data/boards';
+export default function TournamentView() {
+  const [boards, setBoards] = useState<number[]>([]);
+  const [error, setError] = useState<string>();
 
-/**
- * TournamentView Component
- *
- * This component serves as the main hub for navigating between multiple live chess boards
- * during a tournament. It displays a table listing all active games.
- *
- * Each row shows:
- * - Board number
- * - White player (name and rating)
- * - Black player (name and rating)
- * - A link to the live game view
- *
- * Data is dynamically loaded from the `boards` array for scalability.
- */
+  useEffect(() => {
+    fetch('http://localhost:8000/boards')
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        if (!Array.isArray(data.boards)) {
+          throw new Error('Invalid payload: missing "boards" array');
+        }
+        setBoards(data.boards);
+      })
+      .catch(err => {
+        console.error(err);
+        setError(err.message);
+      });
+  }, []);
 
-function TournamentView() {
-  return (
-    <div className='tournament-view'>
-      <div className="heading">
-        Tournament<span> View</span>
+  if (error) {
+    return (
+      <div className='tournament-view'>
+        <div className="heading">Tournament<span> View</span></div>
+        <div className="error-cell">Error loading boards: {error}</div>
       </div>
+    );
+  }
 
-      <table className="tournament-table">
-        <thead>
-          <tr>
-            <th>Board</th>
-            <th>White</th>
-            <th>Black</th>
-            <th>Game</th>
-          </tr>
-        </thead>
-        <tbody>
-          {boards.map((board) => (
-            <TableRow 
-              key={board.id} 
-              boardNumber={board.id} 
-              whitePlayer={`${board.whitePlayer} (${board.whiteRating})`} 
-              blackPlayer={`${board.blackPlayer} (${board.blackRating})`} 
-            />
+  return (
+    <div className="tournament-view">
+      <div className="heading">Tournament<span> View</span></div>
+
+      {boards.length > 0 ? (
+        <table className="tournament-table">
+          <thead>
+            <tr>
+              <th>Board</th>
+              <th>White</th>
+              <th>Black</th>
+              <th>Game</th>
+            </tr>
+          </thead>
+          <tbody>
+            {boards.map(id => (
+              <TableRow
+                key={id}
+                boardNumber={id}
+                whitePlayer={`White #${id}`}
+                blackPlayer={`Black #${id}`}
+              />
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <div className="table-skeleton">
+          {Array.from({ length: 8 * 4 }).map((_, i) => (
+            <div key={i} className="skeleton-cell" />
           ))}
-        </tbody>
-      </table>
+        </div>
+      )}
     </div>
   );
 }
-
-export default TournamentView;

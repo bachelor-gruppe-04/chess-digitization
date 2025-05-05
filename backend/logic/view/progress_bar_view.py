@@ -15,7 +15,7 @@ class ProgressBarTopLevel(ctk.CTkToplevel):
     self.cancelled = False
     
     self.center_on_parent()
-    self.protocol("WM_DELETE_WINDOW", self.cancel_test)
+    self.protocol("WM_DELETE_WINDOW", self.cancel_connection)
     
     self.progressbar = ctk.CTkProgressBar(self, width=320, height=20)
     self.progressbar.grid(row=0, column=0, columnspan=2, padx=20, pady=(20, 10))
@@ -25,7 +25,7 @@ class ProgressBarTopLevel(ctk.CTkToplevel):
         self,
         text="Cancel",
         width=100,
-        command=self.cancel_test
+        command=self.cancel_connection
     )
     cancel_button.grid(row=1, column=1, sticky="e", padx=20, pady=(5, 10))
     
@@ -68,15 +68,15 @@ class ProgressBarTopLevel(ctk.CTkToplevel):
       self.current += 1
       self.after(300, self.update_progress)
     else:
-      self.after(700, self.finish_test)
+      self.after(700, self.finish_connection)
       
-  def cancel_test(self) -> None:
-    """ Cancel the connection test. """
+  def cancel_connection(self) -> None:
+    """ Cancel the connection. """
     self.cancelled = True
     self.destroy()
-    self.on_finish_callback(was_cancelled=True)
+    self.on_finish_callback()
     
-  def finish_test(self) -> None:
-    """ Finish the connection test. """
+  def finish_connection(self) -> None:
+    """ Finish the connection. """
     self.destroy()
-    self.on_finish_callback(was_cancelled=False)
+    self.on_finish_callback()

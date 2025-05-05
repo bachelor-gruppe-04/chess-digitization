@@ -1,9 +1,5 @@
 import asyncio
-# from logic.api.services.board_service import send_move, reset_all_games
-
-# from logic.api.entity.board import Board
 from logic.api.services.board_service import BoardService
-# from logic.api.services.board_storage import boards
 
 board_service = BoardService()
 

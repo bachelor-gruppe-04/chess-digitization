@@ -4,11 +4,10 @@ from logic.machine_learning.game.game_store import GameStore
 from logic.machine_learning.detection.run_detections import get_board_corners
 from logic.machine_learning.board_state.map_pieces import get_payload
 from logic.machine_learning.utilities.move import get_moves_pairs
-from logic.api.services import board_storage
+import logic.api.services.board_storage as storage
 import asyncio
 
 # ──────────────────────────────────────────────────────────────
-# tiny helper
 # def t(label: str, _last=[time.time()]):
 #     now = time.time()
 #     print(f"{label:<35} {(now - _last[0]) * 1000:7.1f} ms")
@@ -60,7 +59,7 @@ async def process_video(
                 if payload:
                     move = payload[1]["sans"][0]
                     
-                    boards = board_storage.boards
+                    boards = storage.boards
                     board_service = BoardService()
                     if board_id in boards:
                         await board_service.send_move(board_id, move)

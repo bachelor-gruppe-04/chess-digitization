@@ -4,7 +4,7 @@ import "./evalBar.css";
 interface EvalBarProps {
   evaluation: string | number | null;  // Accept both string (for mate) and number
   mate: number | null;
-  id: number;
+  id: string | undefined;
 }
 const EvalBar: React.FC<EvalBarProps> = ({ evaluation, mate, id }) => {
   // Determine if there's a mate, if mate is provided and is a valid number
