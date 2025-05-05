@@ -21,14 +21,6 @@ class Board:
     self.last_move: str = last_move  
     self.greedy: bool = greedy
       
-        # self.fen: str = fen  # FEN representation of the board
-        # self.moves: str = moves  # PGN-like move history
-        # self.start: str = start  # Initial FEN or start position
-        # self.last_move: str = last_move  # Last move played
-        # self.greedy: bool = greedy  # Boolean flag for greedy mode
-        # self.board: chess.Board = chess.Board(fen)  # Chess board initialized from FEN   
-      
-      
   def validate_move(self, move) -> (tuple[Literal['INVALID'], Literal[False]] | tuple[str, Literal[True]]):
     """ Check if a chess move is valid. 
     
@@ -58,6 +50,7 @@ class Board:
     """
     try:
       self.chess_board.reset()
+      print(chess_board)
       self.move_history = []
       self.invalid_latched = False
     except Exception:

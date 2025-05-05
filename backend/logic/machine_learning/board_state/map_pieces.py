@@ -14,7 +14,6 @@ from logic.machine_learning.detection.run_detections import find_centers_and_bou
 import time
 
 last_update_time = 0
-# global state for greedy_move_to_time
 greedy_move_to_time = {}
  
 async def get_payload(piece_model_ref: ort.InferenceSession,
