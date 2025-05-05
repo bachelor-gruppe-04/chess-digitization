@@ -18,4 +18,5 @@ async def reset_all_boards():
 
 @router.get("/boards")
 async def list_boards():
-  return {"board_count": len(storage.boards)}
+  ids = list(storage.boards.keys())
+  return {"board_count": len(ids), "boards": ids}
