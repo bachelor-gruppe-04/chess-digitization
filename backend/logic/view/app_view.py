@@ -2,7 +2,7 @@ from enum import Enum
 import customtkinter as ctk
 import asyncio
 from logic.api.entity.camera import CameraDoesNotExistError
-from logic.api.services import board_storage
+import logic.api.services.board_storage as storage
 from logic.api.services.board_service import BoardService
 from logic.api.entity.board_factory import BoardFactory
 import logic.view.state as state
@@ -158,7 +158,7 @@ class App(ctk.CTk):
         board_factory = BoardFactory()
         self.boards = board_factory.create_boards(self.number_of_cameras)
         self.board_service = BoardService()
-        board_storage.boards = self.boards
+        storage.boards = self.boards
         
       except CameraDoesNotExistError as e:
         self.highlight_status_and_entry(f"Error: {e}", CtkTypeEnum.ERROR)
