@@ -3,26 +3,31 @@ import tensorflow as tf
 import time
 import onnxruntime as ort
 
+
 from logic.machine_learning.detection.piece_detection import detect
 from logic.machine_learning.detection.bbox_scores import get_bbox_centers
 from logic.machine_learning.detection.corners_detection import extract_xy_from_labeled_corners
-from logic.machine_learning.utilities.move import san_to_lan, calculate_move_score
+from logic.machine_learning.utilities.move import san_to_lan, calculate_move_score, get_moves_pairs
 from logic.machine_learning.game.game import make_update_payload
 from logic.machine_learning.view.render import draw_points, draw_polygon, draw_boxes_with_scores
 from logic.machine_learning.detection.run_detections import find_centers_and_boundary
+import logic.api.services.board_storage as storage
+
 import time
 
 last_update_time = 0
-# global state for greedy_move_to_time
 greedy_move_to_time = {}
-
+ 
 async def get_payload(piece_model_ref: ort.InferenceSession,
                       video_ref: np.ndarray,
                       corners_ref: np.ndarray,
-                      game_ref: any,
-                      moves_pairs_ref: list):
-    global greedy_move_to_time  # Ensure we're using the global variable
-    global last_update_time  # Ensure we're using the global variable
+                      board_id: int):
+    global greedy_move_to_time
+    global last_update_time
+
+    # Get the correct board instance
+    game_ref = storage.boards[board_id]    
+    moves_pairs_ref: list = get_moves_pairs(game_ref.chess_board)
 
     # Internal state variables
     centers = None
@@ -33,16 +38,18 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
     payload = None
     keypoints = None
     possible_moves = set()
-
+    
+    last_move = game_ref.move_history[-1] if game_ref.move_history else None
+    
     if centers is None:
         keypoints = extract_xy_from_labeled_corners(corners_ref, video_ref)
         centers, boundary, centers_3d, boundary_3d = find_centers_and_boundary(corners_ref, video_ref)
         state = np.zeros((64, 12))
         possible_moves = set()
 
-    start_time = time.time()
     boxes, scores = await detect(piece_model_ref, video_ref, keypoints)
     del piece_model_ref  # Free memory
+    
 
     squares = get_squares(boxes, centers_3d, boundary_3d)
     
@@ -60,15 +67,14 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
     )
 
     end_time = time.time()
-    fps = round(1 / (end_time - start_time), 1)
 
     has_move = False
     if best_moves is not None:
         move_str = best_moves["sans"][0]
         has_move = (best_score2 > 0 and best_joint_score > 0 and move_str in possible_moves)
         if has_move:
-            game_ref.board.push_san(move_str)
-            game_ref.last_move = game_ref.board.peek().uci()
+            game_ref.chess_board.push_san(move_str)
+            last_move = game_ref.chess_board.peek().uci()
             possible_moves.clear()
             greedy_move_to_time = {}  # Reset for greedy moves
 
@@ -80,24 +86,23 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
             greedy_move_to_time[move_str] = end_time
 
         elapsed = (end_time - greedy_move_to_time[move_str]) > 1.0
-        is_new = san_to_lan(game_ref.board, move_str) != game_ref.last_move
+        is_new = san_to_lan(game_ref.chess_board, move_str) != last_move
 
         has_greedy_move = elapsed and is_new
 
         if has_greedy_move:
-            game_ref.board.push_san(move_str)
-            game_ref.last_move = game_ref.board.peek().uci()
+            game_ref.chess_board.push_san(move_str)
+            last_move = game_ref.chess_board.peek().uci()
             greedy_move_to_time = {move_str: greedy_move_to_time[move_str]}  # Preserve last move time
 
     if has_move or has_greedy_move:
         greedy = has_greedy_move
-        payload = make_update_payload(game_ref.board, greedy), best_move
+        payload = make_update_payload(game_ref.chess_board, greedy), best_move
 
     # draw_points(video_ref, centers)
     # draw_polygon(video_ref, boundary)
 
     return video_ref, payload
-
 
 
 

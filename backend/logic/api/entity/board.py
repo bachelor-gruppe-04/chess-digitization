@@ -49,7 +49,7 @@ class Board:
       return "INVALID", False
       
     try:
-      self.chess_board.push_san(move)
+      # self.chess_board.push_san(move)
       self.move_history.append(move)
       return move, True
     except Exception:

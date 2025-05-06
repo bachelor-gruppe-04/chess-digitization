@@ -1,25 +1,15 @@
 import time, cv2, onnxruntime as ort
 from typing import Optional
-from logic.machine_learning.game.game_store import GameStore
 from logic.machine_learning.detection.run_detections import get_board_corners
 from logic.machine_learning.board_state.map_pieces import get_payload
 from logic.machine_learning.utilities.move import get_moves_pairs
 import logic.api.services.board_storage as storage
+from logic.api.services import board_storage
 import asyncio
-
-# ──────────────────────────────────────────────────────────────
-# def t(label: str, _last=[time.time()]):
-#     now = time.time()
-#     print(f"{label:<35} {(now - _last[0]) * 1000:7.1f} ms")
-#     _last[0] = now
-# ──────────────────────────────────────────────────────────────
-
 
 async def process_video(
     piece_model_session: ort.InferenceSession,
     corner_ort_session: ort.InferenceSession,
-    game_store: GameStore,
-    game_id: str,
     video: cv2.VideoCapture,
     board_id: int
 ) -> None:
@@ -29,10 +19,6 @@ async def process_video(
         print("Error: Cannot open camera.")
         return
 
-    ok, frame = cap.read()
-    if not ok:
-        print("Could not read first frame."); return
-
     frame_counter = 0
     board_corners_ref: Optional[list] = None
     from logic.api.services.board_service import BoardService
@@ -40,6 +26,7 @@ async def process_video(
     while True:
         ok, frame = cap.read()
         if not ok:
+            print("Error: Could not read frame.")
             break
 
         if frame_counter % 5 == 0:
@@ -48,37 +35,30 @@ async def process_video(
                     frame, piece_model_session, corner_ort_session
                 )
                 if board_corners_ref is None:
-                    print("Corners not found."); break
+                    print("Corners not found.")
+                    continue
 
-            game = game_store.get_game(game_id)
-            if game:
-                moves_pairs = get_moves_pairs(game.board)
+            # Check if the board_id is registered before proceeding
+            boards = board_storage.boards
+            if board_id in boards:
                 frame, payload = await get_payload(
-                    piece_model_session, frame, board_corners_ref, game, moves_pairs
+                    piece_model_session, frame, board_corners_ref, board_id
                 )
                 if payload:
                     move = payload[1]["sans"][0]
-                    
-                    boards = storage.boards
-                    board_service = BoardService()
-                    if board_id in boards:
-                        await board_service.send_move(board_id, move)
 
-            # cv2.imshow("Chess Board Detection", cv2.resize(frame, (1280, 720)))
-            # cv2.waitKey(1)
+                    board_service = BoardService()
+                    await board_service.send_move(board_id, move)
 
         frame_counter += 1
 
-    # cap.release()
-    # cv2.destroyAllWindows()
+    cap.release()
 
-
-async def prepare_to_run_video(board_id: int, video:cv2.VideoCapture):
+async def prepare_to_run_video(board_id: int, video: cv2.VideoCapture):
     piece_session  = ort.InferenceSession("resources/models/480M_leyolo_pieces.onnx")
     corner_session = ort.InferenceSession("resources/models/480L_leyolo_xcorners.onnx")
 
-    game_store = GameStore(); game_id = "game_1"; game_store.add_game(game_id)
-    await process_video(piece_session, corner_session, game_store, game_id, video, board_id)
+    await process_video(piece_session, corner_session, video, board_id)
 
 
 # quick manual test

@@ -26,10 +26,13 @@ class BoardService:
       move (str): Chess move
     """
     board = storage.boards[board_id]
+
     checked_move, valid = board.validate_move(move)
     if valid:
       for client in board.clients:
         await client.send_text(checked_move)
+        
+        
 
   async def reset_game(self, board_id: int):
     """ Reset the chess game of a board. """
