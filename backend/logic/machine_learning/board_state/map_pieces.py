@@ -3,6 +3,7 @@ import tensorflow as tf
 import time
 import onnxruntime as ort
 
+
 from logic.machine_learning.detection.piece_detection import detect
 from logic.machine_learning.detection.bbox_scores import get_bbox_centers
 from logic.machine_learning.detection.corners_detection import extract_xy_from_labeled_corners
@@ -24,11 +25,7 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
     global last_update_time
 
     # Get the correct board instance
-    from logic.api.services.board_storage import boards
-    game_ref = boards[board_id]
-        
-    print(f"Chessboard: {game_ref}")  # Debugging line
-    
+    game_ref = boards[board_id]    
     moves_pairs_ref: list = get_moves_pairs(game_ref.chess_board)
 
     # Internal state variables
@@ -48,9 +45,9 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
         state = np.zeros((64, 12))
         possible_moves = set()
 
-    start_time = time.time()
     boxes, scores = await detect(piece_model_ref, video_ref, keypoints)
     del piece_model_ref  # Free memory
+    
 
     squares = get_squares(boxes, centers_3d, boundary_3d)
     
@@ -61,6 +58,10 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
 
     # Update state
     state = update_state(state, update)
+    
+    print("THIS IS INSIDE MAP PIECES")
+    print(game_ref.chess_board)
+    print(game_ref.chess_board.fen())
 
     # Get best moves
     best_score1, best_score2, best_joint_score, best_move, best_moves = process_state(
@@ -68,7 +69,6 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
     )
 
     end_time = time.time()
-    fps = round(1 / (end_time - start_time), 1)
 
     has_move = False
     if best_moves is not None:

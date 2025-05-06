@@ -1,5 +1,6 @@
 import asyncio
 import threading
+import chess
 from logic.api.services.board_storage import boards
 
 class BoardService:
@@ -32,10 +33,17 @@ class BoardService:
         await client.send_text(checked_move)
 
   async def reset_game(self, board_id: int):
-    """ Reset the chess game of a board. """
-    board = boards[board_id]
-    for client in board.clients:
-      await client.send_text(board.reset_board())
+        """ Reset the chess game of a board. """
+        board = boards[board_id]
+
+        print("THIS IS INSIDE BOARD SERVICE")
+        print(board.chess_board)
+        board.chess_board = chess.Board()
+        print(board.chess_board)
+        reset_message = board.reset_board() 
+        
+        for client in board.clients:
+            await client.send_text(reset_message)
 
   async def reset_all_games(self):
     """ Reset the chess game to all boards. """

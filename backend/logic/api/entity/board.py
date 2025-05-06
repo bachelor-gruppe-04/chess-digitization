@@ -50,7 +50,6 @@ class Board:
     """
     try:
       self.chess_board.reset()
-      print(chess_board)
       self.move_history = []
       self.invalid_latched = False
     except Exception:
