@@ -177,6 +177,7 @@ class App(ctk.CTk):
       self.reset_select_button.configure(state="normal")
       self.reset_button.configure(state="normal")
       self.board_service.start_detectors()
+      self.start_button.configure(state="disabled")
       
   def disable_main_buttons(self) -> None:
     """ Disable main buttons during connection. """
@@ -192,6 +193,14 @@ class App(ctk.CTk):
     self.start_button.configure(state="normal")
     self.number_of_cameras_entry.configure(state="normal")
     
+  def enable_all_buttons(self) -> None:
+    """ Enable all buttons. """
+    self.apply_button.configure(state="normal")
+    self.start_button.configure(state="normal")
+    self.reset_select_button.configure(state="normal")
+    self.reset_button.configure(state="normal")
+    self.number_of_cameras_entry.configure(state="normal")
+    
   def on_connection_finished(self) -> None:
     """ Callback when the connection is finished. """
     self.highlight_status_and_entry("Connection finished.", CtkTypeEnum.OK)
@@ -201,6 +210,6 @@ class App(ctk.CTk):
     """ Open the board reset selector window. """
     if self.number_of_cameras > 0:
       self.disable_main_buttons()
-      BoardResetSelectorTopLevel(self, self.number_of_cameras, self.enable_main_buttons, func=self.reset_board_command)
+      BoardResetSelectorTopLevel(self, self.number_of_cameras, self.enable_all_buttons, func=self.reset_board_command)
     else:
       self.highlight_entry_label("No cameras connected.", CtkTypeEnum.ERROR)
