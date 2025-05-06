@@ -2,7 +2,6 @@ import './camera.css';
 
 import { createPortal } from 'react-dom';
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
 
 /**
  * Camera Component

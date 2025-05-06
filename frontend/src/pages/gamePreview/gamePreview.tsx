@@ -3,6 +3,7 @@ import './gamePreview.css';
 import { NavLink } from "react-router-dom";
 import Chessboard from '../../components/chessboard/chessboard';
 import { boards } from '../../data/boards';
+import { useEffect } from 'react';
 
 /**
  * GamePreview Component
@@ -18,6 +19,14 @@ import { boards } from '../../data/boards';
  */
 
 function GamePreview() {
+
+  /**
+   * Update the browser tab title
+   */
+    useEffect(() => {
+      document.title = `Game Preview - ChessCamera`;
+    });
+
   return (
     <div className="game-preview">
       <div className="heading">
@@ -32,7 +41,7 @@ function GamePreview() {
             </div>
             <div className="board-preview">
               <div className="chessboard-preview-wrapper">
-                <Chessboard id={board.id} />
+              <Chessboard id={`${board.id}`} />
               </div>
             </div>
             <div className="player-info">

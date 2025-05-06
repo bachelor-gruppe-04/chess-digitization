@@ -1,12 +1,36 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import TableRow from '../../components/tableRow/tableRow';
 import './tournamentview.css';
 
-export default function TournamentView() {
-  const [boards, setBoards] = useState<number[]>([]);
-  const [error, setError] = useState<string>();
+import { useEffect, useState } from 'react';
+import TableRow from '../../components/tableRow/tableRow';
 
+/**
+ * TournamentView Component
+ *
+ * Fetches a list of active board IDs from the backend and displays a tournament table.
+ * Each row represents a chess game with mocked player names ("White #id" / "Black #id").
+ *
+ * If the data is loading, a skeleton loader is shown.
+ * If an error occurs while fetching data, a user-friendly error message is displayed.
+ */
+
+function TournamentView() {
+  const [boards, setBoards] = useState<number[]>([]); // Stores array of board IDs fetched from backend
+  const [error, setError] = useState<string>(); // Tracks any fetch-related errors
+
+    /**
+   * Update the browser tab title
+   */
+    useEffect(() => {
+      document.title = `ChessCamera`;
+    });
+  
+  /**
+   * On component mount, fetch the list of board IDs from the backend.
+   * Endpoint: GET http://localhost:8000/boards
+   *
+   * Expected response: { boards: [1, 2, 3, ...] }
+   * Handles malformed payloads and network errors.
+   */
   useEffect(() => {
     fetch('http://localhost:8000/boards')
       .then(res => {
@@ -25,6 +49,9 @@ export default function TournamentView() {
       });
   }, []);
 
+  /**
+   * Render error state if fetch failed.
+   */
   if (error) {
     return (
       <div className='tournament-view'>
@@ -69,3 +96,5 @@ export default function TournamentView() {
     </div>
   );
 }
+
+export default TournamentView;

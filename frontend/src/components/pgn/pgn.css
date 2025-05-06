@@ -1,12 +1,20 @@
 .pgn-table .highlight {
-  background-color: var(--light-last-move);
+  background-color: var(--dark-last-move);
   font-weight: 600; 
+  color: var(--dark-text);
 }
 
 .pgn-table th,
 .pgn-table td {
   padding: 0.5rem 1.5rem;
   text-align: center;
+}
+
+@media (prefers-color-scheme: light) {
+  .pgn-table .highlight {
+    background-color: var(--light-last-move);
+    font-weight: 600; 
+  }
 }
 
 @media (max-width: 768px) {

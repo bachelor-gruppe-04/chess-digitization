@@ -13,6 +13,9 @@
   -moz-osx-font-smoothing: grayscale;
 
   --main-color:#6CADD5;
+  --light-main-color: #2B79C2;
+  --light-text:#ffffff;
+  --dark-text:#333333;
   --dark-tile: #6CADD5;
   --light-tile: #EFF3FF;
   --dark-last-move: #92B166;
@@ -78,7 +81,7 @@ table td {
 
 table th {
   background-color: var(--main-color);
-  color: white;
+  color: var(--dark-text);
   font-weight: 600;
 }
 
@@ -94,7 +97,17 @@ table tbody tr:nth-child(even) {
   a {
     color: #1a1a1a;
   }
+  a:hover {
+    color: var(--light-main-color);
+  }
+  button:hover {
+    border-color: var(--light-main-color);
+  }
   button {
     background-color: #f9f9f9;
+  }
+  table th {
+    color: var(--light-text);
+    background-color: var(--light-main-color);
   }
 }

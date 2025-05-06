@@ -1,11 +1,12 @@
 import './boardview.css';
+
 import Camera from '../../components/camera/camera';
 import Chessboard, { ChessboardHandle } from '../../components/chessboard/chessboard';
 import PGN from '../../components/pgn/pgn';
 import { useRef, useEffect, useState } from "react";
 import { NavLink, useParams } from 'react-router-dom';
-import EvalBar from '../../components/stockfish/evalbar';
-import useEvaluation from '../../components/stockfish/stockfish';
+import EvalBar from '../../components/evalbar/evalbar';
+import useEvaluation from '../../hooks/useEvaluation';
 
 /**
  * BoardView Component
@@ -18,21 +19,13 @@ import useEvaluation from '../../components/stockfish/stockfish';
  * and updates the local `moves` state at regular intervals to keep the PGN list in sync.
  */
 
-/**
- * Props for BoardView
- * - `id`: Unique identifier for the board, used to connect to the correct data stream (e.g., WebSocket or camera).
- */
-interface BoardViewProps {
-  id: string;
-}
-
 function BoardView() {
   const pgnRef = useRef<HTMLDivElement>(null); // Ref to scroll the PGN list container
   const boardRef = useRef<ChessboardHandle>(null); // Ref to access Chessboard's imperative handle (exposes getMoves method)
   const [moves, setMoves] = useState<string[]>([]); // State to hold the current list of moves in algebraic notation (SAN)
   const [fen, setFen] = useState<string>(''); // State to hold the current FEN string
   const evaluation = useEvaluation(fen); // Fetch evaluation from Stockfish API based on the current FEN
-  const { id } = useParams<{ id: string}>();
+  const { id } = useParams<{ id: string}>(); // Unique identifier for the board, used to connect to the correct data stream (e.g., WebSocket or camera).
 
   /**
    * Sets up a polling interval to sync moves from the Chessboard component.
@@ -72,6 +65,12 @@ function BoardView() {
     return null;  // No mate situation
   })();
   
+  /**
+   * Update the browser tab title dynamically based on the board ID
+   */
+  useEffect(() => {
+    document.title = `Board ${id} - ChessCamera`;
+  }, [id]);
 
   return (
     <div className="table-view">
