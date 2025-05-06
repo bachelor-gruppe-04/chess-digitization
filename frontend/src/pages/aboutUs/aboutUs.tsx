@@ -1,12 +1,10 @@
 import './aboutUs.css';
 
-
 /**
  * AboutUs Component
  *
  * This page explains why the solution Chess Camera was developed.
  */
-
 
 function HowItWorks() {
   return (

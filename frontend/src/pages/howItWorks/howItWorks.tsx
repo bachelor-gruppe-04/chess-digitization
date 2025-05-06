@@ -1,12 +1,10 @@
 import './howItWorks.css';
 
-
 /**
  * HowItWorks Component
  *
  * This page explains how the Chess Camera works for users.
  */
-
 
 function HowItWorks() {
   return (

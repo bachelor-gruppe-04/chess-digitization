@@ -1,7 +1,8 @@
+import "./chessboard.css";
+
 import { forwardRef, useImperativeHandle, useEffect, useState, useRef } from "react";
 import { Chess } from "chess.ts";
 import Tile from "../tile/tile";
-import "./chessboard.css";
 import { useWebSocket } from "../../hooks/useWebSocket";
 
 
@@ -57,7 +58,6 @@ function generatePositionFromFen(fen: string): Piece[] {
   return pieces;
 }
 
-
 /**
  * Props for Chessboard
  * - `id`: Unique ID for the board, used in WebSocket connection
@@ -65,8 +65,6 @@ function generatePositionFromFen(fen: string): Piece[] {
 interface ChessboardProps {
   id: string | undefined;
 }
-
-
 
 /**
  * Ref interface exposed by the Chessboard component.

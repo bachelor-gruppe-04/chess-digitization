@@ -32,7 +32,7 @@ function GamePreview() {
             </div>
             <div className="board-preview">
               <div className="chessboard-preview-wrapper">
-                <Chessboard id={board.id} />
+              <Chessboard id={`${board.id}`} />
               </div>
             </div>
             <div className="player-info">

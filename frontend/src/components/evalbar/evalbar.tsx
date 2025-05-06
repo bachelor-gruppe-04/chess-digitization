@@ -1,5 +1,6 @@
-import React from "react";
 import "./evalBar.css";
+
+import React from "react";
 
 /**
  * EvalBar Component
