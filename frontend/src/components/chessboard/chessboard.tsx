@@ -40,7 +40,7 @@ function generatePositionFromFen(fen: string): Piece[] {
 
   const pieces: Piece[] = [];
 
-   // Parse the FEN rows (from top to bottom)
+  // Parse the FEN rows (from top to bottom)
   for (let y = 0; y < rows.length; y++) {
     let x = 0;
     for (const char of rows[y]) {
@@ -78,7 +78,7 @@ export interface ChessboardHandle {
 }
 
 const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) => {
-  const chessRef = useRef(new Chess()); // ✅ Persistent Chess instance
+  const chessRef = useRef(new Chess());
   const chess = chessRef.current;
 
   const [pieces, setPieces] = useState<Piece[]>([]);
@@ -86,7 +86,7 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
   const [lastMoveSquares, setLastMoveSquares] = useState<string[]>([]);
   const moves = useWebSocket(`ws://localhost:8000/moves/${id}`);
 
-   /**
+  /**
    * Expose the list of SAN moves to parent components via ref.
    */
   useImperativeHandle(ref, () => ({
@@ -104,7 +104,7 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
   useEffect(() => {
     setPieces(generatePositionFromFen(chess.fen()));
 
-    // Debug helper
+    // Expose move handler for console
     (window as any).makeMove = (notation: string) => {
       const move = chess.move(notation);
       if (move) {
@@ -128,8 +128,7 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
     };
   }, []);
 
-
-    /**
+  /**
    * Apply all moves received from the WebSocket.
    * Valid moves are added to the move list and used to update the board.
    * The most recent move's squares are tracked for highlighting.
@@ -145,7 +144,6 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
     }
 
     const validSanMoves: string[] = [];
-
 
     // Attempt to apply each move to the chess instance
     moves.forEach((notation) => {
