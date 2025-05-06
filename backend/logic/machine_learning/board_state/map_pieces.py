@@ -11,6 +11,7 @@ from logic.machine_learning.utilities.move import san_to_lan, calculate_move_sco
 from logic.machine_learning.game.game import make_update_payload
 from logic.machine_learning.view.render import draw_points, draw_polygon, draw_boxes_with_scores
 from logic.machine_learning.detection.run_detections import find_centers_and_boundary
+import logic.api.services.board_storage as storage
 
 import time
 
@@ -25,7 +26,7 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
     global last_update_time
 
     # Get the correct board instance
-    game_ref = boards[board_id]    
+    game_ref = storage.boards[board_id]    
     moves_pairs_ref: list = get_moves_pairs(game_ref.chess_board)
 
     # Internal state variables
@@ -37,7 +38,8 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
     payload = None
     keypoints = None
     possible_moves = set()
-
+    
+    last_move = game_ref.move_history[-1] if game_ref.move_history else None
     
     if centers is None:
         keypoints = extract_xy_from_labeled_corners(corners_ref, video_ref)
@@ -58,10 +60,6 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
 
     # Update state
     state = update_state(state, update)
-    
-    print("THIS IS INSIDE MAP PIECES")
-    print(game_ref.chess_board)
-    print(game_ref.chess_board.fen())
 
     # Get best moves
     best_score1, best_score2, best_joint_score, best_move, best_moves = process_state(
@@ -76,7 +74,7 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
         has_move = (best_score2 > 0 and best_joint_score > 0 and move_str in possible_moves)
         if has_move:
             game_ref.chess_board.push_san(move_str)
-            game_ref.last_move = game_ref.chess_board.peek().uci()
+            last_move = game_ref.chess_board.peek().uci()
             possible_moves.clear()
             greedy_move_to_time = {}  # Reset for greedy moves
 
@@ -88,13 +86,13 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
             greedy_move_to_time[move_str] = end_time
 
         elapsed = (end_time - greedy_move_to_time[move_str]) > 1.0
-        is_new = san_to_lan(game_ref.chess_board, move_str) != game_ref.last_move
+        is_new = san_to_lan(game_ref.chess_board, move_str) != last_move
 
         has_greedy_move = elapsed and is_new
 
         if has_greedy_move:
             game_ref.chess_board.push_san(move_str)
-            game_ref.last_move = game_ref.chess_board.peek().uci()
+            last_move = game_ref.chess_board.peek().uci()
             greedy_move_to_time = {move_str: greedy_move_to_time[move_str]}  # Preserve last move time
 
     if has_move or has_greedy_move:

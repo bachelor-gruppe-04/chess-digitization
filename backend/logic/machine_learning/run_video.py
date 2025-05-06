@@ -7,14 +7,6 @@ import logic.api.services.board_storage as storage
 from logic.api.services import board_storage
 import asyncio
 
-# ──────────────────────────────────────────────────────────────
-# def t(label: str, _last=[time.time()]):
-#     now = time.time()
-#     print(f"{label:<35} {(now - _last[0]) * 1000:7.1f} ms")
-#     _last[0] = now
-# ──────────────────────────────────────────────────────────────
-
-
 async def process_video(
     piece_model_session: ort.InferenceSession,
     corner_ort_session: ort.InferenceSession,
@@ -54,7 +46,6 @@ async def process_video(
                 )
                 if payload:
                     move = payload[1]["sans"][0]
-                    print(move)
 
                     board_service = BoardService()
                     await board_service.send_move(board_id, move)
