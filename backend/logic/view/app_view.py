@@ -1,6 +1,8 @@
+from enum import Enum
 import customtkinter as ctk
 import asyncio
-from logic.api.services import board_storage
+from logic.api.entity.camera import CameraDoesNotExistError
+import logic.api.services.board_storage as storage
 from logic.api.services.board_service import BoardService
 from logic.api.entity.board_factory import BoardFactory
 import logic.view.state as state
@@ -10,10 +12,15 @@ from logic.view.reset_specific_board_view import BoardResetSelectorTopLevel
 ctk.set_appearance_mode("system")
 ctk.set_default_color_theme("blue")
 
+class CtkTypeEnum(Enum):
+  ERROR = {"type": "error", "color": "red"}
+  WARNING = {"type": "warning", "color": "yellow"}
+  OK = {"type": "ok", "color": "green"}
+
 class App(ctk.CTk):
   def __init__(self, reset_board_function=None, reset_all_boards_function=None):
     super().__init__()
-    self.title("Control Panel")
+    self.title("ChessCamera | Control Panel")
     self.geometry("800x500")
     self.minsize(600, 400)
     
@@ -36,10 +43,19 @@ class App(ctk.CTk):
         width=300,
         height=40,
         font=("Segoe UI", 14),
-        fg_color=("#ffffff","#333333")
+        fg_color=("#ffffff","#333333"),
+        border_width=0
     )
     self.number_of_cameras_entry.insert(0, "Number of Cameras")
     self.number_of_cameras_entry.pack(pady=(5, 15))
+    
+    self.error_label = ctk.CTkLabel(
+      container,
+      text="",
+      text_color="red",
+      font=("Segoe UI", 12)
+    )
+    self.error_label.pack(pady=(0, 10))
 
     def on_focus_in(event):
         if event.widget.get() == "Number of Cameras":
@@ -73,6 +89,7 @@ class App(ctk.CTk):
       width=200,
       height=45,
       font=("Segoe UI", 14),
+      state="disabled",
       command=self.open_board_reset_window
     )
     self.reset_select_button.pack(side="left", padx=(0, 20))
@@ -83,6 +100,7 @@ class App(ctk.CTk):
       width=200,
       height=45,
       font=("Segoe UI", 14),
+      state="disabled",
       command=lambda: self.reset_all_boards()
     )
     self.reset_button.pack(side="left")
@@ -93,6 +111,7 @@ class App(ctk.CTk):
       width=200,
       height=45,
       font=("Segoe UI", 14),
+      state="disabled",
       command=self.start_tournament
     )
     self.start_button.pack(pady=(10, 10))
@@ -100,6 +119,7 @@ class App(ctk.CTk):
     self.bind('<Return>', lambda e: self.apply_number_of_cameras())
     
   def reset_all_boards(self) -> None:
+    self.highlight_entry_label("All boards reset succesfully.", CtkTypeEnum.WARNING)
     asyncio.run_coroutine_threadsafe(self._async_reset_all_boards(), state.event_loop)
     
   async def _async_reset_all_boards(self) -> None:
@@ -114,33 +134,52 @@ class App(ctk.CTk):
     """ Validate the entry to only allow digits and empty string. """
     return value.isdigit() or value == ""
   
+  def highlight_status_and_entry(self, msg: str, type: CtkTypeEnum=CtkTypeEnum.ERROR):
+    self.number_of_cameras_entry.configure(border_color=type.value["color"], border_width=2)
+    self.highlight_entry_label(msg, type)
+  
+  def highlight_entry_label(self, msg: str, type: CtkTypeEnum=CtkTypeEnum.ERROR):
+    self.error_label.configure(text=msg, text_color=type.value["color"])
+    self.after(3000, self.clear_entry_label)
+      
+  def clear_entry_label(self):
+    self.number_of_cameras_entry.configure(border_color="", border_width=0)
+    self.error_label.configure(text="")
+  
   def apply_number_of_cameras(self) -> None:
-    """ Apply the number of cameras and start the connection test. """
+    """ Apply the number of cameras and start the connection. """
     number = self.number_of_cameras_entry.get().strip()
     
     if number.isdigit() and int(number) > 0:
-      self.number_of_cameras = int(number)
+      self.clear_entry_label()
       
-      board_factory = BoardFactory()
-      self.boards = board_factory.create_boards(self.number_of_cameras)
-      self.board_service = BoardService()
-      
-      board_storage.boards = self.boards
+      try:
+        self.number_of_cameras = int(number)
+        board_factory = BoardFactory()
+        self.boards = board_factory.create_boards(self.number_of_cameras)
+        self.board_service = BoardService()
+        storage.boards = self.boards
+        
+      except CameraDoesNotExistError as e:
+        self.highlight_status_and_entry(f"Error: {e}", CtkTypeEnum.ERROR)
+        self.number_of_cameras = 0
+        return
       
       self.disable_main_buttons()
       self.progress_window = ProgressBarTopLevel(self, self.number_of_cameras, self.on_connection_finished)
     else:
+      self.highlight_status_and_entry("Please enter a valid number of cameras.", CtkTypeEnum.ERROR)
       self.number_of_cameras = 0
       
   def start_tournament(self) -> None:
     """ Start the tournament if cameras are connected. """
     if self.number_of_cameras > 0 and self.board_service:
+      self.reset_select_button.configure(state="normal")
+      self.reset_button.configure(state="normal")
       self.board_service.start_detectors()
-    # else:
-    #   print("Please apply a valid number of cameras first.")
       
   def disable_main_buttons(self) -> None:
-    """ Disable main buttons during connection test. """
+    """ Disable main buttons during connection. """
     self.apply_button.configure(state="disabled")
     self.start_button.configure(state="disabled")
     self.reset_select_button.configure(state="disabled")
@@ -148,20 +187,14 @@ class App(ctk.CTk):
     self.number_of_cameras_entry.configure(state="disabled")
     
   def enable_main_buttons(self) -> None:
-    """ Enable main buttons after connection test. """
+    """ Enable main buttons after connection. """
     self.apply_button.configure(state="normal")
     self.start_button.configure(state="normal")
-    self.reset_select_button.configure(state="normal")
-    self.reset_button.configure(state="normal")
     self.number_of_cameras_entry.configure(state="normal")
     
-  def on_connection_finished(self, was_cancelled:bool=False) -> None:
+  def on_connection_finished(self) -> None:
     """ Callback when the connection is finished. """
-    # if was_cancelled:
-    #   print("Camera connection cancelled.")
-    # else:
-    #   print("Camera connection completed.")
-      
+    self.highlight_status_and_entry("Connection finished.", CtkTypeEnum.OK)
     self.enable_main_buttons()
     
   def open_board_reset_window(self) -> None:
@@ -169,5 +202,5 @@ class App(ctk.CTk):
     if self.number_of_cameras > 0:
       self.disable_main_buttons()
       BoardResetSelectorTopLevel(self, self.number_of_cameras, self.enable_main_buttons, func=self.reset_board_command)
-    # else:
-    #   print("Please apply a valid number of cameras first.")
+    else:
+      self.highlight_entry_label("No cameras connected.", CtkTypeEnum.ERROR)

@@ -2,6 +2,7 @@ import './camera.css';
 
 import { createPortal } from 'react-dom';
 import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 
 /**
  * Camera Component
@@ -18,7 +19,7 @@ import { useEffect, useState } from 'react';
  * - `id`: Unique identifier used to fetch the correct webcam stream for a specific board
  */
 interface CameraProps {
-  id: number;
+  id: string | undefined;
 }
 
 function Camera({ id }: CameraProps) {

@@ -40,8 +40,9 @@ function App() {
         <Route path="/about" element={<AboutUs />} />
 
         {/* Individual board views with IDs */}
-        <Route path="/board/1" element={<BoardView id={1} />} />
-        <Route path="/board/2" element={<BoardView id={2} />} />
+        {/* <Route path="/board/1" element={<BoardView id={1} />} />
+        <Route path="/board/2" element={<BoardView id={2} />} /> */}
+        <Route path="/board/:id" element={<BoardView />} />
       </Routes>
     </BrowserRouter>
   );

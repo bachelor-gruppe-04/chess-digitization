@@ -1,1 +1,0 @@
-BOARD_COUNT = 1
