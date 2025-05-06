@@ -1,12 +1,21 @@
 import './aboutUs.css';
 
+import { useEffect } from 'react';
+
 /**
  * AboutUs Component
  *
  * This page explains why the solution Chess Camera was developed.
  */
 
-function HowItWorks() {
+function AboutUs() {
+  /**
+   * Update the browser tab title
+   */
+  useEffect(() => {
+    document.title = `About Us - ChessCamera`;
+  });
+  
   return (
     <div className="about-us">
       <div className="heading">
@@ -53,4 +62,4 @@ function HowItWorks() {
   );
 }
 
-export default HowItWorks;
+export default AboutUs;

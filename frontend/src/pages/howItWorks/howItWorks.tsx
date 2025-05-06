@@ -1,5 +1,7 @@
 import './howItWorks.css';
 
+import { useEffect } from 'react';
+
 /**
  * HowItWorks Component
  *
@@ -7,6 +9,14 @@ import './howItWorks.css';
  */
 
 function HowItWorks() {
+
+  /**
+   * Update the browser tab title
+   */
+  useEffect(() => {
+    document.title = `How it Works - ChessCamera`;
+  });
+
   return (
     <div className="how-it-works">
       <div className="heading">

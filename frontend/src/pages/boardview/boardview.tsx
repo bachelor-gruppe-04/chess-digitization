@@ -65,6 +65,12 @@ function BoardView() {
     return null;  // No mate situation
   })();
   
+  /**
+   * Update the browser tab title dynamically based on the board ID
+   */
+  useEffect(() => {
+    document.title = `Board ${id} - ChessCamera`;
+  }, [id]);
 
   return (
     <div className="table-view">

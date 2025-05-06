@@ -13,10 +13,17 @@ import TableRow from '../../components/tableRow/tableRow';
  * If an error occurs while fetching data, a user-friendly error message is displayed.
  */
 
-export default function TournamentView() {
+function TournamentView() {
   const [boards, setBoards] = useState<number[]>([]); // Stores array of board IDs fetched from backend
   const [error, setError] = useState<string>(); // Tracks any fetch-related errors
 
+    /**
+   * Update the browser tab title
+   */
+    useEffect(() => {
+      document.title = `ChessCamera`;
+    });
+  
   /**
    * On component mount, fetch the list of board IDs from the backend.
    * Endpoint: GET http://localhost:8000/boards
@@ -89,3 +96,5 @@ export default function TournamentView() {
     </div>
   );
 }
+
+export default TournamentView;
