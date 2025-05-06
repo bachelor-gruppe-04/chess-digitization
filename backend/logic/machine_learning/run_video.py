@@ -2,8 +2,18 @@ import time, cv2, onnxruntime as ort
 from typing import Optional
 from logic.machine_learning.detection.run_detections import get_board_corners
 from logic.machine_learning.board_state.map_pieces import get_payload
+from logic.machine_learning.utilities.move import get_moves_pairs
+import logic.api.services.board_storage as storage
 from logic.api.services import board_storage
 import asyncio
+
+# ──────────────────────────────────────────────────────────────
+# def t(label: str, _last=[time.time()]):
+#     now = time.time()
+#     print(f"{label:<35} {(now - _last[0]) * 1000:7.1f} ms")
+#     _last[0] = now
+# ──────────────────────────────────────────────────────────────
+
 
 async def process_video(
     piece_model_session: ort.InferenceSession,

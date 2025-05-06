@@ -1,5 +1,5 @@
 from fastapi import APIRouter, WebSocket
-from logic.api.services.board_storage import boards
+import logic.api.services.board_storage as storage
 
 router = APIRouter()
 
@@ -12,16 +12,16 @@ async def websocket_endpoint(websocket: WebSocket, board_id: int) -> None:
     board_id (int): Board ID
   """
   await websocket.accept()
-  if board_id not in boards:
+  if board_id not in storage.boards:
     await websocket.close()
     return
     
-  boards[board_id].clients.append(websocket)
+  storage.boards[board_id].clients.append(websocket)
   try:
-    for move in boards[board_id].move_history:
+    for move in storage.boards[board_id].move_history:
       await websocket.send_text(move)
     while True:
       await websocket.receive_text()
   except Exception:
-    if websocket in boards[board_id].clients:
-      boards[board_id].clients.remove(websocket)
+    if websocket in storage.boards[board_id].clients:
+      storage.boards[board_id].clients.remove(websocket)
