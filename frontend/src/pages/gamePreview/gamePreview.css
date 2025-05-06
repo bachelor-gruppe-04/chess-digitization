@@ -15,11 +15,11 @@
   }
   
   .board-card {
-    background-color: #f4f4f4;
+    background-color: #1e1e1e;
     border-radius: 12px;
     padding: 1rem;
     text-decoration: none;
-    color: black;
+    color: f0f0f0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -28,7 +28,7 @@
   
   .board-card:hover {
     transform: scale(1.05);
-    background-color: #e0e0e0;
+    background-color: #2a2a2a;
   }
   
   .table-label {
@@ -49,4 +49,12 @@
     overflow: hidden;
   }
 
-  
+  @media (prefers-color-scheme: light) {
+    .board-card {
+      background-color: #f4f4f4;
+      color: black;
+    }
+    .board-card:hover {
+      background-color: #e0e0e0;
+    }
+  }

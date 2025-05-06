@@ -9,7 +9,7 @@
   align-items: center;
   padding: 0 1.5rem;
   border-bottom: 1px solid #e5e7eb;
-  background-color: #ffffff;
+  background-color: #1e1e1e;
   z-index: 1000;
 }
 
@@ -20,7 +20,7 @@
 }
 
 .header-logo span {
-  color: black;
+  color: var(--light-text);
 }
 
 .header-links {
@@ -49,12 +49,18 @@
   cursor: pointer;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   .header span {
-    color: white;
+    color: var(--dark-text);
   }
   .header {
-    background-color: #1a1a1a;
+    background-color: var(--light-text);
+  }
+  .header-logo {
+    color: var(--light-main-color);
+  }
+  .header-links a:hover {
+    color: var(--light-main-color);
   }
 }
 

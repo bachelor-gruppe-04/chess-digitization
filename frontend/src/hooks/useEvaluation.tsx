@@ -1,7 +1,22 @@
 import { useState, useEffect } from "react";
 
+/**
+ * useEvaluation Hook
+ *
+ * Fetches a chess evaluation (centipawn or mate) from the Stockfish.online API based on a given FEN string.
+ * Automatically updates when the FEN or depth changes.
+ * Supports both numeric evaluations and mate announcements (e.g., "M1", "-M3").
+ *
+ * @param fen   - The FEN string representing the current board position
+ * @param depth - (Optional) The search depth to use for the engine (default: 15)
+ *
+ * @returns evaluation - Can be:
+ *   - A number (e.g., 0.5)
+ *   - A string representing mate (e.g., "M1")
+ *   - Null if no evaluation is available or on error
+ */
 const useEvaluation = (fen: string, depth: number = 15) => {
-  const [evaluation, setEvaluation] = useState<number | string | null>(null);  // Update state to accept string (mate)
+  const [evaluation, setEvaluation] = useState<number | string | null>(null);  // Stores the current evaluation or mate string
 
   useEffect(() => {
     const fetchStockfishEvaluation = async () => {
