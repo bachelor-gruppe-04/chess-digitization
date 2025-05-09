@@ -1,4 +1,4 @@
-START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+START_FEN = "brnqknrb/pppppppp/8/8/8/8/PPPPPPPP/BRNQKNRB w KQkq - 0 1"
 MODEL_WIDTH = 480
 MODEL_HEIGHT = 288
 MARKER_RADIUS = 25

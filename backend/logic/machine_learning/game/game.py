@@ -4,6 +4,8 @@ import chess.pgn
 from logic.machine_learning.utilities.constants import START_FEN
 
 
+#This would be a custom defined chessboard, however for now we are using the default chessboard in chess.py
+
 # class Game:
 #     def __init__(self, game_id: str, fen: str = START_FEN, moves: str = "", start: str = START_FEN, last_move: str = "", greedy: bool = False):
 #         self.id: str = game_id  # Unique game identifier
