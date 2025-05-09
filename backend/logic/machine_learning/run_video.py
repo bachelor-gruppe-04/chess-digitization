@@ -58,7 +58,7 @@ async def process_video(
                 )
                 if payload:
                     move = payload[1]["sans"][0]
-                    
+                                        
                     boards = storage.boards
                     board_service = BoardService()
                     if board_id in boards:

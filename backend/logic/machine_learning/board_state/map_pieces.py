@@ -95,6 +95,8 @@ async def get_payload(piece_model_ref: ort.InferenceSession,
 
     # draw_points(video_ref, centers)
     # draw_polygon(video_ref, boundary)
+    # draw_boxes_with_scores(video_ref, boxes, scores)
+    
 
     return video_ref, payload
 
