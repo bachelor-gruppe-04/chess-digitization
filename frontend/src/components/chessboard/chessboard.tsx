@@ -76,7 +76,8 @@ export interface ChessboardHandle {
 }
 
 const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) => {
-  const chessRef = useRef(new Chess());
+  const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+  const chessRef = useRef(new Chess(START_FEN));
   const chess = chessRef.current;
 
   const [pieces, setPieces] = useState<Piece[]>([]);
@@ -87,10 +88,13 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
   /**
    * Expose the list of SAN moves to parent components via ref.
    */
-  useImperativeHandle(ref, () => ({
-    getMoves: () => moveList,
-    getFEN: () => chess.fen(),
-  }));
+ useImperativeHandle(ref, () => ({
+  getMoves: () => moveList,
+  getFEN: () => {
+    const fen = chess.fen();
+    return fen;
+  },
+}));
 
   
   /**
@@ -132,7 +136,7 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
    * The most recent move's squares are tracked for highlighting.
    */
   useEffect(() => {
-    chess.reset();
+    chess.load(START_FEN); // Reset the chess instance to the starting position
 
     if (!moves || moves.length === 0) {
       setMoveList([]);

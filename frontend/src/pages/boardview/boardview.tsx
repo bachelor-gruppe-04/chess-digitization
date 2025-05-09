@@ -47,16 +47,18 @@ function BoardView() {
    * This ensures that the most recent moves are always visible.
    */
   useEffect(() => {
-    if (pgnRef.current) {
-      pgnRef.current.scrollTop = pgnRef.current.scrollHeight;
-    }
+  if (pgnRef.current) {
+    pgnRef.current.scrollTop = pgnRef.current.scrollHeight;
+  }
 
+  if (boardRef.current) {  // Fixed the syntax error here
     const newFEN = boardRef.current?.getFEN();
     if (newFEN) {
       setFen(newFEN);
-      console.log('New FEN:', newFEN);
     }
-  }, [moves]);
+  }
+}, [moves]);
+
 
   const mate = (() => {
     if (evaluation && typeof evaluation === 'string' && evaluation.startsWith('M')) {

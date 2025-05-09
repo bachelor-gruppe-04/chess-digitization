@@ -29,9 +29,7 @@ const useEvaluation = (fen: string, depth: number = 15) => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log("Stockfish evaluation result:", data);
 
-        // Check if 'evaluation' exists (regular evaluation)
         if (data.evaluation) {
           setEvaluation(data.evaluation);
         } 
@@ -41,7 +39,6 @@ const useEvaluation = (fen: string, depth: number = 15) => {
         } else {
           setEvaluation(null); // Reset to null if no evaluation or mate
         }
-        console.log("Evaluation set to:", data.evaluation || data.mate);
       } catch (error) {
         console.error("Error fetching evaluation from Stockfish API:", error);
         setEvaluation(null); // Reset to null in case of error
