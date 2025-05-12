@@ -83,6 +83,11 @@ function BoardView() {
         <div className='camera-wrapper'>
           <Camera id={id} />
         </div>
+        <div className="pgn-download-button">
+          <button onClick={() => boardRef.current?.downloadPGN()}>
+            Download PGN
+          </button>
+        </div>
         <div className="pgn-wrapper" ref={pgnRef}>
           <PGN moves={moves} />
         </div>
