@@ -32,7 +32,10 @@ function TableRow({ boardNumber, whitePlayer, blackPlayer }: TableRowProps) {
       <td>{whitePlayer}</td>
       <td>{blackPlayer}</td>
       <td>
-        <NavLink to={`/board/${boardNumber}`} className="live-button">
+        <NavLink to={`/board/${boardNumber}`} state={{
+          whitePlayer: `White #${boardNumber}`,
+          blackPlayer: `Black #${boardNumber}`
+        }} className="live-button">
           LIVE
         </NavLink>
       </td>
