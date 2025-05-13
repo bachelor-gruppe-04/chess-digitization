@@ -1,9 +1,17 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
 .table-view {
+  height: 80vh;
+  overflow: hidden;
   display: flex;
   gap: 1rem;
-  
   padding-left: 1rem;
   padding-right: 1rem;
+  padding-top: 6rem;
 }
 
 .left-wrapper {
@@ -64,8 +72,8 @@
 }
 
 .pgn-wrapper {
-  flex: 1;
-  overflow-y: scroll;
+  height: 200px;
+  overflow-y: auto;
   padding-left: 1rem;
   padding-right: 1rem;
   border-radius: 6px;
