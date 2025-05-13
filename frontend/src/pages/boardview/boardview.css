@@ -1,9 +1,17 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
 .table-view {
+  height: 80vh;
+  overflow: hidden;
   display: flex;
   gap: 1rem;
-  
   padding-left: 1rem;
   padding-right: 1rem;
+  padding-top: 6rem;
 }
 
 .left-wrapper {
@@ -14,8 +22,35 @@
   width: 80vmin;
 }
 
+.top-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
 .back-button {
   text-align: left;
+  flex-shrink: 0;
+}
+
+.pgn-download-button button {
+  cursor: pointer;
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  background-color: var(--main-color);
+  color: var(--dark-text);
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+}
+
+.pgn-download-button:hover button {
+  background-color: rgba(81, 154, 206, 0.85);
+  color: white;
 }
 
 .camera-wrapper {
@@ -37,8 +72,8 @@
 }
 
 .pgn-wrapper {
-  flex: 1;
-  overflow-y: scroll;
+  height: 200px;
+  overflow-y: auto;
   padding-left: 1rem;
   padding-right: 1rem;
   border-radius: 6px;
@@ -100,5 +135,12 @@
 
   body {
     padding-top: 5rem;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .pgn-download-button button {
+    color: var(--light-text);
+    background-color: var(--light-main-color);
   }
 }

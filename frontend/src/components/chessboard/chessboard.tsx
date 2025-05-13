@@ -68,11 +68,19 @@ interface ChessboardProps {
 
 /**
  * Ref interface exposed by the Chessboard component.
- * Allows parent components to retrieve the current move list.
+ *
+ * This allows parent components to access certain chess game data
+ * directly through the component's reference using `useImperativeHandle`.
+ *
+ * Methods exposed:
+ * - `getMoves()`: Returns a list of SAN (Standard Algebraic Notation) moves
+ * - `getFEN()`: Returns the current board state in Forsyth–Edwards Notation
+ * - `getPGN()`: Returns the full move history in PGN (Portable Game Notation) format
  */
 export interface ChessboardHandle {
   getMoves: () => string[];
   getFEN: () => string;
+  getPGN: () => string;
 }
 
 const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) => {
@@ -86,16 +94,18 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
   const moves = useWebSocket(`ws://localhost:8000/moves/${id}`);
 
   /**
-   * Expose the list of SAN moves to parent components via ref.
+   * Expose internal chess game data to the parent component via `ref`.
+   *
+   * This allows external access to:
+   * - The move history
+   * - The current FEN string
+   * - The full PGN history
    */
- useImperativeHandle(ref, () => ({
-  getMoves: () => moveList,
-  getFEN: () => {
-    const fen = chess.fen();
-    return fen;
-  },
-}));
-
+  useImperativeHandle(ref, () => ({
+    getMoves: () => moveList,
+    getFEN: () => chess.fen(),
+    getPGN: () => chess.pgn(),
+  }));
   
   /**
    * Initializes the board on first render using the current FEN from `chess.ts`.

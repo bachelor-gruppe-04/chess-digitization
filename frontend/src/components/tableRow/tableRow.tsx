@@ -10,7 +10,8 @@ import { NavLink } from 'react-router-dom';
  * - Player names
  * - A link to the live board view
  *
- * The "LIVE" link uses React Router's `NavLink` to navigate to the specific board's view.
+ * The `LIVE` link uses React Router’s `NavLink` to navigate to a dedicated board route (e.g., `/board/1`),
+ * and passes player names through the router state object for optional use in the destination component.
  */
 
 /**
@@ -32,7 +33,10 @@ function TableRow({ boardNumber, whitePlayer, blackPlayer }: TableRowProps) {
       <td>{whitePlayer}</td>
       <td>{blackPlayer}</td>
       <td>
-        <NavLink to={`/board/${boardNumber}`} className="live-button">
+        <NavLink to={`/board/${boardNumber}`} state={{
+          whitePlayer: `White #${boardNumber}`,
+          blackPlayer: `Black #${boardNumber}`
+        }} className="live-button">
           LIVE
         </NavLink>
       </td>
