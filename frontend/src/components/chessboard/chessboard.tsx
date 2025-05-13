@@ -73,7 +73,7 @@ interface ChessboardProps {
 export interface ChessboardHandle {
   getMoves: () => string[];
   getFEN: () => string;
-  downloadPGN: () => void;
+  getPGN: () => string;
 }
 
 const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) => {
@@ -92,23 +92,7 @@ const Chessboard = forwardRef<ChessboardHandle, ChessboardProps>(({ id }, ref) =
   useImperativeHandle(ref, () => ({
     getMoves: () => moveList,
     getFEN: () => chess.fen(),
-    downloadPGN: () => {
-      const pgnHeaders = [
-        `[Event "Local Game"]`,
-        `[Date "${new Date().toISOString().split("T")[0]}"]`,
-        `[White "White Player"]`,
-        `[Black "Black Player"]`,
-        `[Result "*"]`,
-      ];
-      const fullPGN = pgnHeaders.join("\n") + "\n\n" + chess.pgn();
-      const blob = new Blob([fullPGN], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `game-${new Date().toISOString().replace(/[:.]/g, '-')}.pgn`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
+    getPGN: () => chess.pgn(),
   }));
   
   /**
