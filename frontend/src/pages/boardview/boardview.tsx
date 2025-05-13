@@ -85,6 +85,10 @@ function BoardView() {
 
   /**
    * Generates and downloads a PGN file using current game info and headers.
+   *
+   * The user should be able to enter the tournament name at the start of the tournament.
+   * The result should reflect the game status and display one of:
+   * "1-0" (white wins), "0-1" (black wins), "1/2-1/2" (draw), or "In Progress".
    */
   const downloadPGN = () => {
     if (!boardRef.current) return;
@@ -107,7 +111,7 @@ function BoardView() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `game-${date}.pgn`;
+    a.download = `game-${date}-board-${id}.pgn`;
     document.body.appendChild(a);
     a.click();
   
