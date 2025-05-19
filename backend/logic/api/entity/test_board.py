@@ -3,8 +3,9 @@ from unittest.mock import MagicMock
 from logic.api.entity.board import Board
 
 class TestBoard(unittest.TestCase):
+  """ Unit tests for the Board class. """
 
-  def test_initialization(self):
+  def test_initialization(self) -> None:
     """ Test the initialization of the Board class. """
     board = Board(1)
     
@@ -15,17 +16,17 @@ class TestBoard(unittest.TestCase):
     self.assertEqual(board.clients, [])
     self.assertFalse(board.invalid_latched)
     
-  def test_invalid_value_initialization(self):
+  def test_invalid_value_initialization(self) -> None:
     """ Test the invalid value initialization of the Board class. """
     with self.assertRaises(ValueError):
       Board(0)
     
-  def test_invalid_type_initialization(self):
+  def test_invalid_type_initialization(self) -> None:
     """ Test the invalid type initialization of the Board class. """
     with self.assertRaises(TypeError):
       Board("INVALID")
     
-  def test_validate_move_one_valid(self):
+  def test_validate_move_one_valid(self) -> None:
     """ Test the validation of a single valid move. """
     board = Board(1)
     
@@ -33,7 +34,7 @@ class TestBoard(unittest.TestCase):
     self.assertEqual(move, "a4")
     self.assertTrue(valid)
     
-  def test_validate_move_two_valid(self):
+  def test_validate_move_two_valid(self) -> None:
     """ Test the validation of two valid moves. """
     board = Board(1)
     
@@ -45,7 +46,7 @@ class TestBoard(unittest.TestCase):
     self.assertEqual(move_2, "b5")
     self.assertTrue(valid_2)
     
-  def test_validate_move_one_invalid(self):
+  def test_validate_move_one_invalid(self) -> None:
     """ Test the validation of a single invalid move. """
     board = Board(1)
     
@@ -53,7 +54,7 @@ class TestBoard(unittest.TestCase):
     self.assertEqual(move, "INVALID")
     self.assertFalse(valid)
     
-  def test_validate_move_two_invalid(self):
+  def test_validate_move_two_invalid(self) -> None:
     """ Test the validation of two invalid moves. """
     board = Board(1)
     
@@ -65,7 +66,7 @@ class TestBoard(unittest.TestCase):
     self.assertEqual(move_2, "INVALID")
     self.assertFalse(valid_2)
     
-  def test_validate_move_first_valid_second_invalid(self):
+  def test_validate_move_first_valid_second_invalid(self) -> None:
     """ Test the validation of a valid move followed by an invalid move. """
     board = Board(1)
     
@@ -77,7 +78,7 @@ class TestBoard(unittest.TestCase):
     self.assertEqual(move_2, "INVALID")
     self.assertFalse(valid_2)
     
-  def test_validate_move_first_invalid_second_valid(self):
+  def test_validate_move_first_invalid_second_valid(self) -> None:
     """ Test the validation of an invalid move followed by a valid move. """
     board = Board(1)
     
@@ -89,13 +90,13 @@ class TestBoard(unittest.TestCase):
     self.assertEqual(move_2, "INVALID")
     self.assertFalse(valid_2)
     
-  def test_reset_board(self):
+  def test_reset_board(self) -> None:
     """ Test the reset_board method. """
     board = Board(1)
     
     self.assertEqual(board.reset_board(), "RESET")
     
-  def test_reset_board_valid_game(self):
+  def test_reset_board_valid_game(self) -> None:
     """ Test the reset_board method with a valid game. """
     board = Board(1)
     
@@ -117,7 +118,7 @@ class TestBoard(unittest.TestCase):
     self.assertEqual(move_22, "b5")
     self.assertTrue(valid_22)
     
-  def test_reset_board_invalid_game_once(self):
+  def test_reset_board_invalid_game_once(self) -> None:
     """ Test the reset_board method with an invalid game. """
     board = Board(1)
     
@@ -139,7 +140,7 @@ class TestBoard(unittest.TestCase):
     self.assertEqual(move_22, "b5")
     self.assertTrue(valid_22)
     
-  def test_reset_board_invalid_game_twice(self):
+  def test_reset_board_invalid_game_twice(self) -> None:
     """ Test the reset_board method with an invalid game twice. """
     board = Board(1)
     
@@ -171,7 +172,7 @@ class TestBoard(unittest.TestCase):
     self.assertEqual(move_32, "b5")
     self.assertTrue(valid_32)
     
-  def test_reset_board_forced_failure(self):
+  def test_reset_board_forced_failure(self) -> None:
     """ Test the reset_board method with a forced failure. """
     board = Board(1)
       
