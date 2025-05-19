@@ -57,11 +57,11 @@ class BoardResetSelectorTopLevel(ctk.CTkToplevel):
       )
       reset_button.pack(side="right", padx=(0, 10))
       
-  def highlight_entry_label(self, msg: str, type: CtkTypeEnum=CtkTypeEnum.ERROR):
+  def highlight_entry_label(self, msg: str, type: CtkTypeEnum=CtkTypeEnum.ERROR) -> None:
     self.error_label.configure(text=msg, text_color=type.value["color"])
     self.after(3000, self.clear_entry_label)
       
-  def clear_entry_label(self):
+  def clear_entry_label(self) -> None:
     self.error_label.configure(text="")
       
   def center_on_parent(self) -> None:
