@@ -17,18 +17,8 @@ Then, when the directory points to the backend folder, please run the following 
 
 To start the backend, run these following lines:
 
-### WebSockets
-
-For starting the WebSocket and cameras, navigate to the correct directory:
-
-    cd logic/api
+    cd backend
 
 Then, when the directory includes the correct path, run the following line to start the process:
 
     uvicorn main:app --reload
-
-### Machine Learning Algorithm
-
-For starting the algorithm, make sure the directory point to the ``backend`` folder, then run the following line:
-
-    python logic/detection/run_video.py
