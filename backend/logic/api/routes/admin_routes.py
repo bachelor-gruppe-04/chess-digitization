@@ -7,7 +7,7 @@ router = APIRouter()
 board_service = BoardService()
 
 @router.post("/reset/{board_id}")
-async def reset_board(board_id: int):
+async def reset_board(board_id: int) -> dict:
   """ Reset a specific board. 
   
   Args:
@@ -17,13 +17,13 @@ async def reset_board(board_id: int):
   return {"status": "reset", "board": board_id}
 
 @router.post("/reset_all")
-async def reset_all_boards():
+async def reset_all_boards() -> dict[str, str]:
   """ Reset all boards. """
   await board_service.reset_all_games()
   return {"status": "all boards reset"}
 
 @router.get("/boards")
-async def list_boards():
+async def list_boards() -> dict:
   """ List all boards. """
   ids = list(storage.boards.keys())
   return {"board_count": len(ids), "boards": ids}

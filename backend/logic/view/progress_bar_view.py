@@ -1,6 +1,7 @@
 import customtkinter as ctk
 
 class ProgressBarTopLevel(ctk.CTkToplevel):
+  """ A progress bar window that shows the progress of connecting to cameras. """
   def __init__(self, parent, total_cameras:int, on_finish_callback):
     super().__init__(parent)
     self.title("Connecting to Cameras...")

@@ -1,14 +1,10 @@
 import customtkinter as ctk
 import asyncio
+from logic.view.ctk_type_enum import CtkTypeEnum
 import logic.view.state as state
-from enum import Enum
-
-class CtkTypeEnum(Enum):
-  ERROR = {"type": "error", "color": "red"}
-  WARNING = {"type": "warning", "color": "yellow"}
-  OK = {"type": "ok", "color": "green"}
 
 class BoardResetSelectorTopLevel(ctk.CTkToplevel):
+  """ A class to create a top-level window for selecting a board to reset. """
   def __init__(self, parent, total_cameras:int, on_close_callback, func=None):
     super().__init__(parent)
     self.title("Reset Specific Board")
@@ -57,11 +53,11 @@ class BoardResetSelectorTopLevel(ctk.CTkToplevel):
       )
       reset_button.pack(side="right", padx=(0, 10))
       
-  def highlight_entry_label(self, msg: str, type: CtkTypeEnum=CtkTypeEnum.ERROR):
+  def highlight_entry_label(self, msg: str, type: CtkTypeEnum=CtkTypeEnum.ERROR) -> None:
     self.error_label.configure(text=msg, text_color=type.value["color"])
     self.after(3000, self.clear_entry_label)
       
-  def clear_entry_label(self):
+  def clear_entry_label(self) -> None:
     self.error_label.configure(text="")
       
   def center_on_parent(self) -> None:
