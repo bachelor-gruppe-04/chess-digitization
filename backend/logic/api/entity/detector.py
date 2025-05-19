@@ -22,7 +22,7 @@ class Detector:
     
     self.id = id
     
-  async def run(self):
+  async def run(self) -> None:
     detector_cap = cv2.VideoCapture(self.id, cv2.CAP_DSHOW)
     await prepare_to_run_video(self.id, detector_cap)
     
