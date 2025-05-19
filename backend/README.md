@@ -22,3 +22,13 @@ To start the backend, run these following lines:
 Then, when the directory includes the correct path, run the following line to start the process:
 
     uvicorn main:app --reload
+
+## How to run tests
+
+to run the tests for the backend logic, run these following lines:
+
+    cd backend
+
+Then, when the directory is in the correct path, run the following line to start the test process:
+
+    python -m unittest logic.api.entity.test_board
