@@ -1,6 +1,6 @@
-from enum import Enum
 import customtkinter as ctk
 import asyncio
+from logic.view.ctk_type_enum import CtkTypeEnum
 from logic.api.entity.camera import CameraDoesNotExistError
 import logic.api.services.board_storage as storage
 from logic.api.services.board_service import BoardService
@@ -12,12 +12,8 @@ from logic.view.reset_specific_board_view import BoardResetSelectorTopLevel
 ctk.set_appearance_mode("system")
 ctk.set_default_color_theme("blue")
 
-class CtkTypeEnum(Enum):
-  ERROR = {"type": "error", "color": "red"}
-  WARNING = {"type": "warning", "color": "yellow"}
-  OK = {"type": "ok", "color": "green"}
-
 class App(ctk.CTk):
+  """ Main application class for the ChessCamera control panel. """
   def __init__(self, reset_board_function=None, reset_all_boards_function=None):
     super().__init__()
     self.title("ChessCamera | Control Panel")
